@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 pub struct App {
     pub running: bool,
-    pub needs_redraw: bool,
-    pub needs_clear: bool,
+    pub needs_clear_and_redraw: bool,
     pub current_mode: Mode,
     pub view_pos: ViewPos,
     pub next_note_id: usize,
@@ -16,8 +15,6 @@ pub enum Mode {
     Insert,
 }
 
-// increment id for each new note added
-// make creating a note an associated function
 pub struct Note {
     pub x: usize,
     pub y: usize,
@@ -103,20 +100,17 @@ impl App {
     pub fn new() -> App {
         let mut app = App { 
             running: true, 
-            needs_redraw: true,
-            needs_clear: false,
+            needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
             view_pos: ViewPos::new(),
             next_note_id: 0,
             notes: HashMap::new(),
         };
-        app.notes.insert(app.next_note_id, Note::new(200, 75, String::from("This is a test sentence.\nA new line.")));
         app
     }
 
     pub fn clear_and_redraw(&mut self) {
-        self.needs_clear = true;
-        self.needs_redraw = true;
+        self.needs_clear_and_redraw = true;
     }
 
     /// Stop the application
@@ -124,8 +118,9 @@ impl App {
         self.running = false;
     }
 
-    //pub fn add_note(&mut self) {
-        // add to notes
-        // increment counter
-    //}
+    pub fn add_note(&mut self) {
+        self.notes.insert(self.next_note_id, Note::new(20, 20, String::from("")));
+        self.next_note_id += 1;
+        //self.notes.insert(self.next_note_id, Note::new(200, 75, String::from("This is a test sentence.\nA new line.")));
+    }
 }

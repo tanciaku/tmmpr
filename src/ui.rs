@@ -37,8 +37,10 @@ fn render_bar(frame: &mut Frame, app: &App) {
 fn render_map(frame: &mut Frame, app: &App) {
     for (_key, value) in app.notes.iter() {
         // Get the dimensions of the text inside the note
-        let (note_width, note_height) = value.get_dimensions();
-        
+        let (mut note_width, mut note_height) = value.get_dimensions();
+        if note_width < 20 { note_width = 20; }
+        if note_height < 4 { note_height = 4; }
+
         // Calculate the position of the note in relation to
         // position of the view 
         let note_rect = SignedRect {

@@ -26,10 +26,10 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     // Main application loop
     while app.running {
         // Draw/Redraw the ui
-        if app.needs_redraw {
+        if app.needs_clear_and_redraw {
             terminal.draw(|frame| clear(frame))?;
             terminal.draw(|frame| render(frame, app))?;
-            app.needs_redraw = false;
+            app.needs_clear_and_redraw = false;
         }
 
         // Read terminal events

@@ -9,7 +9,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => on_key_event(app, key), // Handle keyboard input
             Event::Mouse(_) => {}
-            Event::Resize(_, _) => { app.needs_redraw = true; } // Re-render if terminal window resized
+            Event::Resize(_, _) => { app.needs_clear_and_redraw = true; } // Re-render if terminal window resized
             _ => {}
         }
     }
@@ -23,6 +23,7 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
             match key.code {
                 // Exit the app
                 KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => app.quit(),
+
                 // Move left
                 KeyCode::Char('h') => app.view_pos.x = app.view_pos.x.saturating_sub(1),
                 KeyCode::Char('H') => app.view_pos.x = app.view_pos.x.saturating_sub(5),
@@ -35,6 +36,10 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 // Move right
                 KeyCode::Char('l') => app.view_pos.x += 1,
                 KeyCode::Char('L') => app.view_pos.x += 5,
+
+                // Add note
+                KeyCode::Char('a') => app.add_note(),
+
                 _ => {}
             }
 
