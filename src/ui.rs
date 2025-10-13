@@ -5,9 +5,12 @@ use ratatui::{
     Frame
 };
 
-pub fn render(frame: &mut Frame, app: &App) {
+pub fn render(frame: &mut Frame, app: &mut App) {
 
     // ?...
+
+    app.screen_width = frame.area().width as usize;
+    app.screen_height = frame.area().height as usize;
 
     render_bar(frame, app);
     render_map(frame, app);

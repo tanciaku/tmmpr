@@ -5,6 +5,8 @@ pub struct App {
     pub needs_clear_and_redraw: bool,
     pub current_mode: Mode,
     pub view_pos: ViewPos,
+    pub screen_width: usize,
+    pub screen_height: usize,
     pub next_note_id: usize,
     pub notes: HashMap<usize, Note>,
 }
@@ -103,6 +105,8 @@ impl App {
             needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
             view_pos: ViewPos::new(),
+            screen_width: 0,
+            screen_height: 0,
             next_note_id: 0,
             notes: HashMap::new(),
         };
@@ -119,7 +123,9 @@ impl App {
     }
 
     pub fn add_note(&mut self) {
-        self.notes.insert(self.next_note_id, Note::new(20, 20, String::from("")));
+        let note_x = self.view_pos.x + self.screen_width/2;
+        let note_y = self.view_pos.y + self.screen_height/2;
+        self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from("")));
         self.next_note_id += 1;
         //self.notes.insert(self.next_note_id, Note::new(200, 75, String::from("This is a test sentence.\nA new line.")));
     }
