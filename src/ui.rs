@@ -20,8 +20,8 @@ fn render_bar(frame: &mut Frame, app: &App) {
     let size = frame.area();
 
     let size_display = Paragraph::new(format!(
-        "Width: {}, Height: {}     x: {}  y: {}",
-        size.width, size.height, app.view_pos.x, app.view_pos.y
+        "Width: {}, Height: {}     x: {}  y: {}       Selected note: {}",
+        size.width, size.height, app.view_pos.x, app.view_pos.y, app.selected_note
     ))
     .block(Block::default().borders(Borders::ALL).title("Terminal Info"));
 

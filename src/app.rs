@@ -9,6 +9,59 @@ pub struct App {
     pub screen_height: usize,
     pub next_note_id: usize,
     pub notes: HashMap<usize, Note>,
+    pub selected_note: usize,
+}
+
+impl App {
+    /// Construct a new instance of App
+    pub fn new() -> App {
+        let mut app = App { 
+            running: true, 
+            needs_clear_and_redraw: true,
+            current_mode: Mode::Normal,
+            view_pos: ViewPos::new(),
+            screen_width: 0,
+            screen_height: 0,
+            next_note_id: 0,
+            notes: HashMap::new(),
+            selected_note: 0,
+        };
+        app
+    }
+
+    pub fn clear_and_redraw(&mut self) {
+        self.needs_clear_and_redraw = true;
+    }
+
+    /// Stop the application
+    pub fn quit(&mut self) {
+        self.running = false;
+    }
+
+    pub fn add_note(&mut self) {
+        let note_x = self.view_pos.x + self.screen_width/2;
+        let note_y = self.view_pos.y + self.screen_height/2;
+        self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from("")));
+        self.next_note_id += 1;
+    }
+
+    pub fn select_note(&mut self) {
+        let screen_width_center = self.view_pos.x + self.screen_width/2;
+        let screen_height_center = self.view_pos.y + self.screen_height/2;
+        
+        let mut closest_note = 0;
+        let mut closest_note_distance = 1000; // default value to always be greater than
+        for (id, note) in self.notes.iter() {
+            let distance_to_note = (note.x as isize - screen_width_center as isize).abs() + (note.y as isize - screen_height_center as isize).abs();
+
+            if distance_to_note < closest_note_distance {
+                closest_note_distance = distance_to_note;
+                closest_note = *id;
+            }
+        }
+
+        self.selected_note = closest_note;
+    }
 }
 
 pub enum Mode {
@@ -94,39 +147,5 @@ impl SignedRect {
                 height: y_height,
             })
         }
-    }
-}
-
-impl App {
-    /// Construct a new instance of App
-    pub fn new() -> App {
-        let mut app = App { 
-            running: true, 
-            needs_clear_and_redraw: true,
-            current_mode: Mode::Normal,
-            view_pos: ViewPos::new(),
-            screen_width: 0,
-            screen_height: 0,
-            next_note_id: 0,
-            notes: HashMap::new(),
-        };
-        app
-    }
-
-    pub fn clear_and_redraw(&mut self) {
-        self.needs_clear_and_redraw = true;
-    }
-
-    /// Stop the application
-    pub fn quit(&mut self) {
-        self.running = false;
-    }
-
-    pub fn add_note(&mut self) {
-        let note_x = self.view_pos.x + self.screen_width/2;
-        let note_y = self.view_pos.y + self.screen_height/2;
-        self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from("")));
-        self.next_note_id += 1;
-        //self.notes.insert(self.next_note_id, Note::new(200, 75, String::from("This is a test sentence.\nA new line.")));
     }
 }

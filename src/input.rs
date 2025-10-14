@@ -39,6 +39,8 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
 
                 // Add note
                 KeyCode::Char('a') => app.add_note(),
+                // Select note
+                KeyCode::Char('v') => app.select_note(),
 
                 _ => {}
             }
