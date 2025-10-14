@@ -51,7 +51,33 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
 
         }
         Mode::Insert => {
+            match key.code {
+                KeyCode::Esc => {
+                    app.current_mode = Mode::Normal;
+                }
+                KeyCode::Char(c) => {
+                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                        note.content.push(c);
+                    }
+                }
 
+                KeyCode::Enter => {
+                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                        note.content.push('\n');
+                    }
+                }
+
+                KeyCode::Backspace => {
+                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                        if !note.content.is_empty() {
+                            let _ = note.content.pop();
+                        }
+                    }
+                }
+                _ => {}
+            }
+            
+            app.clear_and_redraw();
         }
     }
 }

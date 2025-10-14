@@ -42,6 +42,9 @@ impl App {
         let note_x = self.view_pos.x + self.screen_width/2;
         let note_y = self.view_pos.y + self.screen_height/2;
         self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from("")));
+        self.selected_note = self.next_note_id;
+        self.current_mode = Mode::Insert;
+
         self.next_note_id += 1;
     }
 
@@ -50,7 +53,7 @@ impl App {
         let screen_height_center = self.view_pos.y + self.screen_height/2;
         
         let mut closest_note = 0;
-        let mut closest_note_distance = 1000; // default value to always be greater than
+        let mut closest_note_distance = 1000; // default value to always be greater than the first comparison
         for (id, note) in self.notes.iter() {
             let distance_to_note = (note.x as isize - screen_width_center as isize).abs() + (note.y as isize - screen_height_center as isize).abs();
 
@@ -74,6 +77,7 @@ pub struct Note {
     pub x: usize,
     pub y: usize,
     pub content: String,
+    pub selected: bool,
 }
 
 impl Note {
@@ -83,11 +87,12 @@ impl Note {
             x,
             y,
             content,
+            selected: false,
         }
     }
 
     pub fn get_dimensions(&self) -> (u16, u16) {
-        let height = self.content.lines().count() as u16;
+        let height = (1 + self.content.matches('\n').count()) as u16;
         let width = self.content
             .lines()
             .map(|line| line.chars().count())

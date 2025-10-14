@@ -1,4 +1,4 @@
-use crate::app::{App, SignedRect};
+use crate::app::{App, SignedRect, Mode};
 use ratatui::{
     prelude::{Rect}, 
     widgets::{Block, Borders, Clear, Paragraph}, 
@@ -19,9 +19,15 @@ pub fn render(frame: &mut Frame, app: &mut App) {
 fn render_bar(frame: &mut Frame, app: &App) {
     let size = frame.area();
 
+    let mode_text_to_display = match &app.current_mode {
+        Mode::Normal => { String::from("Normal") }
+        Mode::Visual => { String::from("Visual") }
+        Mode::Insert => { String::from("Insert") }
+    };
+
     let size_display = Paragraph::new(format!(
-        "Width: {}, Height: {}     x: {}  y: {}       Selected note: {}",
-        size.width, size.height, app.view_pos.x, app.view_pos.y, app.selected_note
+        "Width: {}, Height: {}     x: {}  y: {}       Mode: {}            Selected note: {}",
+        size.width, size.height, app.view_pos.x, app.view_pos.y, mode_text_to_display, app.selected_note
     ))
     .block(Block::default().borders(Borders::ALL).title("Terminal Info"));
 
