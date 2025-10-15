@@ -1,29 +1,39 @@
+//! This module handles terminal events, focusing on keyboard input
+//! to control the application's state and behavior.
+
 use crate::app::{App, Mode};
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 
 /// Reads the terminal events.
 pub fn handle_events(app: &mut App) -> Result<()> {
-    // Only wait for keyboard events for 50ms - otherwise continue the loop iteration
+    // Poll for an event with a timeout of 50ms. This is the main "tick" rate.
     if event::poll(std::time::Duration::from_millis(50))? {
+        // Read the event and dispatch to the appropriate handler.
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => on_key_event(app, key), // Handle keyboard input
             Event::Mouse(_) => {}
-            Event::Resize(_, _) => { app.needs_clear_and_redraw = true; } // Re-render if terminal window resized
+            // Redraw the UI if terminal window resized
+            Event::Resize(_, _) => { app.needs_clear_and_redraw = true; }
             _ => {}
         }
     }
     Ok(())
 }
 
-/// Handles keyboard input.
+/// Handles all keyboard input events and updates the application state accordingly.
+///
+/// This function is the central hub for all user commands. Its behavior is
+/// determined by the application's current `Mode`.
 fn on_key_event(app: &mut App, key: KeyEvent) {
     match app.current_mode {
+        // Normal mode is for navigation and high-level commands.
         Mode::Normal => {
             match key.code {
-                // Exit the app
+                // --- Application Commands ---
                 KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => app.quit(),
 
+                // --- Viewport Navigation ---
                 // Move left
                 KeyCode::Char('h') => app.view_pos.x = app.view_pos.x.saturating_sub(1),
                 KeyCode::Char('H') => app.view_pos.x = app.view_pos.x.saturating_sub(5),
@@ -33,42 +43,49 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 // Move up
                 KeyCode::Char('k') => app.view_pos.y = app.view_pos.y.saturating_sub(1),
                 KeyCode::Char('K') => app.view_pos.y = app.view_pos.y.saturating_sub(5),
-                // Move right
+                // Move right 
                 KeyCode::Char('l') => app.view_pos.x += 1,
                 KeyCode::Char('L') => app.view_pos.x += 5,
 
+                // --- Note Manipulation ---
                 // Add note
                 KeyCode::Char('a') => app.add_note(),
-                // Select note
+                // Select note (first selects closest to the center of the screen)
                 KeyCode::Char('v') => app.select_note(),
 
                 _ => {}
             }
-
+            // Any action in Normal mode triggers a redraw.
             app.clear_and_redraw();
         }
-        Mode::Visual => {
 
+        // Visual mode for selections.
+        Mode::Visual => {
+            
         }
+
+        // Insert mode is for editing the content of a note.
         Mode::Insert => {
             match key.code {
+                // Switch back to Normal Mode
                 KeyCode::Esc => {
                     app.current_mode = Mode::Normal;
                 }
+
+                // --- Text Editing ---
                 KeyCode::Char(c) => {
                     if let Some(note) = app.notes.get_mut(&app.selected_note) {
                         note.content.push(c);
                     }
                 }
-
                 KeyCode::Enter => {
                     if let Some(note) = app.notes.get_mut(&app.selected_note) {
                         note.content.push('\n');
                     }
                 }
-
                 KeyCode::Backspace => {
                     if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                        // Pop the last character if the content is not empty.
                         if !note.content.is_empty() {
                             let _ = note.content.pop();
                         }
@@ -76,7 +93,7 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 }
                 _ => {}
             }
-            
+            // Any action in Insert mode triggers a redraw.
             app.clear_and_redraw();
         }
     }
