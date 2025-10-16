@@ -3,9 +3,7 @@
 
 use crate::app::{App, Mode, SignedRect};
 use ratatui::{
-    prelude::Rect,
-    widgets::{Block, Borders, Clear, Paragraph},
-    Frame,
+    prelude::Rect, style::Color, widgets::{Block, Borders, Clear, Paragraph}, Frame
 };
 
 /// The main rendering entry point.
@@ -131,10 +129,21 @@ fn render_map(frame: &mut Frame, app: &App) {
                 borders |= Borders::BOTTOM;
             }
 
+            let mut block_border_color = Block::default();
+            if note.selected { 
+                match app.current_mode {
+                    Mode::Visual => { block_border_color = Block::default().borders(borders).border_style(Color::Yellow) } 
+                    Mode::Insert => { block_border_color = Block::default().borders(borders).border_style(Color::Blue) } 
+                    _ => {}
+                } 
+            } else {
+                block_border_color = Block::default().borders(borders).border_style(Color::White) 
+            }
+
             // --- 6. Render the Widget ---
             let text_widget = Paragraph::new(note.content.as_str())
                 .scroll((vertical_scroll, horizontal_scroll))
-                .block(Block::default().borders(borders));
+                .block(block_border_color);
 
             frame.render_widget(text_widget, note_area);
         }

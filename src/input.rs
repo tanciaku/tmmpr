@@ -51,7 +51,10 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 // Add note
                 KeyCode::Char('a') => app.add_note(),
                 // Select note (first selects closest to the center of the screen)
-                KeyCode::Char('v') => app.select_note(),
+                KeyCode::Char('v') => {
+                    app.select_note();
+                    app.current_mode = Mode::Visual;
+                }
 
                 _ => {}
             }
@@ -61,7 +64,19 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
 
         // Visual mode for selections.
         Mode::Visual => {
-            
+            match key.code {
+                // Switch back to Normal Mode
+                KeyCode::Esc => {
+                    app.current_mode = Mode::Normal;
+                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                        note.selected = false;
+                    }
+                }
+                KeyCode::Char('i') => app.current_mode = Mode::Insert,
+                _ => {}
+            }
+            // Any action in Visual mode triggers a redraw.
+            app.clear_and_redraw(); 
         }
 
         // Insert mode is for editing the content of a note.
@@ -70,6 +85,9 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 // Switch back to Normal Mode
                 KeyCode::Esc => {
                     app.current_mode = Mode::Normal;
+                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                        note.selected = false;
+                    }
                 }
 
                 // --- Text Editing ---
