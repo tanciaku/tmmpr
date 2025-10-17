@@ -8,7 +8,7 @@ mod utils;
 use crate::{
     app::App,
     input::handle_events,
-    ui::{render, clear},
+    ui::{render},
 };
 
 fn main()-> color_eyre::Result<()> {
@@ -27,7 +27,6 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     while app.running {
         // Draw/Redraw the ui
         if app.needs_clear_and_redraw {
-            terminal.draw(|frame| clear(frame))?;
             terminal.draw(|frame| render(frame, app))?;
             app.needs_clear_and_redraw = false;
         }

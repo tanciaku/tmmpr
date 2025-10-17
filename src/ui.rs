@@ -12,8 +12,8 @@ use ratatui::{
 /// It updates the app state with the current screen dimensions and then calls
 /// the specific rendering functions for different parts of the UI.
 pub fn render(frame: &mut Frame, app: &mut App) {
-
-    // ...?
+    // Clear the frame before drawing anything new.
+    frame.render_widget(Clear, frame.area());
 
     // Update the app state with the current terminal size. This is crucial for
     // calculations that depend on screen dimensions, like centering new notes.
@@ -150,9 +150,3 @@ fn render_map(frame: &mut Frame, app: &App) {
     }
 }
 
-/// Clears the entire frame before a redraw.
-///
-/// This is used to prevent artifacts from previous frames when the UI changes.
-pub fn clear(f: &mut Frame) {
-    f.render_widget(Clear, f.area());
-}
