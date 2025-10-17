@@ -3,7 +3,11 @@
 
 use crate::app::{App, Mode, SignedRect};
 use ratatui::{
-    prelude::Rect, style::Color, widgets::{Block, Borders, Clear, Paragraph}, Frame
+    layout::{Alignment, Constraint, Direction, Layout},
+    prelude::Rect,
+    style::{Color, Style},
+    widgets::{Block, Borders, Clear, Padding, Paragraph},
+    Frame
 };
 
 /// The main rendering entry point.
@@ -21,45 +25,73 @@ pub fn render(frame: &mut Frame, app: &mut App) {
     app.screen_height = frame.area().height as usize;
 
     // Render the main UI components.
-    render_bar(frame, app);
     render_map(frame, app);
+    render_bar(frame, app);
 }
 
-/// Renders the top information bar.
+/// Renders the bottom information bar.
 ///
 /// This bar displays debugging information and the current application state,
 /// such as viewport position, mode, and selected note.
 fn render_bar(frame: &mut Frame, app: &App) {
+
+    // Get the total available screen area.
     let size = frame.area();
 
-    // Determine the text to display for the current mode.
-    let mode_text_to_display = match &app.current_mode {
-        Mode::Normal => String::from("Normal"),
-        Mode::Visual => String::from("Visual"),
-        Mode::Insert => String::from("Insert"),
+    // Determine the display text and color for the current application mode.
+    let (mode_text, mode_text_color) = match &app.current_mode {
+        Mode::Normal => (String::from("NORMAL"), Style::new().fg(Color::White)),
+        Mode::Visual => (String::from("VISUAL"), Style::new().fg(Color::Yellow)),
+        Mode::Insert => (String::from("INSERT"), Style::new().fg(Color::Blue)),
     };
 
-    // Create the paragraph widget with formatted info.
-    let size_display = Paragraph::new(format!(
-        "Width: {}, Height: {}     x: {}  y: {}       Mode: {}            Selected note: {}",
-        size.width,
-        size.height,
+    // --- Left-Aligned Widget: Mode Display ---
+    // Create a Paragraph for the mode, styling it with the color determined above.
+    // It's aligned to the left and given some padding.
+    let mode_display = Paragraph::new(format!("\n[ {} ]", mode_text))
+        .style(mode_text_color)
+        .alignment(Alignment::Left)
+        .block(Block::default().padding(Padding::new(2, 0, 0, 0)));
+
+    // --- Right-Aligned Widget: View Position ---
+    // Create a separate Paragraph to show the viewport's x/y coordinates.
+    // This is aligned to the right, with padding on the right side.
+    let view_position_display = Paragraph::new(format!(
+        "\nView: {},{}",
         app.view_pos.x,
         app.view_pos.y,
-        mode_text_to_display,
-        app.selected_note
     ))
-    .block(Block::default().borders(Borders::ALL).title("Terminal Info"));
-
-    // Define the area for the top bar (first 3 rows).
-    let top_rect = Rect {
+    .alignment(Alignment::Right)
+    .block(Block::default().padding(Padding::new(0, 2, 0, 0)));
+    
+    // Define the rectangular area for the entire bottom bar.
+    let bottom_rect = Rect {
         x: size.x,
-        y: size.y,
+        y: size.height - 2, // Position it in the last two rows of the terminal.
         width: size.width,
-        height: 3,
+        height: 2,
     };
 
-    frame.render_widget(size_display, top_rect);
+    // --- Layout Management ---
+    // Split the `bottom_rect` into two equal horizontal chunks.
+    // This prevents the styling of one widget from affecting the other.
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(50), // Left side gets 50% of the width.
+            Constraint::Percentage(50), // Right side gets the other 50%.
+        ])
+        .split(bottom_rect);
+    
+    // Assign the created chunks to variables for clarity.
+    let left_bar = chunks[0];
+    let right_bar = chunks[1];
+
+    // --- Rendering ---
+    // Finally, render the widgets to the frame.
+    frame.render_widget(Clear, bottom_rect); // First, clear the entire bar area.
+    frame.render_widget(mode_display, left_bar); // Render the mode display to the left chunk.
+    frame.render_widget(view_position_display, right_bar); // Render the position to the right chunk.
 }
 
 /// Renders the main canvas where notes are displayed.

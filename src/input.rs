@@ -3,7 +3,7 @@
 
 use crate::app::{App, Mode};
 use color_eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 
 /// Reads the terminal events.
 pub fn handle_events(app: &mut App) -> Result<()> {
@@ -31,7 +31,7 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
         Mode::Normal => {
             match key.code {
                 // --- Application Commands ---
-                KeyCode::Char('c') if key.modifiers == KeyModifiers::CONTROL => app.quit(),
+                KeyCode::Char('q') => app.quit(),
 
                 // --- Viewport Navigation ---
                 // Move left
