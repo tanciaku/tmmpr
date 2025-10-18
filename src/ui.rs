@@ -99,7 +99,14 @@ fn render_bar(frame: &mut Frame, app: &App) {
 /// This function iterates through all notes and performs a series of calculations
 /// to determine if, where, and how each note should be rendered.
 fn render_map(frame: &mut Frame, app: &App) {
-    for (_id, note) in app.notes.iter() {
+    // To ensure consistent rendering and prevent flickering, we must draw notes
+    // in a stable order. A HashMap's iterator is not guaranteed to be stable,
+    // so we collect the notes into a Vec and sort them by their ID (the key).
+    // This acts as a stable z-index, where higher IDs are drawn on top.
+    let mut sorted_notes: Vec<_> = app.notes.iter().collect();
+    sorted_notes.sort_by_key(|(id, _note)| **id);
+
+    for (_id, note) in sorted_notes {
         // --- 1. Get Note Dimensions ---
         // Enforce a minimum size for readability.
         let (mut note_width, mut note_height) = note.get_dimensions();
@@ -161,22 +168,32 @@ fn render_map(frame: &mut Frame, app: &App) {
                 borders |= Borders::BOTTOM;
             }
 
-            let mut block_border_color = Block::default();
-            if note.selected { 
+            // --- 6. Determine border color  ---
+            // (based on selection and mode)
+            let border_color = if note.selected {
                 match app.current_mode {
-                    Mode::Visual => { block_border_color = Block::default().borders(borders).border_style(Color::Yellow) } 
-                    Mode::Insert => { block_border_color = Block::default().borders(borders).border_style(Color::Blue) } 
-                    _ => {}
-                } 
+                    Mode::Normal => Color::White,
+                    Mode::Visual => Color::Yellow,
+                    Mode::Insert => Color::Blue,
+                }
             } else {
-                block_border_color = Block::default().borders(borders).border_style(Color::White) 
-            }
+                Color::White
+            };
 
-            // --- 6. Render the Widget ---
+            // Create a block for the note with borders.
+            let block = Block::default()
+                .borders(borders)
+                .border_style(border_color);
+
+            // --- 7. Create the widget itself ---
             let text_widget = Paragraph::new(note.content.as_str())
                 .scroll((vertical_scroll, horizontal_scroll))
-                .block(block_border_color);
+                .block(block);
 
+            // --- 8. Render the Widget(s) ---
+            // With a stable rendering order, we can now clear any content 
+            // from notes rendered beneath the note to be drawn and then draw it.
+            frame.render_widget(Clear, note_area);
             frame.render_widget(text_widget, note_area);
         }
     }
