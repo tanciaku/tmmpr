@@ -203,7 +203,7 @@ fn render_map(frame: &mut Frame, app: &App) {
 
                 // To calculate the cursor's position, we first need a slice of the text
                 // from the beginning of the note's content up to the cursor's byte index.
-                let text_before_cursor = &note.content[..app.cursor_pos.pos];
+                let text_before_cursor = &note.content[..app.cursor_pos];
 
                 // --- Calculate cursor's position RELATIVE to the text inside the note ---
 
@@ -215,12 +215,12 @@ fn render_map(frame: &mut Frame, app: &App) {
                     // If a newline is found, the X position is the number of characters
                     // between that newline and the cursor. `c+1` to skip the newline itself.
                     Some(c) => {
-                        text_before_cursor[c+1..app.cursor_pos.pos].chars().count()
+                        text_before_cursor[c+1..app.cursor_pos].chars().count()
                     }
                     // If no newline is found, we're on the first line. The X position is
                     // simply the total number of characters before the cursor.
                     None => { 
-                        text_before_cursor[0..app.cursor_pos.pos].chars().count()
+                        text_before_cursor[0..app.cursor_pos].chars().count()
                     }
                 };
                 
