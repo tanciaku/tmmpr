@@ -87,25 +87,37 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                     app.current_mode = Mode::Normal;
                     if let Some(note) = app.notes.get_mut(&app.selected_note) {
                         note.selected = false;
+                        // Reset cursor position for the next time entering Insert mode.
+                        app.cursor_pos.pos = 0;
                     }
                 }
 
                 // --- Text Editing ---
                 KeyCode::Char(c) => {
                     if let Some(note) = app.notes.get_mut(&app.selected_note) {
-                        note.content.push(c);
+                        // Insert the typed character at the cursor's current position.
+                        note.content.insert(app.cursor_pos.pos, c);
+                        // Move the cursor forward one position.
+                        app.cursor_pos.pos += 1;
                     }
                 }
                 KeyCode::Enter => {
                     if let Some(note) = app.notes.get_mut(&app.selected_note) {
-                        note.content.push('\n');
+                        // Insert a newline character at the cursor's position.
+                        note.content.insert(app.cursor_pos.pos, '\n');
+                        // Move the cursor forward one position.
+                        app.cursor_pos.pos += 1;
                     }
                 }
                 KeyCode::Backspace => {
                     if let Some(note) = app.notes.get_mut(&app.selected_note) {
-                        // Pop the last character if the content is not empty.
-                        if !note.content.is_empty() {
-                            let _ = note.content.pop();
+                        // We can only backspace if the cursor is not at the very beginning of the text.
+                        if app.cursor_pos.pos > 0 {
+                            // To delete the character *before* the cursor, we must remove the character
+                            // at the index `cursor_pos - 1`.
+                            note.content.remove(app.cursor_pos.pos - 1);
+                            // After removing the character, we move the cursor's position back by one.
+                            app.cursor_pos.pos -= 1;
                         }
                     }
                 }

@@ -30,6 +30,7 @@ pub struct App {
     pub notes: HashMap<usize, Note>,
     /// The unique ID of the currently selected note.
     pub selected_note: usize,
+    pub cursor_pos: CursorPos,
 }
 
 impl App {
@@ -47,6 +48,7 @@ impl App {
             next_note_id: 0,
             notes: HashMap::new(),
             selected_note: 0,
+            cursor_pos: CursorPos::new(),
         }
     }
 
@@ -224,6 +226,22 @@ impl SignedRect {
                 width: x_width,
                 height: y_height,
             })
+        }
+    }
+}
+
+pub struct CursorPos {
+    pub x: usize,
+    pub y: usize,
+    pub pos: usize,
+}
+
+impl CursorPos {
+    pub fn new() -> CursorPos {
+        CursorPos {
+            x: 0,
+            y: 0,
+            pos: 0,
         }
     }
 }
