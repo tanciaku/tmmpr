@@ -112,6 +112,9 @@ fn render_map(frame: &mut Frame, app: &App) {
         let (mut note_width, mut note_height) = note.get_dimensions();
         if note_width < 20 { note_width = 20; }
         if note_height < 4 { note_height = 4; }
+        
+        // Add space for cursor
+        note_width+=1;
 
         // --- 2. Translate to Screen Coordinates ---
         // Convert the note's absolute canvas coordinates into screen-relative coordinates.
