@@ -31,6 +31,7 @@ pub struct App {
     /// The unique ID of the currently selected note.
     pub selected_note: usize,
     pub cursor_pos: usize,
+    pub visual_move: bool,
 }
 
 impl App {
@@ -49,6 +50,7 @@ impl App {
             notes: HashMap::new(),
             selected_note: 0,
             cursor_pos: 0,
+            visual_move: false,
         }
     }
 

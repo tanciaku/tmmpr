@@ -41,7 +41,13 @@ fn render_bar(frame: &mut Frame, app: &App) {
     // Determine the display text and color for the current application mode.
     let (mode_text, mode_text_color) = match &app.current_mode {
         Mode::Normal => (String::from("NORMAL"), Style::new().fg(Color::White)),
-        Mode::Visual => (String::from("VISUAL"), Style::new().fg(Color::Yellow)),
+        Mode::Visual => {
+            if app.visual_move {
+                (String::from("VISUAL (MOVE)"), Style::new().fg(Color::Yellow))
+            } else {
+                (String::from("VISUAL"), Style::new().fg(Color::Yellow))
+            }
+        }
         Mode::Insert => (String::from("INSERT"), Style::new().fg(Color::Blue)),
     };
 

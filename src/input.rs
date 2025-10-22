@@ -52,6 +52,9 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 KeyCode::Char('a') => app.add_note(),
                 // Select note (first selects closest to the center of the screen)
                 KeyCode::Char('v') => {
+                    // Don't enter Visual Mode on the off-chance that there are no notes
+                    if let None = app.notes.get(&app.selected_note) { return }
+
                     app.select_note();
                     app.current_mode = Mode::Visual;
                 }
@@ -66,6 +69,44 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
         Mode::Visual => {
             // Get the currently selected note.
             if let Some(note) = app.notes.get_mut(&app.selected_note) {
+
+                // If Move State for Visual Mode is enabled 
+                if app.visual_move {
+                    match key.code {
+                        // Switch back to Visual Mode Normal State
+                        KeyCode::Char('m') => app.visual_move = false,
+
+                        // # FIX?
+                        // Switch back to Normal Mode
+                        KeyCode::Esc => {
+                            app.current_mode = Mode::Normal;
+                                note.selected = false;
+                                app.visual_move = false;
+                        }
+
+                        // --- Moving the note ---
+
+                        // Move the note left
+                        KeyCode::Char('h') => note.x = note.x.saturating_sub(1),
+                        KeyCode::Char('H') => note.x = note.x.saturating_sub(5),
+                        // Move the note down
+                        KeyCode::Char('j') => note.y += 1,
+                        KeyCode::Char('J') => note.y += 5,
+                        // Move the note up
+                        KeyCode::Char('k') => note.y = note.y.saturating_sub(1),
+                        KeyCode::Char('K') => note.y = note.y.saturating_sub(5),
+                        // Move the note right 
+                        KeyCode::Char('l') => note.x += 1,
+                        KeyCode::Char('L') => note.x += 5,
+
+                        _ => {}
+                    }
+                    
+                    // Trigger a redraw and stop there
+                    app.clear_and_redraw(); 
+                    return
+                }
+
                 match key.code {
                     // Switch back to Normal Mode
                     KeyCode::Esc => {
@@ -75,20 +116,8 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                     // Switch to Insert mode
                     KeyCode::Char('i') => app.current_mode = Mode::Insert,
 
-                    // --- Moving the note ---
-
-                    // Move the note left
-                    KeyCode::Char('h') => note.x = note.x.saturating_sub(1),
-                    KeyCode::Char('H') => note.x = note.x.saturating_sub(5),
-                    // Move the note down
-                    KeyCode::Char('j') => note.y += 1,
-                    KeyCode::Char('J') => note.y += 5,
-                    // Move the note up
-                    KeyCode::Char('k') => note.y = note.y.saturating_sub(1),
-                    KeyCode::Char('K') => note.y = note.y.saturating_sub(5),
-                    // Move the note right 
-                    KeyCode::Char('l') => note.x += 1,
-                    KeyCode::Char('L') => note.x += 5,
+                    // Switch to Move State for the Visual Mode
+                    KeyCode::Char('m') => app.visual_move = true,
 
                     _ => {}
                 }
