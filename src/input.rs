@@ -64,19 +64,38 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
 
         // Visual mode for selections.
         Mode::Visual => {
-            match key.code {
-                // Switch back to Normal Mode
-                KeyCode::Esc => {
-                    app.current_mode = Mode::Normal;
-                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
-                        note.selected = false;
+            // Get the currently selected note.
+            if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                match key.code {
+                    // Switch back to Normal Mode
+                    KeyCode::Esc => {
+                        app.current_mode = Mode::Normal;
+                            note.selected = false;
                     }
+                    // Switch to Insert mode
+                    KeyCode::Char('i') => app.current_mode = Mode::Insert,
+
+                    // --- Moving the note ---
+
+                    // Move the note left
+                    KeyCode::Char('h') => note.x = note.x.saturating_sub(1),
+                    KeyCode::Char('H') => note.x = note.x.saturating_sub(5),
+                    // Move the note down
+                    KeyCode::Char('j') => note.y += 1,
+                    KeyCode::Char('J') => note.y += 5,
+                    // Move the note up
+                    KeyCode::Char('k') => note.y = note.y.saturating_sub(1),
+                    KeyCode::Char('K') => note.y = note.y.saturating_sub(5),
+                    // Move the note right 
+                    KeyCode::Char('l') => note.x += 1,
+                    KeyCode::Char('L') => note.x += 5,
+
+                    _ => {}
                 }
-                KeyCode::Char('i') => app.current_mode = Mode::Insert,
-                _ => {}
+
+                // Any action in Visual mode triggers a redraw.
+                app.clear_and_redraw(); 
             }
-            // Any action in Visual mode triggers a redraw.
-            app.clear_and_redraw(); 
         }
 
         // Insert mode is for editing the content of a note.
