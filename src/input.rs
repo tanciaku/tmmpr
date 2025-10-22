@@ -133,122 +133,126 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                         }
                     }
                 }
-                KeyCode::Up => {
-                    if let Some(note) = app.notes.get(&app.selected_note) {
-                        // --- 1. Find the start of the current and previous lines ---
-
-                        // `current_line_start` will hold the starting index of the line the cursor is on.
-                        let mut current_line_start = 0;
-                        // `previous_line_start` will hold the starting index of the line *above* the cursor.
-                        let mut previous_line_start = 0;
-
-                        // Iterate through the lines of the note to find the cursor's position.
-                        for line in note.content.lines() {
-                            // Check if the end of the current line is past the cursor's position.
-                            // If it is, we've found the line the cursor is on.
-                            if current_line_start + line.chars().count() >= app.cursor_pos {
-                                break;
-                            }
-                            
-                            // If we haven't found the cursor's line yet, we update our variables.
-                            // The current line's start becomes the new 'previous' line start.
-                            previous_line_start = current_line_start;
-                            // We update the current line's start to the beginning of the *next* line,
-                            // accounting for the current line's length plus the newline character.
-                            current_line_start += line.chars().count() + 1;
-                        }
-
-                        // --- 2. Handle the edge case of being on the first line ---
-                        
-                        // If `current_line_start` is still 0, it means the loop broke on the first
-                        // line. We can't move up, so we exit early.
-                        if current_line_start == 0 { return }
-
-                        // --- 3. Calculate the new cursor position ---
-
-                        // Determine the cursor's horizontal position (column) within its current line.
-                        let index_in_the_current_line = app.cursor_pos - current_line_start;
-
-                        // Calculate the character length of the previous line.
-                        let previous_line_length = current_line_start - previous_line_start - 1;
-
-                        // --- 4. Set the new cursor position, snapping if necessary ---
-                        
-                        // Check if the previous line is long enough to place the cursor at the same column.
-                        if previous_line_length > index_in_the_current_line {
-                            // If it is, the new position is the start of the previous line plus the column offset.
-                            app.cursor_pos = previous_line_start + index_in_the_current_line;
-                        } else {
-                            // If the previous line is shorter, "snap" the cursor to the end of that line.
-                            app.cursor_pos = previous_line_start + previous_line_length;
-                        }
-                    }
-                }
-                KeyCode::Down => {
-                    if let Some(note) = app.notes.get(&app.selected_note) {
-                        // --- 1. Find the start of the current and next lines ---
-                        let mut current_line_start = 0;
-                        let mut next_line_start = 0;
-
-                        // Iterate through the lines to find the cursor's current line and the start of the next.
-                        for line in note.content.lines() {
-                            // The `if` condition checks if the cursor is on the current line being processed.
-                            // We use `next_line_start` for the check because it holds the starting index
-                            // of the line we are currently evaluating in the loop.
-                            if next_line_start + line.chars().count() >= app.cursor_pos {
-                                // Once we find the correct line, we perform one final update.
-                                // `current_line_start` gets the correct value for the cursor's actual line.
-                                current_line_start = next_line_start;
-                                // `next_line_start` is pushed forward to the start of the *following* line.
-                                next_line_start += line.chars().count() + 1;
-                                // We've found what we need, so we exit the loop.
-                                break;
-                            }
-
-                            // If the cursor isn't on this line, we update the variables for the next iteration.
-                            current_line_start = next_line_start;
-                            next_line_start += line.chars().count() + 1;
-                        }
-
-                        // --- 2. Handle the edge case of being on the last line ---
-
-                        // If the calculated `next_line_start` is beyond the total length of the note,
-                        // it means there is no next line to move to, so we exit early.
-                        if next_line_start > note.content.len() { return }
-
-                        // --- 3. Calculate the new cursor position ---
-
-                        // Determine the cursor's horizontal position (column) within its current line.
-                        let index_in_the_current_line = app.cursor_pos - current_line_start;
-
-                        // To find the length of the next line, we first create a slice of the note
-                        // content starting from the beginning of the next line.
-                        let remaining_content = &note.content[next_line_start..];
-
-                        // We then search for a newline character within that remaining slice.
-                        let next_line_length = match remaining_content.find('\n') {
-                            // If a newline is found, its index within the slice is the length of the next line.
-                            Some(newline_pos) => newline_pos,
-                            // If no newline is found, it's the last line, so its length is the length of the entire remaining slice.
-                            None => remaining_content.len(),
-                        };
-
-                        // --- 4. Set the new cursor position, snapping if necessary ---
-
-                        // Check if the next line is long enough to place the cursor at the same column.
-                        if next_line_length > index_in_the_current_line {
-                            // If it is, the new position is the start of the next line plus the column offset.
-                            app.cursor_pos = next_line_start + index_in_the_current_line;
-                        } else {
-                            // If the next line is shorter, "snap" the cursor to the end of that line.
-                            app.cursor_pos = next_line_start + next_line_length;
-                        }
-                    }
-                }
+                KeyCode::Up => move_cursor_up(app), 
+                KeyCode::Down => move_cursor_down(app),
                 _ => {}
             }
             // Any action in Insert mode triggers a redraw.
             app.clear_and_redraw();
+        }
+    }
+}
+
+fn move_cursor_up(app: &mut App) {
+    if let Some(note) = app.notes.get(&app.selected_note) {
+        // --- 1. Find the start of the current and previous lines ---
+
+        // `current_line_start` will hold the starting index of the line the cursor is on.
+        let mut current_line_start = 0;
+        // `previous_line_start` will hold the starting index of the line *above* the cursor.
+        let mut previous_line_start = 0;
+
+        // Iterate through the lines of the note to find the cursor's position.
+        for line in note.content.lines() {
+            // Check if the end of the current line is past the cursor's position.
+            // If it is, we've found the line the cursor is on.
+            if current_line_start + line.chars().count() >= app.cursor_pos {
+                break;
+            }
+            
+            // If we haven't found the cursor's line yet, we update our variables.
+            // The current line's start becomes the new 'previous' line start.
+            previous_line_start = current_line_start;
+            // We update the current line's start to the beginning of the *next* line,
+            // accounting for the current line's length plus the newline character.
+            current_line_start += line.chars().count() + 1;
+        }
+
+        // --- 2. Handle the edge case of being on the first line ---
+        
+        // If `current_line_start` is still 0, it means the loop broke on the first
+        // line. We can't move up, so we exit early.
+        if current_line_start == 0 { return }
+
+        // --- 3. Calculate the new cursor position ---
+
+        // Determine the cursor's horizontal position (column) within its current line.
+        let index_in_the_current_line = app.cursor_pos - current_line_start;
+
+        // Calculate the character length of the previous line.
+        let previous_line_length = current_line_start - previous_line_start - 1;
+
+        // --- 4. Set the new cursor position, snapping if necessary ---
+        
+        // Check if the previous line is long enough to place the cursor at the same column.
+        if previous_line_length > index_in_the_current_line {
+            // If it is, the new position is the start of the previous line plus the column offset.
+            app.cursor_pos = previous_line_start + index_in_the_current_line;
+        } else {
+            // If the previous line is shorter, "snap" the cursor to the end of that line.
+            app.cursor_pos = previous_line_start + previous_line_length;
+        }
+    }
+}
+
+fn move_cursor_down(app: &mut App) {
+    if let Some(note) = app.notes.get(&app.selected_note) {
+        // --- 1. Find the start of the current and next lines ---
+        let mut current_line_start = 0;
+        let mut next_line_start = 0;
+
+        // Iterate through the lines to find the cursor's current line and the start of the next.
+        for line in note.content.lines() {
+            // The `if` condition checks if the cursor is on the current line being processed.
+            // We use `next_line_start` for the check because it holds the starting index
+            // of the line we are currently evaluating in the loop.
+            if next_line_start + line.chars().count() >= app.cursor_pos {
+                // Once we find the correct line, we perform one final update.
+                // `current_line_start` gets the correct value for the cursor's actual line.
+                current_line_start = next_line_start;
+                // `next_line_start` is pushed forward to the start of the *following* line.
+                next_line_start += line.chars().count() + 1;
+                // We've found what we need, so we exit the loop.
+                break;
+            }
+
+            // If the cursor isn't on this line, we update the variables for the next iteration.
+            current_line_start = next_line_start;
+            next_line_start += line.chars().count() + 1;
+        }
+
+        // --- 2. Handle the edge case of being on the last line ---
+
+        // If the calculated `next_line_start` is beyond the total length of the note,
+        // it means there is no next line to move to, so we exit early.
+        if next_line_start > note.content.len() { return }
+
+        // --- 3. Calculate the new cursor position ---
+
+        // Determine the cursor's horizontal position (column) within its current line.
+        let index_in_the_current_line = app.cursor_pos - current_line_start;
+
+        // To find the length of the next line, we first create a slice of the note
+        // content starting from the beginning of the next line.
+        let remaining_content = &note.content[next_line_start..];
+
+        // We then search for a newline character within that remaining slice.
+        let next_line_length = match remaining_content.find('\n') {
+            // If a newline is found, its index within the slice is the length of the next line.
+            Some(newline_pos) => newline_pos,
+            // If no newline is found, it's the last line, so its length is the length of the entire remaining slice.
+            None => remaining_content.len(),
+        };
+
+        // --- 4. Set the new cursor position, snapping if necessary ---
+
+        // Check if the next line is long enough to place the cursor at the same column.
+        if next_line_length > index_in_the_current_line {
+            // If it is, the new position is the start of the next line plus the column offset.
+            app.cursor_pos = next_line_start + index_in_the_current_line;
+        } else {
+            // If the next line is shorter, "snap" the cursor to the end of that line.
+            app.cursor_pos = next_line_start + next_line_length;
         }
     }
 }
