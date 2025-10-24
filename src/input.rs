@@ -72,11 +72,18 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
 
                 // If Move State for Visual Mode is enabled 
                 if app.visual_move {
+                    // Get note dimensions
+                    let (mut note_width, mut note_height) = note.get_dimensions();
+                    // Enforce a minimum size for readability.
+                    if note_width < 20 { note_width = 20; }
+                    if note_height < 4 { note_height = 4; }
+                    // Add space for cursor
+                    note_width+=1;
+                    
                     match key.code {
                         // Switch back to Visual Mode Normal State
                         KeyCode::Char('m') => app.visual_move = false,
 
-                        // # FIX?
                         // Switch back to Normal Mode
                         KeyCode::Esc => {
                             app.current_mode = Mode::Normal;
@@ -86,18 +93,74 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
 
                         // --- Moving the note ---
 
-                        // Move the note left
-                        KeyCode::Char('h') => note.x = note.x.saturating_sub(1),
-                        KeyCode::Char('H') => note.x = note.x.saturating_sub(5),
-                        // Move the note down
-                        KeyCode::Char('j') => note.y += 1,
-                        KeyCode::Char('J') => note.y += 5,
                         // Move the note up
-                        KeyCode::Char('k') => note.y = note.y.saturating_sub(1),
-                        KeyCode::Char('K') => note.y = note.y.saturating_sub(5),
+                        KeyCode::Char('k') => {
+                            // First, update the note's y-coordinate.
+                            note.y = note.y.saturating_sub(1);
+                            // Then, check if the top edge of the note is now above the top edge of the viewport.
+                            if note.y < app.view_pos.y {
+                                // If it is, move the viewport up by the same amount to "follow" the note.
+                                app.view_pos.y -= 1;
+                            }
+                        }
+                        KeyCode::Char('K') => {
+                            note.y = note.y.saturating_sub(5);
+                            if note.y < app.view_pos.y {
+                                app.view_pos.y = app.view_pos.y.saturating_sub(5);
+                            }
+                        }
+
+                        // Move the note down
+                        KeyCode::Char('j') => {
+                            // First, update the note's y-coordinate.
+                            note.y += 1; 
+                            // Check if the bottom edge of the note is below the visible screen area.
+                            // We subtract 2 from the screen height to account for the bottom info bar.
+                            if note.y as isize + note_height as isize > app.view_pos.y as isize + app.screen_height as isize - 2 {
+                                // If it is, move the viewport down to keep the note in view.
+                                app.view_pos.y += 1;
+                            }
+                        }
+                        KeyCode::Char('J') => {
+                            note.y += 5;
+                            if note.y as isize + note_height as isize > app.view_pos.y as isize + app.screen_height as isize - 2 {
+                                app.view_pos.y += 5;
+                            }
+                        }
+
+                        // Move the note left
+                        KeyCode::Char('h') => {
+                            // First, update the note's x-coordinate.
+                            note.x = note.x.saturating_sub(1);
+                            // Then, check if the left edge of the note is now to the left of the viewport's edge.
+                            if note.x < app.view_pos.x {
+                                // If it is, move the viewport left to keep it in view.
+                                app.view_pos.x -= 1;
+                            }
+                        }
+                        KeyCode::Char('H') => {
+                            note.x = note.x.saturating_sub(5);
+                            if note.x < app.view_pos.x {
+                                app.view_pos.x = app.view_pos.x.saturating_sub(5);
+                            }
+                        }
+
                         // Move the note right 
-                        KeyCode::Char('l') => note.x += 1,
-                        KeyCode::Char('L') => note.x += 5,
+                        KeyCode::Char('l') => {
+                            // First, update the note's x-coordinate.
+                            note.x += 1;
+                            // Check if the right edge of the note is past the right edge of the screen.
+                            if note.x + note_width as usize > app.view_pos.x + app.screen_width {
+                                // If it is, move the viewport right to keep up.
+                                app.view_pos.x += 1;
+                            }
+                        }
+                        KeyCode::Char('L') => {
+                            note.x += 5;
+                            if note.x + note_width as usize > app.view_pos.x + app.screen_width {
+                                app.view_pos.x += 5;
+                            }
+                        }
 
                         _ => {}
                     }
@@ -107,6 +170,7 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                     return
                 }
 
+                // If Visual Mode is in Normal State
                 match key.code {
                     // Switch back to Normal Mode
                     KeyCode::Esc => {
