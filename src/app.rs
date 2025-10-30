@@ -119,6 +119,7 @@ pub enum Mode {
     Visual,
     /// Mode for editing the text content of a note.
     Insert,
+    Delete,
 }
 
 /// Represents a single note on the canvas.

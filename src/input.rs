@@ -187,6 +187,8 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 // Switch to Move State for the Visual Mode
                 KeyCode::Char('m') => app.visual_move = true,
 
+                // Switch to Delete Mode
+                KeyCode::Char('d') => app.current_mode = Mode::Delete,
 
                 // -- Switching focus between notes --
 
@@ -265,6 +267,22 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 _ => {}
             }
             // Any action in Insert mode triggers a redraw.
+            app.clear_and_redraw();
+        }
+    
+        Mode::Delete => {
+            match key.code {
+                // Switch back to Visual Mode
+                KeyCode::Esc => {
+                    app.current_mode = Mode::Visual;
+                }
+                KeyCode::Char('d') => {
+                    app.notes.remove(&app.selected_note);
+                    app.current_mode = Mode::Normal;
+                }
+                _ => {}
+            }
+            
             app.clear_and_redraw();
         }
     }

@@ -40,21 +40,22 @@ fn render_bar(frame: &mut Frame, app: &App) {
 
     // Determine the display text and color for the current application mode.
     let (mode_text, mode_text_color) = match &app.current_mode {
-        Mode::Normal => (String::from("NORMAL"), Style::new().fg(Color::White)),
+        Mode::Normal => (String::from("[ NORMAL ]"), Style::new().fg(Color::White)),
         Mode::Visual => {
             if app.visual_move {
-                (String::from("VISUAL (MOVE)"), Style::new().fg(Color::Yellow))
+                (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow))
             } else {
-                (String::from("VISUAL"), Style::new().fg(Color::Yellow))
+                (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow))
             }
         }
-        Mode::Insert => (String::from("INSERT"), Style::new().fg(Color::Blue)),
+        Mode::Insert => (String::from("[ INSERT ]"), Style::new().fg(Color::Blue)),
+        Mode::Delete => (String::from("Delete the selected note [d]            Go back to Visual Mode [ESC]"), Style::new().fg(Color::Red)),
     };
 
     // --- Left-Aligned Widget: Mode Display ---
     // Create a Paragraph for the mode, styling it with the color determined above.
     // It's aligned to the left and given some padding.
-    let mode_display = Paragraph::new(format!("\n[ {} ]", mode_text))
+    let mode_display = Paragraph::new(format!("\n{}", mode_text))
         .style(mode_text_color)
         .alignment(Alignment::Left)
         .block(Block::default().padding(Padding::new(2, 0, 0, 0)));
@@ -183,6 +184,7 @@ fn render_map(frame: &mut Frame, app: &App) {
                     Mode::Normal => Color::White,
                     Mode::Visual => Color::Yellow,
                     Mode::Insert => Color::Blue,
+                    Mode::Delete => Color::Red,
                 }
             } else {
                 Color::White
