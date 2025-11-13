@@ -32,6 +32,7 @@ pub struct App {
     pub selected_note: usize,
     pub cursor_pos: usize,
     pub visual_move: bool,
+    pub connections: Vec<Connection>,
 }
 
 impl App {
@@ -39,7 +40,7 @@ impl App {
     ///
     /// Initializes the application state with default values, ready for the main loop.
     pub fn new() -> App {
-        App { 
+        let mut app = App { 
             running: true, 
             needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
@@ -51,7 +52,24 @@ impl App {
             selected_note: 0,
             cursor_pos: 0,
             visual_move: false,
-        }
+            connections: vec![],
+        };
+
+        // test, temp
+        app.notes.insert(app.next_note_id, Note::new(10, 10, String::from(""), false));
+        app.next_note_id += 1;
+        app.notes.insert(app.next_note_id, Note::new(70, 30, String::from(""), false));
+        app.next_note_id += 1;
+
+        // Add a test connection to visualize
+        app.connections.push(Connection {
+            from_id: 0,
+            from_side: Side::Right,
+            to_id: Some(1),
+            to_side: Some(Side::Left),
+        });
+
+        app
     }
 
     /// Sets the flag to force a screen clear and redraw on the next frame.
@@ -164,6 +182,25 @@ impl Note {
         // Add 2 to each dimension for a 1-cell border on all sides.
         (width + 2, height + 2)
     }
+
+    pub fn get_connection_point(&self, side: Side) -> (usize, usize) {
+        let (note_width, note_height) = self.get_dimensions();
+
+        match side {
+            Side::Right => {
+                ((self.x + note_width as usize), (self.y + (note_height/2) as usize))
+            }
+            Side::Left => {
+                (self.x, (self.y + (note_height/2) as usize))
+            }
+            Side::Top => {
+                (self.x + (note_width/2) as usize, self.y)
+            }
+            Side::Bottom => {
+                (self.x + (note_width/2) as usize, self.y + note_height as usize)
+            }
+        }
+    }
 }
 
 /// Represents the top-left corner of the viewport on the infinite canvas.
@@ -231,6 +268,21 @@ impl SignedRect {
             })
         }
     }
+}
+
+pub struct Connection {
+    pub from_id: usize,
+    pub from_side: Side,
+    pub to_id: Option<usize>,
+    pub to_side: Option<Side>,
+}
+
+#[derive(Clone, Copy)]
+pub enum Side {
+    Top,
+    Bottom,
+    Left,
+    Right,
 }
 
 #[cfg(test)]

@@ -1,7 +1,9 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{App, Mode, SignedRect};
+use crate::app::{App, Mode, SignedRect, Note};
+use crate::utils::{calculate_path, Point};
+use ratatui::buffer::Cell;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
     prelude::Rect,
@@ -25,8 +27,9 @@ pub fn render(frame: &mut Frame, app: &mut App) {
     app.screen_height = frame.area().height as usize;
 
     // Render the main UI components.
-    render_map(frame, app);
-    render_bar(frame, app);
+    render_connections(frame, app);
+    render_map(frame, app); // Notes will be drawn over connections (if any)
+    render_bar(frame, app); // The bar will be drawn over everything
 }
 
 /// Renders the bottom information bar.
@@ -261,3 +264,75 @@ fn render_map(frame: &mut Frame, app: &App) {
     }
 }
 
+fn render_connections(frame: &mut Frame, app: &App) {
+    for connection in &app.connections {
+        if let Some(start_note) = app.notes.get(&connection.from_id){
+            
+            // logic for just choosing which note to connect from
+
+            if let Some(end_note_id) = connection.to_id {
+                if let Some(end_note) = app.notes.get(&end_note_id) {
+                    let path = calculate_path(
+                        start_note, 
+                        connection.from_side, 
+                        end_note, 
+                        connection.to_side.unwrap(), // unwrap here, since if there is an
+                                                     // end note - there is an end side
+                    );
+
+                    //  (2 points that make up a line)
+                    for points in path.windows(2) {
+                        // Translate points absolute coordinates to screen coordinates
+                        let p1_x = points[0].x - app.view_pos.x as isize;
+                        let p1_y = points[0].y - app.view_pos.y as isize;
+                        let p2_x = points[1].x - app.view_pos.x as isize;
+                        let p2_y = points[1].y - app.view_pos.y as isize;
+
+
+                        // -- Determine line characters and draw them --
+                        
+                        // If the difference is in x coordinates - draw horizontal segment characters
+                        if points[0].x != points[1].x {
+                            let x_diff = (points[1].x - points[0].x).abs();
+                            let mut x_coor: isize;
+
+                            for offset in 0..x_diff {
+                                if points[1].x > points[0].x { // +difference (going right)
+                                    x_coor = p1_x + offset;
+                                } else { // -difference (going left)
+                                    x_coor = p1_x - offset;
+                                }
+
+                                if x_coor >= 0 && x_coor < frame.area().width as isize && p1_y >= 0 && p1_y < frame.area().height as isize {
+                                    if let Some(cell) = frame.buffer_mut().cell_mut((x_coor as u16, p1_y as u16)) {
+                                        cell.set_symbol("─");
+                                    }
+                                }
+                            }
+                        } else { // If the difference is in y coordinates - draw vertical segment characters                        
+                            let y_diff = (points[1].y - points[0].y).abs();
+                            let mut y_coor: isize;
+
+                            for offset in 0..y_diff {
+                                if points[1].y > points[0].y { // +difference (going down)
+                                    y_coor = p1_y + offset;
+                                } else { // -difference (doing up)
+                                    y_coor = p1_y - offset;
+                                }
+                                
+                                if y_coor >= 0 && y_coor < frame.area().height as isize && p1_x >= 0 && p1_x < frame.area().width as isize {
+                                    if let Some(cell) = frame.buffer_mut().cell_mut((p1_x as u16, y_coor as u16)) {
+                                        cell.set_symbol("│");
+                                    }
+                                }
+                            }
+                        }
+
+                        // Draw the connecting characters
+                        
+                    }
+                }
+            }
+        }
+    }
+}
