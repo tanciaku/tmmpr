@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{App, Mode, SignedRect, Note};
+use crate::app::{App, Mode, SignedRect, Note, Side, Connection};
 use crate::utils::{calculate_path, Point};
 use ratatui::buffer::Cell;
 use ratatui::{
@@ -116,6 +116,7 @@ fn render_map(frame: &mut Frame, app: &App) {
     let mut sorted_notes: Vec<_> = app.notes.iter().collect();
     sorted_notes.sort_by_key(|(id, _note)| **id);
 
+    // -- Render the notes --
     for (id, note) in sorted_notes {
         // --- 1. Get Note Dimensions ---
         let (mut note_width, mut note_height) = note.get_dimensions();
@@ -262,14 +263,27 @@ fn render_map(frame: &mut Frame, app: &App) {
             }
         }
     }
+
+    // -- Render the connecting characters --
+    // (placed here to draw over the note borders)
+    for connection in &app.connections {
+        if let Some(start_note) = app.notes.get(&connection.from_id){
+            // -- Draw the FROM connecting character --
+            draw_connecting_character(connection, start_note, connection.from_side, frame, app);
+
+            // -- Draw the TO connecting character --                    
+            if let Some(end_note_id) = connection.to_id {
+                if let Some(end_note) = app.notes.get(&end_note_id) {
+                    draw_connecting_character(connection, end_note, connection.to_side.unwrap(), frame, app);
+                }
+            }
+        }
+    }
 }
 
 fn render_connections(frame: &mut Frame, app: &App) {
     for connection in &app.connections {
         if let Some(start_note) = app.notes.get(&connection.from_id){
-            
-            // logic for just choosing which note to connect from
-
             if let Some(end_note_id) = connection.to_id {
                 if let Some(end_note) = app.notes.get(&end_note_id) {
                     let path = calculate_path(
@@ -280,7 +294,8 @@ fn render_connections(frame: &mut Frame, app: &App) {
                                                      // end note - there is an end side
                     );
 
-                    //  (2 points that make up a line)
+                    // Draw the horizontal and vertical line segments that make
+                    // up a connection (.windows(2) - 2 points that make up a line)
                     for points in path.windows(2) {
                         // Translate points absolute coordinates to screen coordinates
                         let p1_x = points[0].x - app.view_pos.x as isize;
@@ -326,13 +341,31 @@ fn render_connections(frame: &mut Frame, app: &App) {
                                     }
                                 }
                             }
-                        }
-
-                        // Draw the connecting characters
-                        
+                        } 
                     }
+                    
                 }
             }
+        }
+    }
+}
+
+fn draw_connecting_character(connection: &Connection, note: &Note, side: Side, frame: &mut Frame, app: &App) {
+    let connection_point_character: &str;
+    match side {
+        Side::Top => { connection_point_character = "┴" }
+        Side::Bottom => { connection_point_character = "┬"}
+        Side::Left => { connection_point_character = "┤"}
+        Side::Right => { connection_point_character = "├"}
+    }
+
+    let p = note.get_connection_point(side);
+    let p_x = p.0 as isize - app.view_pos.x as isize; // connection start point relative x
+    let p_y = p.1 as isize - app.view_pos.y as isize; // connection start point relative y
+
+    if p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize {
+        if let Some(cell) = frame.buffer_mut().cell_mut((p_x as u16, p_y as u16)) {
+            cell.set_symbol(connection_point_character);
         }
     }
 }

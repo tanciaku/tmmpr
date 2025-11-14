@@ -184,19 +184,25 @@ impl Note {
     }
 
     pub fn get_connection_point(&self, side: Side) -> (usize, usize) {
-        let (note_width, note_height) = self.get_dimensions();
+        let (mut note_width, mut note_height) = self.get_dimensions();
+
+        // Enforce a minimum size
+        if note_width < 20 { note_width = 20; }
+        if note_height < 4 { note_height = 4; } 
+        // Add space for cursor
+        note_width+=1;
 
         match side {
             Side::Right => {
-                ((self.x + note_width as usize), (self.y + (note_height/2) as usize))
+                ((self.x + note_width as usize - 1), (self.y + (note_height/2) as usize))
             }
-            Side::Left => {
+            Side::Left => { // * check
                 (self.x, (self.y + (note_height/2) as usize))
             }
-            Side::Top => {
+            Side::Top => { // * check
                 (self.x + (note_width/2) as usize, self.y)
             }
-            Side::Bottom => {
+            Side::Bottom => { // * check
                 (self.x + (note_width/2) as usize, self.y + note_height as usize)
             }
         }

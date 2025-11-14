@@ -39,12 +39,12 @@ pub fn calculate_path(
             match (h_placement, v_placement) {
                 (HPlacement::Right, VPlacement::Below) => {
                     let midway_point_x = start.x + (available_space_x/2);
+                    // is this path correct?
                     points = vec![
-                        Point { x: start.x + 1, y: start.y },
+                        Point { x: start.x, y: start.y },
                         Point { x: midway_point_x, y: start.y, },
                         Point { x: midway_point_x, y: end.y, },
-                        Point { x: end.x - 1, y: end.y}
-
+                        Point { x: end.x, y: end.y}
                     ];
                 }
                 _ => {}
