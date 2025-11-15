@@ -303,14 +303,13 @@ fn render_connections(frame: &mut Frame, app: &App) {
                         let p2_x = points[1].x - app.view_pos.x as isize;
                         let p2_y = points[1].y - app.view_pos.y as isize;
 
-
                         // -- Determine line characters and draw them --
                         
                         // If the difference is in x coordinates - draw horizontal segment characters
                         if points[0].x != points[1].x {
                             let x_diff = (points[1].x - points[0].x).abs();
                             let mut x_coor: isize;
-
+                            
                             for offset in 0..x_diff {
                                 if points[1].x > points[0].x { // +difference (going right)
                                     x_coor = p1_x + offset;
@@ -331,7 +330,7 @@ fn render_connections(frame: &mut Frame, app: &App) {
                             for offset in 0..y_diff {
                                 if points[1].y > points[0].y { // +difference (going down)
                                     y_coor = p1_y + offset;
-                                } else { // -difference (doing up)
+                                } else { // -difference (going up)
                                     y_coor = p1_y - offset;
                                 }
                                 
@@ -341,9 +340,63 @@ fn render_connections(frame: &mut Frame, app: &App) {
                                     }
                                 }
                             }
-                        } 
+                        }
                     }
-                    
+
+                    // -- Determine segment directions --
+                    // (p1->p2, p2->p3, ...)
+                    // Used later to determine corner characters (┌ ┐ └ ┘)
+                    let mut segment_directions: Vec<SegDir> = vec![];
+
+                    for points in path.windows(2) {
+
+                        if points[0].x != points[1].x { // horizontal difference
+                            if points[1].x > points[0].x { // +difference (going right)
+                                segment_directions.push(SegDir::Right);
+                            } else { // -difference (going left)
+                                segment_directions.push(SegDir::Left);
+                            }
+                        } else { // vertical difference
+                            if points[1].y > points[0].y { // +difference (going down)
+                                segment_directions.push(SegDir::Down);
+                            } else { // -difference (going up)
+                                segment_directions.push(SegDir::Up);
+                            } 
+                        }
+                    }
+
+                    // -- Draw the corner characters for segments --
+                    for (i, points) in path.windows(3).enumerate() {
+                        // Translate points absolute coordinates to screen coordinates
+                        // points[1] - to draw every 2nd point, so all besides the first and last [1, 0, 0, 0, 1]
+                        let p_x = points[1].x - app.view_pos.x as isize;
+                        let p_y = points[1].y - app.view_pos.y as isize;
+
+                        let incoming = segment_directions[i];
+                        let outgoing = segment_directions[i + 1];
+                        
+                        let corner_character = match (incoming, outgoing) {
+                            // ┌
+                            (SegDir::Left, SegDir::Down) => { "┌" }
+                            (SegDir::Up, SegDir::Right) => { "┌" }
+                            // ┐
+                            (SegDir::Right, SegDir::Down) => { "┐" }
+                            (SegDir::Up, SegDir::Left) => { "┐" }
+                            // └
+                            (SegDir::Down, SegDir::Right) => { "└" }
+                            (SegDir::Left, SegDir::Up) => { "└" }
+                            // ┘
+                            (SegDir::Down, SegDir::Left) => { "┘" }
+                            (SegDir::Right, SegDir::Up) => { "┘" }
+                            _ => { "" }
+                        };
+
+                        if p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize {
+                            if let Some(cell) = frame.buffer_mut().cell_mut((p_x as u16, p_y as u16)) {
+                                cell.set_symbol(corner_character);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -368,4 +421,14 @@ fn draw_connecting_character(connection: &Connection, note: &Note, side: Side, f
             cell.set_symbol(connection_point_character);
         }
     }
+}
+
+// Which direction the segment is going
+// Used to determine which corner character to draw
+#[derive(Copy, Clone)]
+enum SegDir {
+    Right, // Horizontal going Right
+    Left, // Horizontal going Left
+    Up, // Vertical going Up
+    Down, // Vertical going Down
 }
