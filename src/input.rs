@@ -278,6 +278,13 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 }
                 KeyCode::Char('d') => {
                     app.notes.remove(&app.selected_note);
+
+                    // After deleting, update selected_note to a valid ID to prevent
+                    // the application from retaining a stale reference. We'll pick
+                    // the note with the highest ID as a predictable default.
+                    // If no notes are left, it will default to 0.
+                    app.selected_note = app.notes.keys().copied().max().unwrap_or(0);
+
                     app.current_mode = Mode::Normal;
                 }
                 _ => {}

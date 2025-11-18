@@ -245,9 +245,6 @@ impl SignedRect {
     ///
     /// Returns `Some(SignedRect)` representing the overlapping area, or `None` if
     /// the rectangles do not overlap at all.
-    /// 
-    /// * Reformat ?
-    /// 
     pub fn intersection(&self, view: &SignedRect) -> Option<SignedRect> {
         // if the no part of the note rectangle is within the view rectangle
         // no part of the note will be drawn

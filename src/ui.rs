@@ -1,9 +1,8 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{App, Mode, SignedRect, Note, Side, Connection};
-use crate::utils::{calculate_path, Point};
-use ratatui::buffer::Cell;
+use crate::app::{App, Mode, SignedRect, Note, Side};
+use crate::utils::{calculate_path};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
     prelude::Rect,
@@ -269,12 +268,12 @@ fn render_map(frame: &mut Frame, app: &App) {
     for connection in &app.connections {
         if let Some(start_note) = app.notes.get(&connection.from_id){
             // -- Draw the FROM connecting character --
-            draw_connecting_character(connection, start_note, connection.from_side, frame, app);
+            draw_connecting_character(start_note, connection.from_side, frame, app);
 
             // -- Draw the TO connecting character --                    
             if let Some(end_note_id) = connection.to_id {
                 if let Some(end_note) = app.notes.get(&end_note_id) {
-                    draw_connecting_character(connection, end_note, connection.to_side.unwrap(), frame, app);
+                    draw_connecting_character(end_note, connection.to_side.unwrap(), frame, app);
                 }
             }
         }
@@ -314,17 +313,15 @@ fn render_connections(frame: &mut Frame, app: &App) {
                     // Draw the horizontal and vertical line segments that make
                     // up a connection (.windows(2) - 2 points that make up a line)
                     for points in path.windows(2) {
-                        // Translate points absolute coordinates to screen coordinates
+                        // Translate first point absolute coordinates to screen coordinates
                         let p1_x = points[0].x - app.view_pos.x as isize;
                         let p1_y = points[0].y - app.view_pos.y as isize;
-                        let p2_x = points[1].x - app.view_pos.x as isize;
-                        let p2_y = points[1].y - app.view_pos.y as isize;
 
                         // -- Determine line characters and draw them --
                         
                         // If the difference is in x coordinates - draw horizontal segment characters
                         if points[0].x != points[1].x {
-                            let x_diff = (points[1].x - points[0].x).abs();
+                            let x_diff = (points[1].x - points[0].x).abs(); // difference in point 1 to point 2
                             let mut x_coor: isize;
                             
                             for offset in 0..x_diff {
@@ -341,7 +338,7 @@ fn render_connections(frame: &mut Frame, app: &App) {
                                 }
                             }
                         } else { // If the difference is in y coordinates - draw vertical segment characters                        
-                            let y_diff = (points[1].y - points[0].y).abs();
+                            let y_diff = (points[1].y - points[0].y).abs(); // difference in point 1 to point 2
                             let mut y_coor: isize;
 
                             for offset in 0..y_diff {
@@ -420,7 +417,7 @@ fn render_connections(frame: &mut Frame, app: &App) {
     }
 }
 
-fn draw_connecting_character(connection: &Connection, note: &Note, side: Side, frame: &mut Frame, app: &App) {
+fn draw_connecting_character(note: &Note, side: Side, frame: &mut Frame, app: &App) {
     let connection_point_character: &str;
     match side {
         Side::Top => { connection_point_character = "┴" }
