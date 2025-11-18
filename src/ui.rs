@@ -294,6 +294,23 @@ fn render_connections(frame: &mut Frame, app: &App) {
                                                      // end note - there is an end side
                     );
 
+                    // For optimization, quickly check if the connection is visible before attempting
+                    // to draw it. This avoids iterating over every cell of connections that are
+                    // completely off-screen.
+                    // The `.any()` iterator is efficient, stopping as soon as the first visible
+                    // point is found.
+                    let is_visible = path.iter().any(|point| {
+                        let p_x = point.x - app.view_pos.x as isize;
+                        let p_y = point.y - app.view_pos.y as isize;
+                        p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize
+                    });
+
+                    // If no points in the path are within the visible screen area, skip
+                    // the expensive drawing logic and move to the next connection.
+                    if !is_visible {
+                        continue
+                    }
+
                     // Draw the horizontal and vertical line segments that make
                     // up a connection (.windows(2) - 2 points that make up a line)
                     for points in path.windows(2) {
