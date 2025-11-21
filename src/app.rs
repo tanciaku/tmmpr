@@ -66,7 +66,7 @@ impl App {
             from_id: 0,
             from_side: Side::Right,
             to_id: Some(1),
-            to_side: Some(Side::Left),
+            to_side: Some(Side::Bottom),
         });
 
         app
@@ -196,14 +196,14 @@ impl Note {
             Side::Right => {
                 ((self.x + note_width as usize - 1), (self.y + (note_height/2) as usize))
             }
-            Side::Left => { // * check
+            Side::Left => {
                 (self.x, (self.y + (note_height/2) as usize))
             }
-            Side::Top => { // * check
+            Side::Top => {
                 (self.x + (note_width/2) as usize, self.y)
             }
-            Side::Bottom => { // * check
-                (self.x + (note_width/2) as usize, self.y + note_height as usize)
+            Side::Bottom => {
+                (self.x + (note_width/2) as usize, self.y + note_height as usize - 1)
             }
         }
     }
