@@ -56,15 +56,15 @@ impl App {
         };
 
         // test, temp
-        app.notes.insert(app.next_note_id, Note::new(10, 10, String::from(""), false));
+        app.notes.insert(app.next_note_id, Note::new(40, 20, String::from("0"), false));
         app.next_note_id += 1;
-        app.notes.insert(app.next_note_id, Note::new(70, 30, String::from(""), false));
+        app.notes.insert(app.next_note_id, Note::new(100, 40, String::from("1"), false));
         app.next_note_id += 1;
 
         // Add a test connection to visualize
         app.connections.push(Connection {
             from_id: 0,
-            from_side: Side::Right,
+            from_side: Side::Bottom,
             to_id: Some(1),
             to_side: Some(Side::Bottom),
         });

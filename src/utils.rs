@@ -35,7 +35,7 @@ pub fn calculate_path(
     let mut points = vec![];
 
     match (start_side, end_side) {
-        // Right -> ...
+        // Right to _
         (Side::Right, Side::Right) => {
             match (h_placement, v_placement) {
                 // Right
@@ -206,9 +206,476 @@ pub fn calculate_path(
                 _ => {}
             }
         }
-        // Left -> ...
-
-        _ => {}
+        // Left to _
+        (Side::Left, Side::Right) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Level) => {
+                    let midway_point_y = start.y + (available_space_y/2);
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: midway_point_y },
+                        Point { x: end.x+2, y: midway_point_y },
+                        Point { x: end.x+2, y: end.y},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Bottom
+                (HPlacement::Left, VPlacement::Below) |
+                // Top
+                (HPlacement::Left, VPlacement::Above) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    let midway_point_x = end.x + (available_space_x.abs()/2);
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: midway_point_x, y: start.y },
+                        Point { x: midway_point_x, y: end.y},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) => {
+                    let midway_point_y = start.y + (available_space_y/2);
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: midway_point_y },
+                        Point { x: end.x+2, y: midway_point_y },
+                        Point { x: end.x+2, y: end.y},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Top
+                (HPlacement::Level, VPlacement::Above) => {
+                    let midway_point_y = end.y + (available_space_y.abs()/2);
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: midway_point_y },
+                        Point { x: end.x+2, y: midway_point_y },
+                        Point { x: end.x+2, y: end.y},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                _ => {}
+            }
+        }
+        (Side::Left, Side::Left) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: end.y },
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) |
+                (HPlacement::Left, VPlacement::Below) |
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                (HPlacement::Left, VPlacement::Above) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: end.x-2, y: start.y },
+                        Point { x: end.x-2, y: end.y},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                _ => {}
+            }
+        }
+        (Side::Left, Side::Top) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) => {
+                    let midway_point_y = start.y + (available_space_y/2);
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: midway_point_y },
+                        Point { x: end.x, y: midway_point_y },
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Right
+                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: end.y-2},
+                        Point { x: end.x, y: end.y-2},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Bottom
+                (HPlacement::Left, VPlacement::Below) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: end.x, y: start.y },
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                (HPlacement::Left, VPlacement::Above) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: end.y-2 },
+                        Point { x: end.x, y: end.y-2},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: end.y-2 },
+                        Point { x: end.x, y: end.y-2},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                _ => {}
+            }
+        }
+        (Side::Left, Side::Bottom) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Level) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) |
+                (HPlacement::Left, VPlacement::Below) |
+                // Top
+                (HPlacement::Level, VPlacement::Above) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: end.y+2 },
+                        Point { x: end.x, y: end.y+2},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Top
+                (HPlacement::Left, VPlacement::Above) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: end.x, y: start.y},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x-2, y: start.y },
+                        Point { x: start.x-2, y: end.y+2 },
+                        Point { x: end.x, y: end.y+2},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                _ => {}
+            }
+        }
+        // Top to _
+        (Side::Top, Side::Right) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Level) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) |
+                (HPlacement::Left, VPlacement::Below) |
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y-2 },
+                        Point { x: start.x, y: start.y-2 },
+                        Point { x: end.x+2, y: start.y-2 },
+                        Point { x: end.x+2, y: end.y},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Top
+                (HPlacement::Left, VPlacement::Above) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: end.y },
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                _ => {}
+            }
+        }
+        (Side::Top, Side::Left) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                (HPlacement::Right, VPlacement::Level) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) |
+                (HPlacement::Left, VPlacement::Below) |
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                (HPlacement::Left, VPlacement::Above) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y-2 },
+                        Point { x: end.x-2, y: start.y-2 },
+                        Point { x: end.x-2, y: end.y},
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Right
+                (HPlacement::Right, VPlacement::Above) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: end.y },
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                _ => {}
+            }
+        }
+        (Side::Top, Side::Top) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                (HPlacement::Right, VPlacement::Level) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) |
+                (HPlacement::Left, VPlacement::Below) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y-2 },
+                        Point { x: end.x, y: start.y-2 },
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                // Right
+                (HPlacement::Right, VPlacement::Above) |
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                (HPlacement::Left, VPlacement::Above) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: end.y-2 },
+                        Point { x: end.x, y: end.y-2 },
+                        Point { x: end.x, y: end.y},
+                    ];
+                }
+                _ => {}
+            }
+        }
+        (Side::Top, Side::Bottom) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                (HPlacement::Right, VPlacement::Level) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) |
+                (HPlacement::Left, VPlacement::Below) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    let midway_point_x = start.x + (available_space_x/2);
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y-2 },
+                        Point { x: midway_point_x, y: start.y-2 },
+                        Point { x: midway_point_x, y: end.y+2 },
+                        Point { x: end.x, y: end.y+2 },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                // Right
+                (HPlacement::Right, VPlacement::Above) |
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                (HPlacement::Left, VPlacement::Above) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y-1 },
+                        Point { x: end.x, y: start.y-1 },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                _ => {}
+            }
+        }
+        // Bottom to _
+        (Side::Bottom, Side::Right) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) => {
+                    let midway_point_y = start.y + (available_space_y/2);
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: midway_point_y },
+                        Point { x: end.x+2, y: midway_point_y },
+                        Point { x: end.x+2, y: end.y },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                // Right
+                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y+2 },
+                        Point { x: end.x+2, y: start.y+2 },
+                        Point { x: end.x+2, y: end.y },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                // Bottom
+                (HPlacement::Left, VPlacement::Below) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: end.y },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                (HPlacement::Left, VPlacement::Above) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y+2 },
+                        Point { x: end.x+2, y: start.y+2 },
+                        Point { x: end.x+2, y: end.y },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                _ => {}
+            }
+        }
+        (Side::Bottom, Side::Left) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: end.y },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Level) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) |
+                (HPlacement::Left, VPlacement::Below) |
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                (HPlacement::Left, VPlacement::Above) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y+2 },
+                        Point { x: end.x-2, y: start.y+2 },
+                        Point { x: end.x-2, y: end.y },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                _ => {}
+            }
+        }
+        (Side::Bottom, Side::Top) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) |
+                (HPlacement::Left, VPlacement::Below) => {
+                    let midway_point_y = start.y + (available_space_y/2);
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: midway_point_y },
+                        Point { x: end.x, y: midway_point_y },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                // Right
+                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Level) |
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                (HPlacement::Left, VPlacement::Above) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    let midway_point_x = start.x + (available_space_x/2);
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y+2 },
+                        Point { x: midway_point_x, y: start.y+2 },
+                        Point { x: midway_point_x, y: end.y-2 },
+                        Point { x: end.x, y: end.y-2 },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                _ => {}
+            }
+        }
+        (Side::Bottom, Side::Bottom) => {
+            match (h_placement, v_placement) {
+                // Right
+                (HPlacement::Right, VPlacement::Below) |
+                // Bottom
+                (HPlacement::Level, VPlacement::Below) |
+                (HPlacement::Left, VPlacement::Below) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: end.y+2 },
+                        Point { x: end.x, y: end.y+2 },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                // Right
+                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Level) |
+                // Top
+                (HPlacement::Level, VPlacement::Above) |
+                (HPlacement::Left, VPlacement::Above) |
+                // Left
+                (HPlacement::Left, VPlacement::Level) => {
+                    points = vec![
+                        Point { x: start.x, y: start.y },
+                        Point { x: start.x, y: start.y+2 },
+                        Point { x: end.x, y: start.y+2 },
+                        Point { x: end.x, y: end.y },
+                    ];
+                }
+                _ => {}
+            }
+        }
     }
 
     points
