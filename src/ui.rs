@@ -147,7 +147,6 @@ fn render_map(frame: &mut Frame, app: &App) {
         // Calculate the intersection between the note and the frame. If there's no
         // overlap, `intersection_result` will be `None`, and drawing the note will be skipped.
         let intersection_result = note_rect.intersection(&frame_rect);
-
         if let Some(visible_part) = intersection_result {
             // Convert the clipped, screen-space rectangle back to a `ratatui::Rect`.
             // The coordinates are guaranteed to be non-negative at this point.
@@ -260,20 +259,39 @@ fn render_map(frame: &mut Frame, app: &App) {
                     frame.set_cursor_position(Position::new(final_cursor_x as u16, final_cursor_y as u16));
                 }
             }
-        }
-    }
+            
+            // -- 10. Render this note's connecting characters --
+            // To fix the visual bug where connection characters were drawn over the notes "above",
+            // this logic now runs *after* each note is drawn. It iterates through all
+            // connections and checks if the current note is a part of any of them. If it
+            // is, it draws the appropriate character (`┬`, `┴`, etc.) on top of the border.
+            // This entire block is inside the `if let` for visible notes as a key
+            // optimization, avoiding any of this work for off-screen notes.
+            //
+            // NOTE: This approach of iterating through all connections for every visible
+            // note is not the most performant solution, but it is acceptable for now.
+            // The work inside the loop is minimal (mostly cheap `if` checks), so the
+            // performance impact should be negligible for a reasonable number of notes.
+            // A truly optimized solution would require a more complex data structure for
+            // connections (like a HashMap for O(1) lookups). This can be revisited if
+            // it ever becomes a noticeable bottleneck in the future.
+            for connection in &app.connections {
+                if let Some(start_note) = app.notes.get(&connection.from_id){
+                    // Check if the current note is the *starting* point of the connection.
+                    // If it is, draw the character on the "from" side.
+                    if *id == connection.from_id {
+                        draw_connecting_character(start_note, connection.from_side, frame, app);
+                    }
 
-    // -- Render the connecting characters --
-    // (placed here to draw over the note borders)
-    for connection in &app.connections {
-        if let Some(start_note) = app.notes.get(&connection.from_id){
-            // -- Draw the FROM connecting character --
-            draw_connecting_character(start_note, connection.from_side, frame, app);
-
-            // -- Draw the TO connecting character --                    
-            if let Some(end_note_id) = connection.to_id {
-                if let Some(end_note) = app.notes.get(&end_note_id) {
-                    draw_connecting_character(end_note, connection.to_side.unwrap(), frame, app);
+                    // Then, check if the current note is the *ending* point of the connection.
+                    // If it is, draw the character on the "to" side.
+                    if let Some(end_note_id) = connection.to_id {
+                        if let Some(end_note) = app.notes.get(&end_note_id) {
+                            if *id == end_note_id {
+                                draw_connecting_character(end_note, connection.to_side.unwrap(), frame, app);
+                            }
+                        }
+                    }
                 }
             }
         }

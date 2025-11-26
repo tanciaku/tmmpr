@@ -64,7 +64,7 @@ impl App {
         // Add a test connection to visualize
         app.connections.push(Connection {
             from_id: 0,
-            from_side: Side::Bottom,
+            from_side: Side::Left,
             to_id: Some(1),
             to_side: Some(Side::Bottom),
         });
