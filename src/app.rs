@@ -66,7 +66,7 @@ impl App {
             from_id: 0,
             from_side: Side::Left,
             to_id: Some(1),
-            to_side: Some(Side::Bottom),
+            to_side: Some(Side::Top),
         });
 
         app
