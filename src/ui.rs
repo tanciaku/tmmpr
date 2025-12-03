@@ -1,8 +1,8 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{App, Mode, SignedRect, Note, Side};
-use crate::utils::{calculate_path};
+use crate::app::{App, Mode, SignedRect, Note, Side, Connection};
+use crate::utils::{calculate_path, Point};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
     prelude::Rect,
@@ -46,6 +46,8 @@ fn render_bar(frame: &mut Frame, app: &App) {
         Mode::Visual => {
             if app.visual_move {
                 (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow))
+            } else if app.visual_connection {
+                (String::from("[ VISUAL (CONNECTION) ]"), Style::new().fg(Color::Yellow))
             } else {
                 (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow))
             }
@@ -280,7 +282,7 @@ fn render_map(frame: &mut Frame, app: &App) {
                     // Check if the current note is the *starting* point of the connection.
                     // If it is, draw the character on the "from" side.
                     if *id == connection.from_id {
-                        draw_connecting_character(start_note, connection.from_side, frame, app);
+                        draw_connecting_character(start_note, connection.from_side, Color::White, frame, app);
                     }
 
                     // Then, check if the current note is the *ending* point of the connection.
@@ -288,7 +290,7 @@ fn render_map(frame: &mut Frame, app: &App) {
                     if let Some(end_note_id) = connection.to_id {
                         if let Some(end_note) = app.notes.get(&end_note_id) {
                             if *id == end_note_id {
-                                draw_connecting_character(end_note, connection.to_side.unwrap(), frame, app);
+                                draw_connecting_character(end_note, connection.to_side.unwrap(), Color::White, frame, app);
                             }
                         }
                     }
@@ -296,9 +298,24 @@ fn render_map(frame: &mut Frame, app: &App) {
             }
         }
     }
+
+    // Render the start/end point for the "in progress" connection, if any
+    if let Some(connection) = &app.focused_connection {
+    
+        if let Some(start_note) = app.notes.get(&connection.from_id){
+            draw_connecting_character(start_note, connection.from_side, Color::Yellow, frame, app);
+
+            if let Some(end_note_id) = connection.to_id {
+                if let Some(end_note) = app.notes.get(&end_note_id) {
+                    draw_connecting_character(end_note, connection.to_side.unwrap(), Color::Yellow, frame, app);
+                }
+            }
+        }
+    }
 }
 
 fn render_connections(frame: &mut Frame, app: &App) {
+
     for connection in &app.connections {
         if let Some(start_note) = app.notes.get(&connection.from_id){
             if let Some(end_note_id) = connection.to_id {
@@ -328,126 +345,154 @@ fn render_connections(frame: &mut Frame, app: &App) {
                         continue
                     }
 
-                    // Draw the horizontal and vertical line segments that make
-                    // up a connection (.windows(2) - 2 points that make up a line)
-                    for points in path.windows(2) {
-                        // Translate first point absolute coordinates to screen coordinates
-                        let p1_x = points[0].x - app.view_pos.x as isize;
-                        let p1_y = points[0].y - app.view_pos.y as isize;
+                    draw_connection(path, Color::White, frame, app);
+                }
+            }
+        }
+    }
+        
+    // Render the "in progress" connection, if any
+    if let Some(focused_connection) = &app.focused_connection {
 
-                        // -- Determine line characters and draw them --
-                        
-                        // If the difference is in x coordinates - draw horizontal segment characters
-                        if points[0].x != points[1].x {
-                            let x_diff = (points[1].x - points[0].x).abs(); // difference in point 1 to point 2
-                            let mut x_coor: isize;
-                            
-                            for offset in 0..x_diff {
-                                if points[1].x > points[0].x { // +difference (going right)
-                                    x_coor = p1_x + offset;
-                                } else { // -difference (going left)
-                                    x_coor = p1_x - offset;
-                                }
+        if let Some(start_note) = app.notes.get(&focused_connection.from_id){
 
-                                if x_coor >= 0 && x_coor < frame.area().width as isize && p1_y >= 0 && p1_y < frame.area().height as isize {
-                                    if let Some(cell) = frame.buffer_mut().cell_mut((x_coor as u16, p1_y as u16)) {
-                                        cell.set_symbol("─");
-                                    }
-                                }
-                            }
-                        } else { // If the difference is in y coordinates - draw vertical segment characters                        
-                            let y_diff = (points[1].y - points[0].y).abs(); // difference in point 1 to point 2
-                            let mut y_coor: isize;
+            if let Some(end_note_id) = focused_connection.to_id {
+                if let Some(end_note) = app.notes.get(&end_note_id) {
+                    let path = calculate_path(
+                        start_note, 
+                        focused_connection.from_side, 
+                        end_note, 
+                        focused_connection.to_side.unwrap(), // unwrap here, since if there is an
+                                                             // end note - there is an end side
+                    );
 
-                            for offset in 0..y_diff {
-                                if points[1].y > points[0].y { // +difference (going down)
-                                    y_coor = p1_y + offset;
-                                } else { // -difference (going up)
-                                    y_coor = p1_y - offset;
-                                }
-                                
-                                if y_coor >= 0 && y_coor < frame.area().height as isize && p1_x >= 0 && p1_x < frame.area().width as isize {
-                                    if let Some(cell) = frame.buffer_mut().cell_mut((p1_x as u16, y_coor as u16)) {
-                                        cell.set_symbol("│");
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // -- Determine segment directions --
-                    // (p1->p2, p2->p3, ...)
-                    // Used later to determine corner characters (┌ ┐ └ ┘)
-                    let mut segment_directions: Vec<SegDir> = vec![];
-
-                    for points in path.windows(2) {
-                        if points[0].x != points[1].x { // horizontal difference
-                            if points[1].x > points[0].x { // +difference (going right)
-                                segment_directions.push(SegDir::Right);
-                            } else { // -difference (going left)
-                                segment_directions.push(SegDir::Left);
-                            }
-                        } else if points[0].y != points[1].y { // vertical difference
-                            if points[1].y > points[0].y { // +difference (going down)
-                                segment_directions.push(SegDir::Down);
-                            } else { // -difference (going up)
-                                segment_directions.push(SegDir::Up);
-                            } 
-                        } else { // no difference, difference on the same axis
-                            if let Some(last_direction) = segment_directions.last() {
-                                segment_directions.push(*last_direction); 
-                            }
-                        }
-                    }
-
-                    // -- Draw the corner characters for segments --
-                    for (i, points) in path.windows(3).enumerate() {
-                        // Translate points absolute coordinates to screen coordinates
-                        // points[1] - to draw every 2nd point, so all besides the first and last [1, 0, 0, 0, 1]
-                        let p_x = points[1].x - app.view_pos.x as isize;
-                        let p_y = points[1].y - app.view_pos.y as isize;
-
-                        let incoming = segment_directions[i];
-                        let outgoing = segment_directions[i + 1];
-                        
-                        let corner_character = match (incoming, outgoing) {
-                            // ┌
-                            (SegDir::Left, SegDir::Down) => { "┌" }
-                            (SegDir::Up, SegDir::Right) => { "┌" }
-                            // ┐
-                            (SegDir::Right, SegDir::Down) => { "┐" }
-                            (SegDir::Up, SegDir::Left) => { "┐" }
-                            // └
-                            (SegDir::Down, SegDir::Right) => { "└" }
-                            (SegDir::Left, SegDir::Up) => { "└" }
-                            // ┘
-                            (SegDir::Down, SegDir::Left) => { "┘" }
-                            (SegDir::Right, SegDir::Up) => { "┘" }
-                            // ─
-                            (SegDir::Left, SegDir::Left) => { "─" }
-                            (SegDir::Left, SegDir::Right) => { "─" }
-                            (SegDir::Right, SegDir::Right) => { "─" }
-                            (SegDir::Right, SegDir::Left) => { "─" }
-                            // │
-                            (SegDir::Up, SegDir::Up) => { "│" }
-                            (SegDir::Up, SegDir::Down) => { "│" }
-                            (SegDir::Down, SegDir::Down) => { "│" }
-                            (SegDir::Down, SegDir::Up) => { "│" }
-                        };
-
-                        if p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize {
-                            if let Some(cell) = frame.buffer_mut().cell_mut((p_x as u16, p_y as u16)) {
-                                cell.set_symbol(corner_character);
-                            }
-                        }
-                    }
+                    draw_connection(path, Color::Yellow, frame, app);
                 }
             }
         }
     }
 }
 
-fn draw_connecting_character(note: &Note, side: Side, frame: &mut Frame, app: &App) {
+fn draw_connection(path: Vec<Point>, color: Color, frame: &mut Frame, app: &App) {
+    // Draw the horizontal and vertical line segments that make
+    // up a connection (.windows(2) - 2 points that make up a line)
+    for points in path.windows(2) {
+        // Translate first point absolute coordinates to screen coordinates
+        let p1_x = points[0].x - app.view_pos.x as isize;
+        let p1_y = points[0].y - app.view_pos.y as isize;
+
+        // -- Determine line characters and draw them --
+        
+        // If the difference is in x coordinates - draw horizontal segment characters
+        if points[0].x != points[1].x {
+            let x_diff = (points[1].x - points[0].x).abs(); // difference in point 1 to point 2
+            let mut x_coor: isize;
+            
+            for offset in 0..x_diff {
+                if points[1].x > points[0].x { // +difference (going right)
+                    x_coor = p1_x + offset;
+                } else { // -difference (going left)
+                    x_coor = p1_x - offset;
+                }
+
+                if x_coor >= 0 && x_coor < frame.area().width as isize && p1_y >= 0 && p1_y < frame.area().height as isize {
+                    if let Some(cell) = frame.buffer_mut().cell_mut((x_coor as u16, p1_y as u16)) {
+                        cell.set_symbol("─")
+                            .set_fg(color);
+                    }
+                }
+            }
+        } else { // If the difference is in y coordinates - draw vertical segment characters                        
+            let y_diff = (points[1].y - points[0].y).abs(); // difference in point 1 to point 2
+            let mut y_coor: isize;
+
+            for offset in 0..y_diff {
+                if points[1].y > points[0].y { // +difference (going down)
+                    y_coor = p1_y + offset;
+                } else { // -difference (going up)
+                    y_coor = p1_y - offset;
+                }
+                
+                if y_coor >= 0 && y_coor < frame.area().height as isize && p1_x >= 0 && p1_x < frame.area().width as isize {
+                    if let Some(cell) = frame.buffer_mut().cell_mut((p1_x as u16, y_coor as u16)) {
+                        cell.set_symbol("│")
+                            .set_fg(color);
+                    }
+                }
+            }
+        }
+    }
+
+    // -- Determine segment directions --
+    // (p1->p2, p2->p3, ...)
+    // Used later to determine corner characters (┌ ┐ └ ┘)
+    let mut segment_directions: Vec<SegDir> = vec![];
+
+    for points in path.windows(2) {
+        if points[0].x != points[1].x { // horizontal difference
+            if points[1].x > points[0].x { // +difference (going right)
+                segment_directions.push(SegDir::Right);
+            } else { // -difference (going left)
+                segment_directions.push(SegDir::Left);
+            }
+        } else if points[0].y != points[1].y { // vertical difference
+            if points[1].y > points[0].y { // +difference (going down)
+                segment_directions.push(SegDir::Down);
+            } else { // -difference (going up)
+                segment_directions.push(SegDir::Up);
+            } 
+        } else { // no difference, difference on the same axis
+            if let Some(last_direction) = segment_directions.last() {
+                segment_directions.push(*last_direction); 
+            }
+        }
+    }
+
+    // -- Draw the corner characters for segments --
+    for (i, points) in path.windows(3).enumerate() {
+        // Translate points absolute coordinates to screen coordinates
+        // points[1] - to draw every 2nd point, so all besides the first and last [1, 0, 0, 0, 1]
+        let p_x = points[1].x - app.view_pos.x as isize;
+        let p_y = points[1].y - app.view_pos.y as isize;
+
+        let incoming = segment_directions[i];
+        let outgoing = segment_directions[i + 1];
+        
+        let corner_character = match (incoming, outgoing) {
+            // ┌
+            (SegDir::Left, SegDir::Down) => { "┌" }
+            (SegDir::Up, SegDir::Right) => { "┌" }
+            // ┐
+            (SegDir::Right, SegDir::Down) => { "┐" }
+            (SegDir::Up, SegDir::Left) => { "┐" }
+            // └
+            (SegDir::Down, SegDir::Right) => { "└" }
+            (SegDir::Left, SegDir::Up) => { "└" }
+            // ┘
+            (SegDir::Down, SegDir::Left) => { "┘" }
+            (SegDir::Right, SegDir::Up) => { "┘" }
+            // ─
+            (SegDir::Left, SegDir::Left) => { "─" }
+            (SegDir::Left, SegDir::Right) => { "─" }
+            (SegDir::Right, SegDir::Right) => { "─" }
+            (SegDir::Right, SegDir::Left) => { "─" }
+            // │
+            (SegDir::Up, SegDir::Up) => { "│" }
+            (SegDir::Up, SegDir::Down) => { "│" }
+            (SegDir::Down, SegDir::Down) => { "│" }
+            (SegDir::Down, SegDir::Up) => { "│" }
+        };
+
+        if p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize {
+            if let Some(cell) = frame.buffer_mut().cell_mut((p_x as u16, p_y as u16)) {
+                cell.set_symbol(corner_character)
+                    .set_fg(color);
+            }
+        }
+    }
+}
+
+fn draw_connecting_character(note: &Note, side: Side, color: Color, frame: &mut Frame, app: &App) {
     let connection_point_character: &str;
     match side {
         Side::Top => { connection_point_character = "┴" }
@@ -462,7 +507,8 @@ fn draw_connecting_character(note: &Note, side: Side, frame: &mut Frame, app: &A
 
     if p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize {
         if let Some(cell) = frame.buffer_mut().cell_mut((p_x as u16, p_y as u16)) {
-            cell.set_symbol(connection_point_character);
+            cell.set_symbol(connection_point_character)
+                .set_fg(color);
         }
     }
 }

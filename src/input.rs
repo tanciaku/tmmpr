@@ -1,7 +1,7 @@
 //! This module handles terminal events, focusing on keyboard input
 //! to control the application's state and behavior.
 
-use crate::app::{App, Mode};
+use crate::app::{App, Connection, Mode, Side};
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use std::cmp::Reverse;
@@ -172,6 +172,44 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 }
             }
 
+            if app.visual_connection {
+
+                match key.code {
+                    // Switch back to Visual Mode Normal State
+                    KeyCode::Char('c') => {
+                        
+                        // Take the connection out, leaving None in its place.
+                        if let Some(connection) = app.focused_connection.take() {
+                            // Now we own the connection. We can check its fields.
+                            if connection.to_id.is_some() {
+                                // If it has a target, we finalize it.
+                                app.connections.push(connection);
+                            }
+                            // If it didn't have a target, we just drop it here.
+                        }
+
+                        app.visual_connection = false
+                    }
+                    
+                    // -- Target Note Selection --
+                    // Reuse the focus switching logic to select a target note for the new connection.
+                    // Right
+                    KeyCode::Char('j') => { switch_notes_focus(app, 'j'); }
+                    // Above
+                    KeyCode::Char('k') => { switch_notes_focus(app, 'k'); }
+                    // Left
+                    KeyCode::Char('h') => { switch_notes_focus(app, 'h'); }
+                    // Right
+                    KeyCode::Char('l') => { switch_notes_focus(app, 'l'); }
+
+                    _ => {}
+                }
+
+                // Trigger a redraw and stop there
+                app.clear_and_redraw(); 
+                return
+            }
+
             // If Visual Mode is in Normal State
             match key.code {
                 // Switch back to Normal Mode
@@ -186,6 +224,28 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
 
                 // Switch to Move State for the Visual Mode
                 KeyCode::Char('m') => app.visual_move = true,
+
+                // Switch to Connection Sate for Visual Mode
+                KeyCode::Char('c') => {
+                    // if the note that is currently selected has connections to - switch to Connection state
+                    if false {
+                        app.visual_connection = true;
+                    }
+                }
+                
+                // Add a new Connection for the selected note
+                KeyCode::Char('C') => {
+                    app.focused_connection = Some(
+                        Connection {
+                            from_id: app.selected_note,
+                            from_side: Side::Right, // default side
+                            to_id: None,
+                            to_side: None,
+                        }
+                    );
+
+                    app.visual_connection = true;
+                }
 
                 // Switch to Delete Mode
                 KeyCode::Char('d') => app.current_mode = Mode::Delete,
@@ -405,6 +465,15 @@ fn switch_notes_focus(app: &mut App, key: char) {
         if let Some(note) = app.notes.get(&app.selected_note) {
             app.view_pos.x = note.x.saturating_sub(app.screen_width/2);
             app.view_pos.y = note.y.saturating_sub(app.screen_height/2);
+        }
+
+        // If in the middle of creating a connection:
+        if app.visual_connection {
+            if let Some(focused_connection) = app.focused_connection.as_mut() {
+                // update the `to_id` of "in-progress" connection to point to the newly found note.
+                focused_connection.to_id = Some(id); // id of the note that just jumped to
+                focused_connection.to_side = Some(Side::Right); // default side
+            }
         }
     }
 }

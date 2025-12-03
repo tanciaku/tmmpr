@@ -32,7 +32,9 @@ pub struct App {
     pub selected_note: usize,
     pub cursor_pos: usize,
     pub visual_move: bool,
+    pub visual_connection: bool,
     pub connections: Vec<Connection>,
+    pub focused_connection: Option<Connection>,
 }
 
 impl App {
@@ -40,7 +42,7 @@ impl App {
     ///
     /// Initializes the application state with default values, ready for the main loop.
     pub fn new() -> App {
-        let mut app = App { 
+        App {
             running: true, 
             needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
@@ -52,24 +54,10 @@ impl App {
             selected_note: 0,
             cursor_pos: 0,
             visual_move: false,
+            visual_connection: false,
             connections: vec![],
-        };
-
-        // test, temp
-        app.notes.insert(app.next_note_id, Note::new(40, 20, String::from("0"), false));
-        app.next_note_id += 1;
-        app.notes.insert(app.next_note_id, Note::new(100, 40, String::from("1"), false));
-        app.next_note_id += 1;
-
-        // Add a test connection to visualize
-        app.connections.push(Connection {
-            from_id: 0,
-            from_side: Side::Bottom,
-            to_id: Some(1),
-            to_side: Some(Side::Bottom),
-        });
-
-        app
+            focused_connection: None,
+        }
     }
 
     /// Sets the flag to force a screen clear and redraw on the next frame.
@@ -280,7 +268,7 @@ pub struct Connection {
     pub to_side: Option<Side>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Side {
     Top,
     Bottom,
