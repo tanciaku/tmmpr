@@ -35,6 +35,10 @@ pub struct App {
     pub visual_connection: bool,
     pub connections: Vec<Connection>,
     pub focused_connection: Option<Connection>,
+    pub visual_editing_a_connection: bool,
+    /// Index of the connection being edited, when it was taken out
+    /// out the connections vector.
+    pub editing_connection_index: Option<usize>,
 }
 
 impl App {
@@ -57,6 +61,8 @@ impl App {
             visual_connection: false,
             connections: vec![],
             focused_connection: None,
+            visual_editing_a_connection: false,
+            editing_connection_index: None,
         }
     }
 

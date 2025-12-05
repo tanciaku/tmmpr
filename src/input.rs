@@ -173,7 +173,6 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
             }
 
             if app.visual_connection {
-
                 match key.code {
                     // Switch back to Visual Mode Normal State
                     KeyCode::Char('c') => {
@@ -188,7 +187,69 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                             // If it didn't have a target, we just drop it here.
                         }
 
-                        app.visual_connection = false
+                        app.visual_connection = false;
+                        app.visual_editing_a_connection = false; // (if already isn't)
+                        app.editing_connection_index = None; // (if already isn't)
+                    }
+
+                    KeyCode::Char('r') => {
+                        if let Some(focused_connection) = app.focused_connection.as_mut() {
+                            if focused_connection.from_id == app.selected_note {
+                                focused_connection.from_side = cycle_side(focused_connection.from_side);
+                            }
+
+                            if let Some(to_id) = focused_connection.to_id {
+                                if to_id == app.selected_note {
+                                    focused_connection.to_side = Some(cycle_side(focused_connection.to_side.unwrap()));
+                                    // .unwrap() okay here - since if there is a to_id, there is a to_side
+                                }
+                            }
+                        }
+                    }
+
+                    KeyCode::Char('n') => {
+                        // Can only cycle through the available connections on this note if
+                        // entered the visual_connection mode to edit existing connections
+                        // and not currently making a new one
+                        if app.visual_editing_a_connection {
+
+                            // 2. Stash the Current Connection
+                            if let Some(connection) = app.focused_connection.take() {
+                                app.connections.insert(app.editing_connection_index.unwrap(), connection);
+                                // unwrap okay here since if it takes out a connection, it records an index
+
+                                // Index of the connection just stashed
+                                let mut start_index = app.editing_connection_index.unwrap();
+                                let mut next_index_option = None; // Start by assuming we haven't found it.
+
+                                // Only search the latter part of the vector if it's safe to do so.
+                                if start_index + 1 < app.connections.len() {
+                                    next_index_option = app.connections[start_index + 1..]
+                                        .iter()
+                                        .position(|c| {
+                                            app.selected_note == c.from_id || app.selected_note == c.to_id.unwrap()
+                                        })
+                                        .map(|i| i + start_index + 1);
+                                }
+
+                                // If that connection was last in the vector or no match was found after it -
+                                // search from the start
+                                if next_index_option.is_none() {
+                                    next_index_option = app.connections
+                                        .iter()
+                                        .position(|c| {
+                                            app.selected_note == c.from_id || app.selected_note == c.to_id.unwrap()
+                                        });
+                                }
+                                
+                                if let Some(next_index) = next_index_option {
+                                    // If found one - remove it and put it in focus.
+                                    // Note: it will always "find" one - since
+                                    app.focused_connection = Some(app.connections.remove(next_index));
+                                    app.editing_connection_index = Some(next_index);
+                                }
+                            }
+                        }
                     }
                     
                     // -- Target Note Selection --
@@ -227,9 +288,16 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
 
                 // Switch to Connection Sate for Visual Mode
                 KeyCode::Char('c') => {
-                    // if the note that is currently selected has connections to - switch to Connection state
-                    if false {
+
+                    if let Some(index) = app.connections.iter().position(|c| {
+                        app.selected_note == c.from_id || app.selected_note == c.to_id.unwrap()
+                        // unwrap() is safe here since all the connections have an endpoint if
+                        // they are in the connections vector.
+                    }) {
+                        app.focused_connection = Some(app.connections.remove(index));
+                        app.editing_connection_index = Some(index);
                         app.visual_connection = true;
+                        app.visual_editing_a_connection = true;
                     }
                 }
                 
@@ -589,5 +657,14 @@ fn move_cursor_down(app: &mut App) {
             // If the next line is shorter, "snap" the cursor to the end of that line.
             app.cursor_pos = next_line_start + next_line_length;
         }
+    }
+}
+
+fn cycle_side(side: Side) -> Side {
+    match side {
+        Side::Right => Side::Bottom,
+        Side::Bottom => Side::Left,
+        Side::Left => Side::Top,
+        Side::Top => Side::Right,
     }
 }
