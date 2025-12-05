@@ -251,6 +251,18 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                             }
                         }
                     }
+
+                    KeyCode::Char('d') => {
+                        if app.visual_editing_a_connection {
+                            // Delete that connection
+                            app.focused_connection = None;
+
+                            // Exit
+                            app.visual_connection = false;
+                            app.visual_editing_a_connection = false;
+                            app.editing_connection_index = None;
+                        }
+                    }
                     
                     // -- Target Note Selection --
                     // Reuse the focus switching logic to select a target note for the new connection.
