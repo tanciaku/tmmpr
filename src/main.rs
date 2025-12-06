@@ -11,7 +11,7 @@ use crate::{
     ui::{render},
 };
 
-fn main()-> color_eyre::Result<()> {
+fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
     let terminal = ratatui::init();
     let mut app = App::new();

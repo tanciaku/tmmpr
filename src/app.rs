@@ -124,6 +124,7 @@ impl App {
 }
 
 /// Represents the application's current input mode, similar to Vim.
+#[derive(PartialEq)]
 pub enum Mode {
     /// Default mode for navigation and commands.
     Normal,

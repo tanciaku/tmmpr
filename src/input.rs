@@ -219,7 +219,7 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                                 // unwrap okay here since if it takes out a connection, it records an index
 
                                 // Index of the connection just stashed
-                                let mut start_index = app.editing_connection_index.unwrap();
+                                let start_index = app.editing_connection_index.unwrap();
                                 let mut next_index_option = None; // Start by assuming we haven't found it.
 
                                 // Only search the latter part of the vector if it's safe to do so.
@@ -418,6 +418,13 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 }
                 KeyCode::Char('d') => {
                     app.notes.remove(&app.selected_note);
+                    
+                    // Remove any connections that were associated with that note
+                    // (Only keep the ones that aren't)
+                    app.connections.retain(|c| {
+                        app.selected_note != c.from_id && app.selected_note != c.to_id.unwrap()
+                        // .unwrap() is okay here since all the connections in the vector have an endpoint
+                    });
 
                     // After deleting, update selected_note to a valid ID to prevent
                     // the application from retaining a stale reference. We'll pick
@@ -550,9 +557,18 @@ fn switch_notes_focus(app: &mut App, key: char) {
         // If in the middle of creating a connection:
         if app.visual_connection {
             if let Some(focused_connection) = app.focused_connection.as_mut() {
-                // update the `to_id` of "in-progress" connection to point to the newly found note.
-                focused_connection.to_id = Some(id); // id of the note that just jumped to
-                focused_connection.to_side = Some(Side::Right); // default side
+                // only create a connection on note other than the start note
+                // (otherwise could have a connection going from start note to itself)
+                if id == focused_connection.from_id {
+                    // if tried to make a connection (jumped to) from the start note
+                    // to itself - just set the "to" fields to None (the default)
+                    focused_connection.to_id = None;
+                    focused_connection.to_side = None;
+                } else {
+                    // update the `to_id` of "in-progress" connection to point to the newly found note.
+                    focused_connection.to_id = Some(id); // id of the note that just jumped to
+                    focused_connection.to_side = Some(Side::Right); // default side
+                }
             }
         }
     }

@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{App, Mode, SignedRect, Note, Side, Connection};
+use crate::app::{App, Mode, SignedRect, Note, Side};
 use crate::utils::{calculate_path, Point};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
@@ -277,12 +277,28 @@ fn render_map(frame: &mut Frame, app: &App) {
             // A truly optimized solution would require a more complex data structure for
             // connections (like a HashMap for O(1) lookups). This can be revisited if
             // it ever becomes a noticeable bottleneck in the future.
+
+            // In which color to draw the said connecting characters.
+            let connection_char_color: Color;
+
+            // Draw the connecting character in Yellow if in Visual mode and on the selected note
+            if *id == app.selected_note && app.current_mode == Mode::Visual {
+                connection_char_color = Color::Yellow;
+            // Draw the connecting character in Red if in Delete mode and on the selected note
+            } else if *id == app.selected_note && app.current_mode == Mode::Delete {
+                connection_char_color = Color::Red;
+            // Otherwise draw it in White
+            } else {
+                connection_char_color = Color::White;
+            }
+
+            // Draw the connecting characters. (A note can have multiple connecting characters)
             for connection in &app.connections {
                 if let Some(start_note) = app.notes.get(&connection.from_id){
                     // Check if the current note is the *starting* point of the connection.
                     // If it is, draw the character on the "from" side.
                     if *id == connection.from_id {
-                        draw_connecting_character(start_note, connection.from_side, Color::White, frame, app);
+                        draw_connecting_character(start_note, connection.from_side, connection_char_color, frame, app);
                     }
 
                     // Then, check if the current note is the *ending* point of the connection.
@@ -290,7 +306,7 @@ fn render_map(frame: &mut Frame, app: &App) {
                     if let Some(end_note_id) = connection.to_id {
                         if let Some(end_note) = app.notes.get(&end_note_id) {
                             if *id == end_note_id {
-                                draw_connecting_character(end_note, connection.to_side.unwrap(), Color::White, frame, app);
+                                draw_connecting_character(end_note, connection.to_side.unwrap(), connection_char_color, frame, app);
                             }
                         }
                     }
