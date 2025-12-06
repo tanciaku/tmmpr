@@ -7,9 +7,16 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
     prelude::Rect,
     style::{Color, Style},
-    widgets::{Block, Borders, Clear, Padding, Paragraph},
+    widgets::{Block, Borders, Clear, Padding, Paragraph, BorderType},
     Frame
 };
+
+const IN_PROGRESS_CHARSET: [&str; 6] = ["━", "┃", "┏", "┓", "┗", "┛"];
+const NORMAL_CHARSET: [&str; 6] = ["─", "│", "┌", "┐", "└", "┘"];
+
+const PLAIN_JUNCTIONS: [&str; 4] = ["┴", "┬", "┤", "├"];
+const THICK_JUNCTIONS: [&str; 4] = ["┻", "┳", "┫", "┣"];
+const DOUBLE_JUNCTIONS: [&str; 4] = ["╩", "╦", "╣", "╠"];
 
 /// The main rendering entry point.
 ///
@@ -194,10 +201,23 @@ fn render_map(frame: &mut Frame, app: &App) {
                 Color::White
             };
 
+            // Determine border type
+            let border_type = if note.selected {
+                match app.current_mode {
+                    Mode::Normal => BorderType::Plain,
+                    Mode::Visual => BorderType::Thick,
+                    Mode::Insert => BorderType::Double,
+                    Mode::Delete => BorderType::Rounded,
+                }
+            } else {
+                BorderType::Plain
+            };
+
             // Create a block for the note with borders.
             let block = Block::default()
                 .borders(borders)
-                .border_style(border_color);
+                .border_style(border_color)
+                .border_type(border_type);
 
             // --- 7. Create the widget itself ---
             let text_widget = Paragraph::new(note.content.as_str())
@@ -278,27 +298,13 @@ fn render_map(frame: &mut Frame, app: &App) {
             // connections (like a HashMap for O(1) lookups). This can be revisited if
             // it ever becomes a noticeable bottleneck in the future.
 
-            // In which color to draw the said connecting characters.
-            let connection_char_color: Color;
-
-            // Draw the connecting character in Yellow if in Visual mode and on the selected note
-            if *id == app.selected_note && app.current_mode == Mode::Visual {
-                connection_char_color = Color::Yellow;
-            // Draw the connecting character in Red if in Delete mode and on the selected note
-            } else if *id == app.selected_note && app.current_mode == Mode::Delete {
-                connection_char_color = Color::Red;
-            // Otherwise draw it in White
-            } else {
-                connection_char_color = Color::White;
-            }
-
             // Draw the connecting characters. (A note can have multiple connecting characters)
             for connection in &app.connections {
                 if let Some(start_note) = app.notes.get(&connection.from_id){
                     // Check if the current note is the *starting* point of the connection.
                     // If it is, draw the character on the "from" side.
                     if *id == connection.from_id {
-                        draw_connecting_character(start_note, connection.from_side, connection_char_color, frame, app);
+                        draw_connecting_character(start_note, connection.from_side, false, border_color, frame, app);
                     }
 
                     // Then, check if the current note is the *ending* point of the connection.
@@ -306,7 +312,7 @@ fn render_map(frame: &mut Frame, app: &App) {
                     if let Some(end_note_id) = connection.to_id {
                         if let Some(end_note) = app.notes.get(&end_note_id) {
                             if *id == end_note_id {
-                                draw_connecting_character(end_note, connection.to_side.unwrap(), connection_char_color, frame, app);
+                                draw_connecting_character(end_note, connection.to_side.unwrap(), false, border_color, frame, app);
                             }
                         }
                     }
@@ -319,11 +325,11 @@ fn render_map(frame: &mut Frame, app: &App) {
     if let Some(connection) = &app.focused_connection {
     
         if let Some(start_note) = app.notes.get(&connection.from_id){
-            draw_connecting_character(start_note, connection.from_side, Color::Yellow, frame, app);
+            draw_connecting_character(start_note, connection.from_side, true, Color::Yellow, frame, app);
 
             if let Some(end_note_id) = connection.to_id {
                 if let Some(end_note) = app.notes.get(&end_note_id) {
-                    draw_connecting_character(end_note, connection.to_side.unwrap(), Color::Yellow, frame, app);
+                    draw_connecting_character(end_note, connection.to_side.unwrap(), true, Color::Yellow, frame, app);
                 }
             }
         }
@@ -361,7 +367,7 @@ fn render_connections(frame: &mut Frame, app: &App) {
                         continue
                     }
 
-                    draw_connection(path, Color::White, frame, app);
+                    draw_connection(path, false, Color::White, frame, app);
                 }
             }
         }
@@ -382,14 +388,21 @@ fn render_connections(frame: &mut Frame, app: &App) {
                                                              // end note - there is an end side
                     );
 
-                    draw_connection(path, Color::Yellow, frame, app);
+                    draw_connection(path, true, Color::Yellow, frame, app);
                 }
             }
         }
     }
 }
 
-fn draw_connection(path: Vec<Point>, color: Color, frame: &mut Frame, app: &App) {
+// * bool argument for whether it is the th
+fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame: &mut Frame, app: &App) {
+    let connection_charset = if in_progress {
+        &IN_PROGRESS_CHARSET
+    } else {
+        &NORMAL_CHARSET
+    };
+
     // Draw the horizontal and vertical line segments that make
     // up a connection (.windows(2) - 2 points that make up a line)
     for points in path.windows(2) {
@@ -413,7 +426,7 @@ fn draw_connection(path: Vec<Point>, color: Color, frame: &mut Frame, app: &App)
 
                 if x_coor >= 0 && x_coor < frame.area().width as isize && p1_y >= 0 && p1_y < frame.area().height as isize {
                     if let Some(cell) = frame.buffer_mut().cell_mut((x_coor as u16, p1_y as u16)) {
-                        cell.set_symbol("─")
+                        cell.set_symbol(connection_charset[0])
                             .set_fg(color);
                     }
                 }
@@ -431,7 +444,7 @@ fn draw_connection(path: Vec<Point>, color: Color, frame: &mut Frame, app: &App)
                 
                 if y_coor >= 0 && y_coor < frame.area().height as isize && p1_x >= 0 && p1_x < frame.area().width as isize {
                     if let Some(cell) = frame.buffer_mut().cell_mut((p1_x as u16, y_coor as u16)) {
-                        cell.set_symbol("│")
+                        cell.set_symbol(connection_charset[1])
                             .set_fg(color);
                     }
                 }
@@ -476,27 +489,27 @@ fn draw_connection(path: Vec<Point>, color: Color, frame: &mut Frame, app: &App)
         
         let corner_character = match (incoming, outgoing) {
             // ┌
-            (SegDir::Left, SegDir::Down) => { "┌" }
-            (SegDir::Up, SegDir::Right) => { "┌" }
+            (SegDir::Left, SegDir::Down) => { connection_charset[2] }
+            (SegDir::Up, SegDir::Right) => { connection_charset[2] }
             // ┐
-            (SegDir::Right, SegDir::Down) => { "┐" }
-            (SegDir::Up, SegDir::Left) => { "┐" }
+            (SegDir::Right, SegDir::Down) => { connection_charset[3] }
+            (SegDir::Up, SegDir::Left) => { connection_charset[3] }
             // └
-            (SegDir::Down, SegDir::Right) => { "└" }
-            (SegDir::Left, SegDir::Up) => { "└" }
+            (SegDir::Down, SegDir::Right) => { connection_charset[4] }
+            (SegDir::Left, SegDir::Up) => { connection_charset[4] }
             // ┘
-            (SegDir::Down, SegDir::Left) => { "┘" }
-            (SegDir::Right, SegDir::Up) => { "┘" }
+            (SegDir::Down, SegDir::Left) => { connection_charset[5] }
+            (SegDir::Right, SegDir::Up) => { connection_charset[5] }
             // ─
-            (SegDir::Left, SegDir::Left) => { "─" }
-            (SegDir::Left, SegDir::Right) => { "─" }
-            (SegDir::Right, SegDir::Right) => { "─" }
-            (SegDir::Right, SegDir::Left) => { "─" }
+            (SegDir::Left, SegDir::Left) => { connection_charset[0] }
+            (SegDir::Left, SegDir::Right) => { connection_charset[0] }
+            (SegDir::Right, SegDir::Right) => { connection_charset[0] }
+            (SegDir::Right, SegDir::Left) => { connection_charset[0] }
             // │
-            (SegDir::Up, SegDir::Up) => { "│" }
-            (SegDir::Up, SegDir::Down) => { "│" }
-            (SegDir::Down, SegDir::Down) => { "│" }
-            (SegDir::Down, SegDir::Up) => { "│" }
+            (SegDir::Up, SegDir::Up) => { connection_charset[1] }
+            (SegDir::Up, SegDir::Down) => { connection_charset[1] }
+            (SegDir::Down, SegDir::Down) => { connection_charset[1] }
+            (SegDir::Down, SegDir::Up) => { connection_charset[1] }
         };
 
         if p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize {
@@ -508,14 +521,27 @@ fn draw_connection(path: Vec<Point>, color: Color, frame: &mut Frame, app: &App)
     }
 }
 
-fn draw_connecting_character(note: &Note, side: Side, color: Color, frame: &mut Frame, app: &App) {
-    let connection_point_character: &str;
-    match side {
-        Side::Top => { connection_point_character = "┴" }
-        Side::Bottom => { connection_point_character = "┬"}
-        Side::Left => { connection_point_character = "┤"}
-        Side::Right => { connection_point_character = "├"}
-    }
+// `is_editing` argument is to determine whether the function is called from the
+// block that is responosible for drawing the "in progress" connection (being made or edited)
+fn draw_connecting_character(note: &Note, side: Side, is_editing: bool, color: Color, frame: &mut Frame, app: &App) {
+    // Set of connection characters for the selected note (depends on the current_mode)
+    let connection_charset = if note.selected || is_editing {
+        match app.current_mode {
+            Mode::Visual => &THICK_JUNCTIONS,
+            Mode::Insert => &DOUBLE_JUNCTIONS,
+            // For Normal and Delete, we use the plain set
+            _ => &PLAIN_JUNCTIONS,
+        }
+    } else { // Default set of connection characters (if note or the connection is not selected)
+        &PLAIN_JUNCTIONS
+    };
+
+    let connection_point_character = match side {
+        Side::Top => connection_charset[0],
+        Side::Bottom => connection_charset[1],
+        Side::Left => connection_charset[2],
+        Side::Right => connection_charset[3],
+    };
 
     let p = note.get_connection_point(side);
     let p_x = p.0 as isize - app.view_pos.x as isize; // connection start point relative x
