@@ -1,7 +1,7 @@
 //! This module handles terminal events, focusing on keyboard input
 //! to control the application's state and behavior.
 
-use crate::app::{App, Connection, Mode, Side};
+use crate::app::{App, Connection, Mode, Side, Screen};
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use std::cmp::Reverse;
@@ -28,6 +28,14 @@ pub fn handle_events(app: &mut App) -> Result<()> {
 /// This function is the central hub for all user commands. Its behavior is
 /// determined by the application's current `Mode`.
 fn on_key_event(app: &mut App, key: KeyEvent) {
+    match app.current_screen {
+        Screen::Map => map_kh(app, key),
+        _ => {}
+    }
+}
+
+/// Key handling for the Map Screen
+fn map_kh(app: &mut App, key: KeyEvent) {
     match app.current_mode {
         // Normal mode is for navigation and high-level commands.
         Mode::Normal => map_normal_kh(app, key),
@@ -40,10 +48,6 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
     
         Mode::Delete => map_delete_kh(app, key),
     }
-}
-
-/// Key handling for the Map Screen
-fn map_key_handling(app: &mut App, key: KeyEvent) {
 }
 
 /// Key handling for Normal Mode in the Map Screen

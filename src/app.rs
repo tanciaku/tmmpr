@@ -40,6 +40,7 @@ pub struct App {
     /// Index of the connection being edited, when it was taken out
     /// out the connections vector.
     pub editing_connection_index: Option<usize>,
+    pub current_screen: Screen,
 }
 
 impl App {
@@ -64,6 +65,7 @@ impl App {
             focused_connection: None,
             visual_editing_a_connection: false,
             editing_connection_index: None,
+            current_screen: Screen::Map,
         }
     }
 
@@ -285,6 +287,13 @@ pub enum Side {
     Bottom,
     Left,
     Right,
+}
+
+pub enum Screen {
+    Start,
+    Map,
+    Settings,
+    Help,
 }
 
 #[cfg(test)]

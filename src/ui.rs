@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{App, Mode, SignedRect, Note, Side};
+use crate::app::{App, Mode, SignedRect, Note, Side, Screen};
 use crate::utils::{calculate_path, Point};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
@@ -28,6 +28,13 @@ pub fn render(frame: &mut Frame, app: &mut App) {
     // Clear the frame before drawing anything new.
     frame.render_widget(Clear, frame.area());
 
+    match app.current_screen {
+        Screen::Map => render_map(frame, app),
+        _ => {}
+    }
+}
+
+fn render_map(frame: &mut Frame, app: &mut App) {
     // Update the app state with the current terminal size. This is crucial for
     // calculations that depend on screen dimensions, like centering new notes.
     app.screen_width = frame.area().width as usize;
@@ -35,7 +42,7 @@ pub fn render(frame: &mut Frame, app: &mut App) {
 
     // Render the main UI components.
     render_connections(frame, app);
-    render_map(frame, app); // Notes will be drawn over connections (if any)
+    render_notes(frame, app); // Notes will be drawn over connections (if any)
     render_bar(frame, app); // The bar will be drawn over everything
 }
 
@@ -147,7 +154,7 @@ fn render_bar(frame: &mut Frame, app: &App) {
 ///
 /// This function iterates through all notes and performs a series of calculations
 /// to determine if, where, and how each note should be rendered.
-fn render_map(frame: &mut Frame, app: &App) {
+fn render_notes(frame: &mut Frame, app: &App) {
     // To ensure consistent rendering and prevent flickering, we must draw notes
     // in a stable order. A HashMap's iterator is not guaranteed to be stable,
     // so we collect the notes into a Vec and sort them by their ID (the key).
