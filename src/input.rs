@@ -30,432 +30,446 @@ pub fn handle_events(app: &mut App) -> Result<()> {
 fn on_key_event(app: &mut App, key: KeyEvent) {
     match app.current_mode {
         // Normal mode is for navigation and high-level commands.
-        Mode::Normal => {
-            match key.code {
-                // --- Application Commands ---
-                KeyCode::Char('q') => app.quit(),
-
-                // --- Viewport Navigation ---
-                // Move left
-                KeyCode::Char('h') => app.view_pos.x = app.view_pos.x.saturating_sub(1),
-                KeyCode::Char('H') => app.view_pos.x = app.view_pos.x.saturating_sub(5),
-                // Move down
-                KeyCode::Char('j') => app.view_pos.y += 1,
-                KeyCode::Char('J') => app.view_pos.y += 5,
-                // Move up
-                KeyCode::Char('k') => app.view_pos.y = app.view_pos.y.saturating_sub(1),
-                KeyCode::Char('K') => app.view_pos.y = app.view_pos.y.saturating_sub(5),
-                // Move right 
-                KeyCode::Char('l') => app.view_pos.x += 1,
-                KeyCode::Char('L') => app.view_pos.x += 5,
-
-                // --- Note Manipulation ---
-                // Add note
-                KeyCode::Char('a') => app.add_note(),
-                // Select note (first selects closest to the center of the screen)
-                KeyCode::Char('v') => {
-                    // Don't enter Visual Mode on the off-chance that there are no notes
-                    if let None = app.notes.get(&app.selected_note) { return }
-
-                    app.select_note();
-                    app.current_mode = Mode::Visual;
-                }
-
-                _ => {}
-            }
-            // Any action in Normal mode triggers a redraw.
-            app.clear_and_redraw();
-        }
+        Mode::Normal => map_normal_kh(app, key),
 
         // Visual mode for selections.
-        Mode::Visual => {
-            // If Move State for Visual Mode is enabled 
-            if app.visual_move {
-                // Get the currently selected note.
-                if let Some(note) = app.notes.get_mut(&app.selected_note) {
-
-                    // Get note dimensions
-                    let (mut note_width, mut note_height) = note.get_dimensions();
-                    // Enforce a minimum size for readability.
-                    if note_width < 20 { note_width = 20; }
-                    if note_height < 4 { note_height = 4; }
-                    // Add space for cursor
-                    note_width+=1;
-                    
-                    match key.code {
-                        // Switch back to Visual Mode Normal State
-                        KeyCode::Char('m') => app.visual_move = false,
-
-                        // Switch back to Normal Mode
-                        KeyCode::Esc => {
-                            app.current_mode = Mode::Normal;
-                                note.selected = false;
-                                app.visual_move = false;
-                        }
-
-                        // --- Moving the note ---
-
-                        // Move the note up
-                        KeyCode::Char('k') => {
-                            // First, update the note's y-coordinate.
-                            note.y = note.y.saturating_sub(1);
-                            // Then, check if the top edge of the note is now above the top edge of the viewport.
-                            if note.y < app.view_pos.y {
-                                // If it is, move the viewport up by the same amount to "follow" the note.
-                                app.view_pos.y -= 1;
-                            }
-                        }
-                        KeyCode::Char('K') => {
-                            note.y = note.y.saturating_sub(5);
-                            if note.y < app.view_pos.y {
-                                app.view_pos.y = app.view_pos.y.saturating_sub(5);
-                            }
-                        }
-
-                        // Move the note down
-                        KeyCode::Char('j') => {
-                            // First, update the note's y-coordinate.
-                            note.y += 1; 
-                            // Check if the bottom edge of the note is below the visible screen area.
-                            // We subtract 2 from the screen height to account for the bottom info bar.
-                            if note.y as isize + note_height as isize > app.view_pos.y as isize + app.screen_height as isize - 2 {
-                                // If it is, move the viewport down to keep the note in view.
-                                app.view_pos.y += 1;
-                            }
-                        }
-                        KeyCode::Char('J') => {
-                            note.y += 5;
-                            if note.y as isize + note_height as isize > app.view_pos.y as isize + app.screen_height as isize - 2 {
-                                app.view_pos.y += 5;
-                            }
-                        }
-
-                        // Move the note left
-                        KeyCode::Char('h') => {
-                            // First, update the note's x-coordinate.
-                            note.x = note.x.saturating_sub(1);
-                            // Then, check if the left edge of the note is now to the left of the viewport's edge.
-                            if note.x < app.view_pos.x {
-                                // If it is, move the viewport left to keep it in view.
-                                app.view_pos.x -= 1;
-                            }
-                        }
-                        KeyCode::Char('H') => {
-                            note.x = note.x.saturating_sub(5);
-                            if note.x < app.view_pos.x {
-                                app.view_pos.x = app.view_pos.x.saturating_sub(5);
-                            }
-                        }
-
-                        // Move the note right 
-                        KeyCode::Char('l') => {
-                            // First, update the note's x-coordinate.
-                            note.x += 1;
-                            // Check if the right edge of the note is past the right edge of the screen.
-                            if note.x + note_width as usize > app.view_pos.x + app.screen_width {
-                                // If it is, move the viewport right to keep up.
-                                app.view_pos.x += 1;
-                            }
-                        }
-                        KeyCode::Char('L') => {
-                            note.x += 5;
-                            if note.x + note_width as usize > app.view_pos.x + app.screen_width {
-                                app.view_pos.x += 5;
-                            }
-                        }
-
-                        _ => {}
-                    }
-
-                    // Trigger a redraw and stop there
-                    app.clear_and_redraw(); 
-                    return
-                }
-            }
-
-            if app.visual_connection {
-                match key.code {
-                    // Switch back to Visual Mode Normal State
-                    KeyCode::Char('c') => {
-                        
-                        // Take the connection out, leaving None in its place.
-                        if let Some(connection) = app.focused_connection.take() {
-                            // Now we own the connection. We can check its fields.
-                            if connection.to_id.is_some() {
-                                // If it has a target, we finalize it.
-                                app.connections.push(connection);
-                            }
-                            // If it didn't have a target, we just drop it here.
-                        }
-
-                        app.visual_connection = false;
-                        app.visual_editing_a_connection = false; // (if already isn't)
-                        app.editing_connection_index = None; // (if already isn't)
-                    }
-
-                    KeyCode::Char('r') => {
-                        if let Some(focused_connection) = app.focused_connection.as_mut() {
-                            if focused_connection.from_id == app.selected_note {
-                                focused_connection.from_side = cycle_side(focused_connection.from_side);
-                            }
-
-                            if let Some(to_id) = focused_connection.to_id {
-                                if to_id == app.selected_note {
-                                    focused_connection.to_side = Some(cycle_side(focused_connection.to_side.unwrap()));
-                                    // .unwrap() okay here - since if there is a to_id, there is a to_side
-                                }
-                            }
-                        }
-                    }
-
-                    KeyCode::Char('n') => {
-                        // Can only cycle through the available connections on this note if
-                        // entered the visual_connection mode to edit existing connections
-                        // and not currently making a new one
-                        if app.visual_editing_a_connection {
-
-                            // 2. Stash the Current Connection
-                            if let Some(connection) = app.focused_connection.take() {
-                                app.connections.insert(app.editing_connection_index.unwrap(), connection);
-                                // unwrap okay here since if it takes out a connection, it records an index
-
-                                // Index of the connection just stashed
-                                let start_index = app.editing_connection_index.unwrap();
-                                let mut next_index_option = None; // Start by assuming we haven't found it.
-
-                                // Only search the latter part of the vector if it's safe to do so.
-                                if start_index + 1 < app.connections.len() {
-                                    next_index_option = app.connections[start_index + 1..]
-                                        .iter()
-                                        .position(|c| {
-                                            app.selected_note == c.from_id || app.selected_note == c.to_id.unwrap()
-                                        })
-                                        .map(|i| i + start_index + 1);
-                                }
-
-                                // If that connection was last in the vector or no match was found after it -
-                                // search from the start
-                                if next_index_option.is_none() {
-                                    next_index_option = app.connections
-                                        .iter()
-                                        .position(|c| {
-                                            app.selected_note == c.from_id || app.selected_note == c.to_id.unwrap()
-                                        });
-                                }
-                                
-                                if let Some(next_index) = next_index_option {
-                                    // If found one - remove it and put it in focus.
-                                    // Note: it will always "find" one - since
-                                    app.focused_connection = Some(app.connections.remove(next_index));
-                                    app.editing_connection_index = Some(next_index);
-                                }
-                            }
-                        }
-                    }
-
-                    KeyCode::Char('d') => {
-                        if app.visual_editing_a_connection {
-                            // Delete that connection
-                            app.focused_connection = None;
-
-                            // Exit
-                            app.visual_connection = false;
-                            app.visual_editing_a_connection = false;
-                            app.editing_connection_index = None;
-                        }
-                    }
-                    
-                    // -- Target Note Selection --
-                    // Reuse the focus switching logic to select a target note for the new connection.
-                    // Right
-                    KeyCode::Char('j') => { switch_notes_focus(app, 'j'); }
-                    // Above
-                    KeyCode::Char('k') => { switch_notes_focus(app, 'k'); }
-                    // Left
-                    KeyCode::Char('h') => { switch_notes_focus(app, 'h'); }
-                    // Right
-                    KeyCode::Char('l') => { switch_notes_focus(app, 'l'); }
-
-                    // Cycle through colors for the "in progress"/focused connection
-                    KeyCode::Char('e') => {
-                        if let Some(focused_connection) = app.focused_connection.as_mut() {
-                            focused_connection.color = cycle_color(focused_connection.color)
-                        }
-                    }
-
-                    _ => {}
-                }
-
-                // Trigger a redraw and stop there
-                app.clear_and_redraw(); 
-                return
-            }
-
-            // If Visual Mode is in Normal State
-            match key.code {
-                // Switch back to Normal Mode
-                KeyCode::Esc => {
-                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
-                        app.current_mode = Mode::Normal;
-                        note.selected = false;
-                    }
-                }
-                // Switch to Insert mode
-                KeyCode::Char('i') => app.current_mode = Mode::Insert,
-
-                // Switch to Move State for the Visual Mode
-                KeyCode::Char('m') => app.visual_move = true,
-
-                // Switch to Connection Sate for Visual Mode
-                KeyCode::Char('c') => {
-
-                    if let Some(index) = app.connections.iter().position(|c| {
-                        app.selected_note == c.from_id || app.selected_note == c.to_id.unwrap()
-                        // unwrap() is safe here since all the connections have an endpoint if
-                        // they are in the connections vector.
-                    }) {
-                        app.focused_connection = Some(app.connections.remove(index));
-                        app.editing_connection_index = Some(index);
-                        app.visual_connection = true;
-                        app.visual_editing_a_connection = true;
-                    }
-                }
-                
-                // Add a new Connection for the selected note
-                KeyCode::Char('C') => {
-                    app.focused_connection = Some(
-                        Connection {
-                            from_id: app.selected_note,
-                            from_side: Side::Right, // default side
-                            to_id: None,
-                            to_side: None,
-                            color: Color::White,
-                        }
-                    );
-
-                    app.visual_connection = true;
-                }
-
-                // Switch to Delete Mode
-                KeyCode::Char('d') => app.current_mode = Mode::Delete,
-
-                // -- Switching focus between notes --
-                // Switch focus to the closest note below the currently selected one
-                KeyCode::Char('j') => { switch_notes_focus(app, 'j'); }
-                // Above
-                KeyCode::Char('k') => { switch_notes_focus(app, 'k'); }
-                // Left
-                KeyCode::Char('h') => { switch_notes_focus(app, 'h'); }
-                // Right
-                KeyCode::Char('l') => { switch_notes_focus(app, 'l'); }
-
-                // Cycle through colors for the selected note
-                KeyCode::Char('e') => {
-                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
-                        note.color = cycle_color(note.color);
-                    }
-                }
-
-                _ => {}
-            }
-
-            // Any action in Visual mode triggers a redraw.
-            app.clear_and_redraw(); 
-        }
+        Mode::Visual => map_visual_kh(app, key),
 
         // Insert mode is for editing the content of a note.
-        Mode::Insert => {
+        Mode::Insert => map_insert_kh(app, key),
+    
+        Mode::Delete => map_delete_kh(app, key),
+    }
+}
+
+/// Key handling for the Map Screen
+fn map_key_handling(app: &mut App, key: KeyEvent) {
+}
+
+/// Key handling for Normal Mode in the Map Screen
+fn map_normal_kh(app: &mut App, key: KeyEvent) {
+    match key.code {
+        // --- Application Commands ---
+        KeyCode::Char('q') => app.quit(),
+
+        // --- Viewport Navigation ---
+        // Move left
+        KeyCode::Char('h') => app.view_pos.x = app.view_pos.x.saturating_sub(1),
+        KeyCode::Char('H') => app.view_pos.x = app.view_pos.x.saturating_sub(5),
+        // Move down
+        KeyCode::Char('j') => app.view_pos.y += 1,
+        KeyCode::Char('J') => app.view_pos.y += 5,
+        // Move up
+        KeyCode::Char('k') => app.view_pos.y = app.view_pos.y.saturating_sub(1),
+        KeyCode::Char('K') => app.view_pos.y = app.view_pos.y.saturating_sub(5),
+        // Move right 
+        KeyCode::Char('l') => app.view_pos.x += 1,
+        KeyCode::Char('L') => app.view_pos.x += 5,
+
+        // --- Note Manipulation ---
+        // Add note
+        KeyCode::Char('a') => app.add_note(),
+        // Select note (first selects closest to the center of the screen)
+        KeyCode::Char('v') => {
+            // Don't enter Visual Mode on the off-chance that there are no notes
+            if let None = app.notes.get(&app.selected_note) { return }
+
+            app.select_note();
+            app.current_mode = Mode::Visual;
+        }
+
+        _ => {}
+    }
+    // Any action in Normal mode triggers a redraw.
+    app.clear_and_redraw();
+}
+
+fn map_visual_kh(app: &mut App, key: KeyEvent) {
+    // If Move State for Visual Mode is enabled 
+    if app.visual_move {
+        // Get the currently selected note.
+        if let Some(note) = app.notes.get_mut(&app.selected_note) {
+
+            // Get note dimensions
+            let (mut note_width, mut note_height) = note.get_dimensions();
+            // Enforce a minimum size for readability.
+            if note_width < 20 { note_width = 20; }
+            if note_height < 4 { note_height = 4; }
+            // Add space for cursor
+            note_width+=1;
+            
             match key.code {
+                // Switch back to Visual Mode Normal State
+                KeyCode::Char('m') => app.visual_move = false,
+
                 // Switch back to Normal Mode
                 KeyCode::Esc => {
                     app.current_mode = Mode::Normal;
-                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
                         note.selected = false;
-                        // Reset cursor position for the next time entering Insert mode.
-                        app.cursor_pos = 0;
+                        app.visual_move = false;
+                }
+
+                // --- Moving the note ---
+
+                // Move the note up
+                KeyCode::Char('k') => {
+                    // First, update the note's y-coordinate.
+                    note.y = note.y.saturating_sub(1);
+                    // Then, check if the top edge of the note is now above the top edge of the viewport.
+                    if note.y < app.view_pos.y {
+                        // If it is, move the viewport up by the same amount to "follow" the note.
+                        app.view_pos.y -= 1;
+                    }
+                }
+                KeyCode::Char('K') => {
+                    note.y = note.y.saturating_sub(5);
+                    if note.y < app.view_pos.y {
+                        app.view_pos.y = app.view_pos.y.saturating_sub(5);
                     }
                 }
 
-                // --- Text Editing ---
-                KeyCode::Char(c) => {
-                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
-                        // Insert the typed character at the cursor's current position.
-                        note.content.insert(app.cursor_pos, c);
-                        // Move the cursor forward one position.
-                        app.cursor_pos += 1;
+                // Move the note down
+                KeyCode::Char('j') => {
+                    // First, update the note's y-coordinate.
+                    note.y += 1; 
+                    // Check if the bottom edge of the note is below the visible screen area.
+                    // We subtract 2 from the screen height to account for the bottom info bar.
+                    if note.y as isize + note_height as isize > app.view_pos.y as isize + app.screen_height as isize - 2 {
+                        // If it is, move the viewport down to keep the note in view.
+                        app.view_pos.y += 1;
                     }
                 }
-                KeyCode::Enter => {
-                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
-                        // Insert a newline character at the cursor's position.
-                        note.content.insert(app.cursor_pos, '\n');
-                        // Move the cursor forward one position.
-                        app.cursor_pos += 1;
+                KeyCode::Char('J') => {
+                    note.y += 5;
+                    if note.y as isize + note_height as isize > app.view_pos.y as isize + app.screen_height as isize - 2 {
+                        app.view_pos.y += 5;
                     }
                 }
-                KeyCode::Backspace => {
-                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
-                        // We can only backspace if the cursor is not at the very beginning of the text.
-                        if app.cursor_pos > 0 {
-                            // To delete the character *before* the cursor, we must remove the character
-                            // at the index `cursor_pos - 1`.
-                            note.content.remove(app.cursor_pos - 1);
-                            // After removing the character, we move the cursor's position back by one.
-                            app.cursor_pos -= 1;
-                        }
+
+                // Move the note left
+                KeyCode::Char('h') => {
+                    // First, update the note's x-coordinate.
+                    note.x = note.x.saturating_sub(1);
+                    // Then, check if the left edge of the note is now to the left of the viewport's edge.
+                    if note.x < app.view_pos.x {
+                        // If it is, move the viewport left to keep it in view.
+                        app.view_pos.x -= 1;
                     }
                 }
-                KeyCode::Left => {
-                    if app.cursor_pos > 0 { 
-                        app.cursor_pos -= 1 
+                KeyCode::Char('H') => {
+                    note.x = note.x.saturating_sub(5);
+                    if note.x < app.view_pos.x {
+                        app.view_pos.x = app.view_pos.x.saturating_sub(5);
                     }
                 }
-                KeyCode::Right => {
-                    if let Some(note) = app.notes.get(&app.selected_note) {
-                        if app.cursor_pos < note.content.len() {
-                            app.cursor_pos += 1;
-                        }
+
+                // Move the note right 
+                KeyCode::Char('l') => {
+                    // First, update the note's x-coordinate.
+                    note.x += 1;
+                    // Check if the right edge of the note is past the right edge of the screen.
+                    if note.x + note_width as usize > app.view_pos.x + app.screen_width {
+                        // If it is, move the viewport right to keep up.
+                        app.view_pos.x += 1;
                     }
                 }
-                KeyCode::Up => move_cursor_up(app), 
-                KeyCode::Down => move_cursor_down(app),
+                KeyCode::Char('L') => {
+                    note.x += 5;
+                    if note.x + note_width as usize > app.view_pos.x + app.screen_width {
+                        app.view_pos.x += 5;
+                    }
+                }
+
                 _ => {}
             }
-            // Any action in Insert mode triggers a redraw.
-            app.clear_and_redraw();
-        }
-    
-        Mode::Delete => {
-            match key.code {
-                // Switch back to Visual Mode
-                KeyCode::Esc => {
-                    app.current_mode = Mode::Visual;
-                }
-                KeyCode::Char('d') => {
-                    app.notes.remove(&app.selected_note);
-                    
-                    // Remove any connections that were associated with that note
-                    // (Only keep the ones that aren't)
-                    app.connections.retain(|c| {
-                        app.selected_note != c.from_id && app.selected_note != c.to_id.unwrap()
-                        // .unwrap() is okay here since all the connections in the vector have an endpoint
-                    });
 
-                    // After deleting, update selected_note to a valid ID to prevent
-                    // the application from retaining a stale reference. We'll pick
-                    // the note with the highest ID as a predictable default.
-                    // If no notes are left, it will default to 0.
-                    app.selected_note = app.notes.keys().copied().max().unwrap_or(0);
-
-                    app.current_mode = Mode::Normal;
-                }
-                _ => {}
-            }
-            
-            app.clear_and_redraw();
+            // Trigger a redraw and stop there
+            app.clear_and_redraw(); 
+            return
         }
     }
+
+    if app.visual_connection {
+        match key.code {
+            // Switch back to Visual Mode Normal State
+            KeyCode::Char('c') => {
+                
+                // Take the connection out, leaving None in its place.
+                if let Some(connection) = app.focused_connection.take() {
+                    // Now we own the connection. We can check its fields.
+                    if connection.to_id.is_some() {
+                        // If it has a target, we finalize it.
+                        app.connections.push(connection);
+                    }
+                    // If it didn't have a target, we just drop it here.
+                }
+
+                app.visual_connection = false;
+                app.visual_editing_a_connection = false; // (if already isn't)
+                app.editing_connection_index = None; // (if already isn't)
+            }
+
+            KeyCode::Char('r') => {
+                if let Some(focused_connection) = app.focused_connection.as_mut() {
+                    if focused_connection.from_id == app.selected_note {
+                        focused_connection.from_side = cycle_side(focused_connection.from_side);
+                    }
+
+                    if let Some(to_id) = focused_connection.to_id {
+                        if to_id == app.selected_note {
+                            focused_connection.to_side = Some(cycle_side(focused_connection.to_side.unwrap()));
+                            // .unwrap() okay here - since if there is a to_id, there is a to_side
+                        }
+                    }
+                }
+            }
+
+            KeyCode::Char('n') => {
+                // Can only cycle through the available connections on this note if
+                // entered the visual_connection mode to edit existing connections
+                // and not currently making a new one
+                if app.visual_editing_a_connection {
+
+                    // 2. Stash the Current Connection
+                    if let Some(connection) = app.focused_connection.take() {
+                        app.connections.insert(app.editing_connection_index.unwrap(), connection);
+                        // unwrap okay here since if it takes out a connection, it records an index
+
+                        // Index of the connection just stashed
+                        let start_index = app.editing_connection_index.unwrap();
+                        let mut next_index_option = None; // Start by assuming we haven't found it.
+
+                        // Only search the latter part of the vector if it's safe to do so.
+                        if start_index + 1 < app.connections.len() {
+                            next_index_option = app.connections[start_index + 1..]
+                                .iter()
+                                .position(|c| {
+                                    app.selected_note == c.from_id || app.selected_note == c.to_id.unwrap()
+                                })
+                                .map(|i| i + start_index + 1);
+                        }
+
+                        // If that connection was last in the vector or no match was found after it -
+                        // search from the start
+                        if next_index_option.is_none() {
+                            next_index_option = app.connections
+                                .iter()
+                                .position(|c| {
+                                    app.selected_note == c.from_id || app.selected_note == c.to_id.unwrap()
+                                });
+                        }
+                        
+                        if let Some(next_index) = next_index_option {
+                            // If found one - remove it and put it in focus.
+                            // Note: it will always "find" one - since
+                            app.focused_connection = Some(app.connections.remove(next_index));
+                            app.editing_connection_index = Some(next_index);
+                        }
+                    }
+                }
+            }
+
+            KeyCode::Char('d') => {
+                if app.visual_editing_a_connection {
+                    // Delete that connection
+                    app.focused_connection = None;
+
+                    // Exit
+                    app.visual_connection = false;
+                    app.visual_editing_a_connection = false;
+                    app.editing_connection_index = None;
+                }
+            }
+            
+            // -- Target Note Selection --
+            // Reuse the focus switching logic to select a target note for the new connection.
+            // Right
+            KeyCode::Char('j') => { switch_notes_focus(app, 'j'); }
+            // Above
+            KeyCode::Char('k') => { switch_notes_focus(app, 'k'); }
+            // Left
+            KeyCode::Char('h') => { switch_notes_focus(app, 'h'); }
+            // Right
+            KeyCode::Char('l') => { switch_notes_focus(app, 'l'); }
+
+            // Cycle through colors for the "in progress"/focused connection
+            KeyCode::Char('e') => {
+                if let Some(focused_connection) = app.focused_connection.as_mut() {
+                    focused_connection.color = cycle_color(focused_connection.color)
+                }
+            }
+
+            _ => {}
+        }
+
+        // Trigger a redraw and stop there
+        app.clear_and_redraw(); 
+        return
+    }
+
+    // If Visual Mode is in Normal State
+    match key.code {
+        // Switch back to Normal Mode
+        KeyCode::Esc => {
+            if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                app.current_mode = Mode::Normal;
+                note.selected = false;
+            }
+        }
+        // Switch to Insert mode
+        KeyCode::Char('i') => app.current_mode = Mode::Insert,
+
+        // Switch to Move State for the Visual Mode
+        KeyCode::Char('m') => app.visual_move = true,
+
+        // Switch to Connection Sate for Visual Mode
+        KeyCode::Char('c') => {
+
+            if let Some(index) = app.connections.iter().position(|c| {
+                app.selected_note == c.from_id || app.selected_note == c.to_id.unwrap()
+                // unwrap() is safe here since all the connections have an endpoint if
+                // they are in the connections vector.
+            }) {
+                app.focused_connection = Some(app.connections.remove(index));
+                app.editing_connection_index = Some(index);
+                app.visual_connection = true;
+                app.visual_editing_a_connection = true;
+            }
+        }
+        
+        // Add a new Connection for the selected note
+        KeyCode::Char('C') => {
+            app.focused_connection = Some(
+                Connection {
+                    from_id: app.selected_note,
+                    from_side: Side::Right, // default side
+                    to_id: None,
+                    to_side: None,
+                    color: Color::White,
+                }
+            );
+
+            app.visual_connection = true;
+        }
+
+        // Switch to Delete Mode
+        KeyCode::Char('d') => app.current_mode = Mode::Delete,
+
+        // -- Switching focus between notes --
+        // Switch focus to the closest note below the currently selected one
+        KeyCode::Char('j') => { switch_notes_focus(app, 'j'); }
+        // Above
+        KeyCode::Char('k') => { switch_notes_focus(app, 'k'); }
+        // Left
+        KeyCode::Char('h') => { switch_notes_focus(app, 'h'); }
+        // Right
+        KeyCode::Char('l') => { switch_notes_focus(app, 'l'); }
+
+        // Cycle through colors for the selected note
+        KeyCode::Char('e') => {
+            if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                note.color = cycle_color(note.color);
+            }
+        }
+
+        _ => {}
+    }
+
+    // Any action in Visual mode triggers a redraw.
+    app.clear_and_redraw(); 
 }
+
+fn map_insert_kh(app: &mut App, key: KeyEvent) {
+    match key.code {
+        // Switch back to Normal Mode
+        KeyCode::Esc => {
+            app.current_mode = Mode::Normal;
+            if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                note.selected = false;
+                // Reset cursor position for the next time entering Insert mode.
+                app.cursor_pos = 0;
+            }
+        }
+
+        // --- Text Editing ---
+        KeyCode::Char(c) => {
+            if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                // Insert the typed character at the cursor's current position.
+                note.content.insert(app.cursor_pos, c);
+                // Move the cursor forward one position.
+                app.cursor_pos += 1;
+            }
+        }
+        KeyCode::Enter => {
+            if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                // Insert a newline character at the cursor's position.
+                note.content.insert(app.cursor_pos, '\n');
+                // Move the cursor forward one position.
+                app.cursor_pos += 1;
+            }
+        }
+        KeyCode::Backspace => {
+            if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                // We can only backspace if the cursor is not at the very beginning of the text.
+                if app.cursor_pos > 0 {
+                    // To delete the character *before* the cursor, we must remove the character
+                    // at the index `cursor_pos - 1`.
+                    note.content.remove(app.cursor_pos - 1);
+                    // After removing the character, we move the cursor's position back by one.
+                    app.cursor_pos -= 1;
+                }
+            }
+        }
+        KeyCode::Left => {
+            if app.cursor_pos > 0 { 
+                app.cursor_pos -= 1 
+            }
+        }
+        KeyCode::Right => {
+            if let Some(note) = app.notes.get(&app.selected_note) {
+                if app.cursor_pos < note.content.len() {
+                    app.cursor_pos += 1;
+                }
+            }
+        }
+        KeyCode::Up => move_cursor_up(app), 
+        KeyCode::Down => move_cursor_down(app),
+        _ => {}
+    }
+    // Any action in Insert mode triggers a redraw.
+    app.clear_and_redraw();
+}
+
+fn map_delete_kh(app: &mut App, key: KeyEvent) {
+    match key.code {
+        // Switch back to Visual Mode
+        KeyCode::Esc => {
+            app.current_mode = Mode::Visual;
+        }
+        KeyCode::Char('d') => {
+            app.notes.remove(&app.selected_note);
+            
+            // Remove any connections that were associated with that note
+            // (Only keep the ones that aren't)
+            app.connections.retain(|c| {
+                app.selected_note != c.from_id && app.selected_note != c.to_id.unwrap()
+                // .unwrap() is okay here since all the connections in the vector have an endpoint
+            });
+
+            // After deleting, update selected_note to a valid ID to prevent
+            // the application from retaining a stale reference. We'll pick
+            // the note with the highest ID as a predictable default.
+            // If no notes are left, it will default to 0.
+            app.selected_note = app.notes.keys().copied().max().unwrap_or(0);
+
+            app.current_mode = Mode::Normal;
+        }
+        _ => {}
+    }
+    
+    app.clear_and_redraw();
+}
+
 
 fn switch_notes_focus(app: &mut App, key: char) {
     // --- 1. Get the starting position ---
