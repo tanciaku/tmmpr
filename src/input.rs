@@ -5,6 +5,7 @@ use crate::app::{App, Connection, Mode, Side};
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use std::cmp::Reverse;
+use ratatui::style::Color;
 
 /// Reads the terminal events.
 pub fn handle_events(app: &mut App) -> Result<()> {
@@ -275,6 +276,13 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                     // Right
                     KeyCode::Char('l') => { switch_notes_focus(app, 'l'); }
 
+                    // Cycle through colors for the "in progress"/focused connection
+                    KeyCode::Char('e') => {
+                        if let Some(focused_connection) = app.focused_connection.as_mut() {
+                            focused_connection.color = cycle_color(focused_connection.color)
+                        }
+                    }
+
                     _ => {}
                 }
 
@@ -321,6 +329,7 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                             from_side: Side::Right, // default side
                             to_id: None,
                             to_side: None,
+                            color: Color::White,
                         }
                     );
 
@@ -331,7 +340,6 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 KeyCode::Char('d') => app.current_mode = Mode::Delete,
 
                 // -- Switching focus between notes --
-
                 // Switch focus to the closest note below the currently selected one
                 KeyCode::Char('j') => { switch_notes_focus(app, 'j'); }
                 // Above
@@ -340,6 +348,13 @@ fn on_key_event(app: &mut App, key: KeyEvent) {
                 KeyCode::Char('h') => { switch_notes_focus(app, 'h'); }
                 // Right
                 KeyCode::Char('l') => { switch_notes_focus(app, 'l'); }
+
+                // Cycle through colors for the selected note
+                KeyCode::Char('e') => {
+                    if let Some(note) = app.notes.get_mut(&app.selected_note) {
+                        note.color = cycle_color(note.color);
+                    }
+                }
 
                 _ => {}
             }
@@ -694,5 +709,19 @@ fn cycle_side(side: Side) -> Side {
         Side::Bottom => Side::Left,
         Side::Left => Side::Top,
         Side::Top => Side::Right,
+    }
+}
+
+fn cycle_color(color: Color) -> Color {
+    match color {
+        Color::Red => Color::Green,
+        Color::Green => Color::Yellow,
+        Color::Yellow => Color::Blue,
+        Color::Blue => Color::Magenta,
+        Color::Magenta => Color::Cyan,
+        Color::Cyan => Color::White,
+        Color::White => Color::Black,
+        Color::Black => Color::Red,
+        _ => Color::White,
     }
 }

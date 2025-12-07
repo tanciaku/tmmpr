@@ -8,6 +8,7 @@ use ratatui::{
     prelude::Rect,
     style::{Color, Style},
     widgets::{Block, Borders, Clear, Padding, Paragraph, BorderType},
+    text::{Span, Line},
     Frame
 };
 
@@ -96,20 +97,50 @@ fn render_bar(frame: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
-            Constraint::Percentage(50), // Left side gets 50% of the width.
-            Constraint::Percentage(50), // Right side gets the other 50%.
+            Constraint::Percentage(33), // Left side gets 33% of the width.
+            Constraint::Percentage(34), // Middle area gets 34% of the width.
+            Constraint::Percentage(33), // Right side gets the other 33%.
         ])
         .split(bottom_rect);
     
     // Assign the created chunks to variables for clarity.
     let left_bar = chunks[0];
-    let right_bar = chunks[1];
+    let middle_bar = chunks[1];
+    let right_bar = chunks[2];
 
     // --- Rendering ---
     // Finally, render the widgets to the frame.
     frame.render_widget(Clear, bottom_rect); // First, clear the entire bar area.
     frame.render_widget(mode_display, left_bar); // Render the mode display to the left chunk.
     frame.render_widget(view_position_display, right_bar); // Render the position to the right chunk.
+    
+    // (In Visual Mode only) 
+    // -- Middle-Aligned Widget: Color currently set for the selected note/connection --
+    if app.current_mode == Mode::Visual {
+                
+        let mut current_color_text = String::from("");
+        let mut current_color_name = String::from("");
+        let mut current_color = Color::White;
+
+        if let Some(focused_connection) = &app.focused_connection {
+            current_color_text = String::from("Selected connection color: ");
+            current_color_name = get_color_name_in_string(focused_connection.color);
+            current_color = focused_connection.color;
+        } else {
+            if let Some(note) = app.notes.get(&app.selected_note) {
+                current_color_text = String::from("Selected note color: ");
+                current_color_name = get_color_name_in_string(note.color);
+                current_color = note.color;
+            }
+        }
+
+        let current_color_widget = Line::from(vec![ 
+            Span::from(current_color_text), 
+            Span::styled(current_color_name, Style::new().fg(current_color))
+        ]).alignment(Alignment::Center);
+
+        frame.render_widget(current_color_widget, middle_bar);
+    }
 }
 
 /// Renders the main canvas where notes are displayed.
@@ -198,7 +229,7 @@ fn render_map(frame: &mut Frame, app: &App) {
                     Mode::Delete => Color::Red,
                 }
             } else {
-                Color::White
+                note.color
             };
 
             // Determine border type
@@ -367,7 +398,7 @@ fn render_connections(frame: &mut Frame, app: &App) {
                         continue
                     }
 
-                    draw_connection(path, false, Color::White, frame, app);
+                    draw_connection(path, false, connection.color, frame, app);
                 }
             }
         }
@@ -395,7 +426,8 @@ fn render_connections(frame: &mut Frame, app: &App) {
     }
 }
 
-// * bool argument for whether it is the th
+// `in_progess` is a bool argument for whether it is the "in progress" (of making/editing)
+// connection being drawn.
 fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame: &mut Frame, app: &App) {
     let connection_charset = if in_progress {
         &IN_PROGRESS_CHARSET
@@ -563,4 +595,19 @@ enum SegDir {
     Left, // Horizontal going Left
     Up, // Vertical going Up
     Down, // Vertical going Down
+}
+
+/// Helper function for displaying the color currently set for the selected note/connection
+fn get_color_name_in_string(color: Color) -> String {
+    String::from(match color {
+        Color::Red => "Red",
+        Color::Green => "Green",
+        Color::Yellow => "Yellow",
+        Color::Blue => "Blue",
+        Color::Magenta => "Magenta",
+        Color::Cyan => "Cyan",
+        Color::White => "White",
+        Color::Black => "Black",
+        _ => "",
+    })
 }

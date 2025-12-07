@@ -4,6 +4,7 @@
 //! of the notes on the canvas.
 
 use std::collections::HashMap;
+use ratatui::style::Color;
 
 /// Represents the central state of the terminal application.
 ///
@@ -84,7 +85,7 @@ impl App {
     pub fn add_note(&mut self) {
         let note_x = self.view_pos.x + self.screen_width/2;
         let note_y = self.view_pos.y + self.screen_height/2;
-        self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from(""), true));
+        self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from(""), true, Color::White));
         self.selected_note = self.next_note_id;
         self.current_mode = Mode::Insert;
 
@@ -145,16 +146,18 @@ pub struct Note {
     pub content: String,
     /// A flag indicating whether this note is currently selected.
     pub selected: bool,
+    pub color: Color,
 }
 
 impl Note {
     /// Creates a new `Note` at a given position with initial content.
-    pub fn new(x: usize, y: usize, content: String, selected: bool) -> Note {
+    pub fn new(x: usize, y: usize, content: String, selected: bool, color: Color) -> Note {
         Note {
             x,
             y,
             content,
             selected,
+            color,
         }
     }
 
@@ -273,6 +276,7 @@ pub struct Connection {
     pub from_side: Side,
     pub to_id: Option<usize>,
     pub to_side: Option<Side>,
+    pub color: Color,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -320,7 +324,7 @@ mod tests {
         assert_eq!(app.selected_note, 0); // Should remain default
 
         // --- Scenario 2: One note ---
-        app.notes.insert(0, Note::new(50, 20, "".to_string(), false));
+        app.notes.insert(0, Note::new(50, 20, "".to_string(), false, Color::White));
         app.select_note();
         assert_eq!(app.selected_note, 0);
         assert_eq!(app.notes.get(&0).unwrap().selected, true);
@@ -330,8 +334,8 @@ mod tests {
         // Note 0 is at (50, 20), distance = |50-40| + |20-12| = 10 + 8 = 18
         // Note 1 is at (45, 15), distance = |45-40| + |15-12| = 5 + 3 = 8  <-- Closest
         // Note 2 is at (10, 10), distance = |10-40| + |10-12| = 30 + 2 = 32
-        app.notes.insert(1, Note::new(45, 15, "".to_string(), false));
-        app.notes.insert(2, Note::new(10, 10, "".to_string(), false));
+        app.notes.insert(1, Note::new(45, 15, "".to_string(), false, Color::White));
+        app.notes.insert(2, Note::new(10, 10, "".to_string(), false, Color::White));
         
         app.select_note();
         assert_eq!(app.selected_note, 1);
@@ -342,24 +346,24 @@ mod tests {
     fn test_get_dimensions() {
         // --- Scenario 1: Empty note ---
         // Internal size (0, 1) + border (2, 2) = (2, 3)
-        let note1 = Note::new(0, 0, "".to_string(), false);
+        let note1 = Note::new(0, 0, "".to_string(), false, Color::White);
         assert_eq!(note1.get_dimensions(), (2, 3));
 
         // --- Scenario 2: Single line ---
         // Internal size (11, 1) + border (2, 2) = (13, 3)
-        let note2 = Note::new(0, 0, "hello world".to_string(), false);
+        let note2 = Note::new(0, 0, "hello world".to_string(), false, Color::White);
         assert_eq!(note2.get_dimensions(), (13, 3));
 
         // --- Scenario 3: Multi-line, varied length ---
         // Internal size (longest line is 9, height is 3 lines) = (9, 3)
         // Dimensions + border (2, 2) = (11, 5)
-        let note3 = Note::new(0, 0, "short\nloooonger\nmedium".to_string(), false);
+        let note3 = Note::new(0, 0, "short\nloooonger\nmedium".to_string(), false, Color::White);
         assert_eq!(note3.get_dimensions(), (11, 5));
 
         // --- Scenario 4: Trailing newline ---
         // Internal size (5, 2 lines) = (5, 2)
         // Dimensions + border (2, 2) = (7, 4)
-        let note4 = Note::new(0, 0, "hello\n".to_string(), false);
+        let note4 = Note::new(0, 0, "hello\n".to_string(), false, Color::White);
         assert_eq!(note4.get_dimensions(), (7, 4));
     }
 
