@@ -36,7 +36,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         handle_events(app)?;
     }
 
-    //app.exit();
+    app.exit();
 
     Ok(())
 }

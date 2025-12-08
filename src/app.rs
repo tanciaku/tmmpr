@@ -3,7 +3,7 @@
 //! application's current state, from user interface modes to the content
 //! of the notes on the canvas.
 
-use std::collections::HashMap;
+use std::{fs, collections::HashMap};
 use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
 
@@ -74,6 +74,23 @@ impl App {
     }
     
     pub fn exit(&mut self) {
+        // handle error cases
+        self.save_map().unwrap();
+    }
+
+    pub fn save_map(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let map_data = MapData {
+            view_pos: self.view_pos.clone(),
+            next_note_id: self.next_note_id,
+            notes: self.notes.clone(),
+            connections: self.connections.clone(),
+        };
+
+        let json_string = serde_json::to_string_pretty(&map_data)?;
+
+        fs::write("map.json", json_string)?;
+
+        Ok(())
     }
 
     /// Sets the flag to force a screen clear and redraw on the next frame.
@@ -146,7 +163,7 @@ pub enum Mode {
 }
 
 /// Represents a single note on the canvas.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Note {
     /// The absolute x-coordinate of the note's top-left corner on the canvas.
     pub x: usize,
@@ -219,7 +236,7 @@ impl Note {
 }
 
 /// Represents the top-left corner of the viewport on the infinite canvas.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ViewPos {
     pub x: usize,
     pub y: usize,
@@ -283,7 +300,7 @@ impl SignedRect {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Connection {
     pub from_id: usize,
     pub from_side: Side,
@@ -312,7 +329,7 @@ pub enum Screen {
 pub struct MapData {
     view_pos: ViewPos,
     next_note_id: usize,
-    notes: Vec<Note>,
+    notes: HashMap<usize, Note>,
     connections: Vec<Connection>,
 }
 
