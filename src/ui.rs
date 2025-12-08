@@ -7,7 +7,7 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
     prelude::Rect,
     style::{Color, Style},
-    widgets::{Block, Borders, Clear, Padding, Paragraph, BorderType},
+    widgets::{Block, Borders, Clear, Padding, Paragraph, BorderType, List, ListItem},
     text::{Span, Line},
     Frame
 };
@@ -29,9 +29,37 @@ pub fn render(frame: &mut Frame, app: &mut App) {
     frame.render_widget(Clear, frame.area());
 
     match app.current_screen {
+        Screen::Start => render_start(frame, app),
         Screen::Map => render_map(frame, app),
         _ => {}
     }
+}
+
+fn render_start(frame: &mut Frame, app: &mut App) {
+    let start_text_area = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(vec![
+            Constraint::Percentage(35),
+            Constraint::Percentage(30),
+            Constraint::Percentage(35),
+        ]).split(frame.area());
+    
+    let start_menu = vec![
+        Line::from("tmmpr  v0.1.0").alignment(Alignment::Center),
+        //Line::from(""),
+        //Line::from(""),
+        //Line::from(""),
+        //Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
+    ];
+        
+    let start_menu: Vec<ListItem> = start_menu
+        .into_iter()
+        .map(ListItem::new)
+        .collect();
+
+    let start_menu = List::new(start_menu);
+
+    frame.render_widget(start_menu, start_text_area[1]);
 }
 
 fn render_map(frame: &mut Frame, app: &mut App) {

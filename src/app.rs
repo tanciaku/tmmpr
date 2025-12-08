@@ -66,7 +66,7 @@ impl App {
             focused_connection: None,
             visual_editing_a_connection: false,
             editing_connection_index: None,
-            current_screen: Screen::Map,
+            current_screen: Screen::Start,
         }
     }
 
@@ -74,7 +74,7 @@ impl App {
     }
     
     pub fn exit(&mut self) {
-        // handle error cases
+        // * handle error cases
         self.save_map().unwrap();
     }
 

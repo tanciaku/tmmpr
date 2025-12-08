@@ -25,10 +25,10 @@ pub fn handle_events(app: &mut App) -> Result<()> {
 
 /// Handles all keyboard input events and updates the application state accordingly.
 ///
-/// This function is the central hub for all user commands. Its behavior is
-/// determined by the application's current `Mode`.
+/// This function is the central hub for all user commands.
 fn on_key_event(app: &mut App, key: KeyEvent) {
     match app.current_screen {
+        Screen::Start => start_kh(app, key),
         Screen::Map => map_kh(app, key),
         _ => {}
     }
@@ -47,6 +47,16 @@ fn map_kh(app: &mut App, key: KeyEvent) {
         Mode::Insert => map_insert_kh(app, key),
     
         Mode::Delete => map_delete_kh(app, key),
+    }
+}
+
+// * Will have "Insert" mode for entering preferred path (paths?)
+fn start_kh(app: &mut App, key: KeyEvent) {
+    match key.code {
+
+        KeyCode::Char('q') => app.quit(),
+
+        _ => {}
     }
 }
 
