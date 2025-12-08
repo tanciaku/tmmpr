@@ -2,7 +2,7 @@
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
 use crate::app::{App, Mode, SignedRect, Note, Side, Screen};
-use crate::utils::{calculate_path, Point};
+use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
     prelude::Rect,
@@ -602,19 +602,4 @@ enum SegDir {
     Left, // Horizontal going Left
     Up, // Vertical going Up
     Down, // Vertical going Down
-}
-
-/// Helper function for displaying the color currently set for the selected note/connection
-fn get_color_name_in_string(color: Color) -> String {
-    String::from(match color {
-        Color::Red => "Red",
-        Color::Green => "Green",
-        Color::Yellow => "Yellow",
-        Color::Blue => "Blue",
-        Color::Magenta => "Magenta",
-        Color::Cyan => "Cyan",
-        Color::White => "White",
-        Color::Black => "Black",
-        _ => "",
-    })
 }

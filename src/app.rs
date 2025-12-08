@@ -5,6 +5,7 @@
 
 use std::collections::HashMap;
 use ratatui::style::Color;
+use serde::{Serialize, Deserialize};
 
 /// Represents the central state of the terminal application.
 ///
@@ -67,6 +68,12 @@ impl App {
             editing_connection_index: None,
             current_screen: Screen::Map,
         }
+    }
+
+    pub fn setup(&mut self) {
+    }
+    
+    pub fn exit(&mut self) {
     }
 
     /// Sets the flag to force a screen clear and redraw on the next frame.
@@ -139,6 +146,7 @@ pub enum Mode {
 }
 
 /// Represents a single note on the canvas.
+#[derive(Serialize, Deserialize)]
 pub struct Note {
     /// The absolute x-coordinate of the note's top-left corner on the canvas.
     pub x: usize,
@@ -148,6 +156,7 @@ pub struct Note {
     pub content: String,
     /// A flag indicating whether this note is currently selected.
     pub selected: bool,
+    #[serde(with = "crate::serialization")]
     pub color: Color,
 }
 
@@ -210,6 +219,7 @@ impl Note {
 }
 
 /// Represents the top-left corner of the viewport on the infinite canvas.
+#[derive(Serialize, Deserialize)]
 pub struct ViewPos {
     pub x: usize,
     pub y: usize,
@@ -273,15 +283,17 @@ impl SignedRect {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Connection {
     pub from_id: usize,
     pub from_side: Side,
     pub to_id: Option<usize>,
     pub to_side: Option<Side>,
+    #[serde(with = "crate::serialization")]
     pub color: Color,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Side {
     Top,
     Bottom,
@@ -294,6 +306,14 @@ pub enum Screen {
     Map,
     Settings,
     Help,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct MapData {
+    view_pos: ViewPos,
+    next_note_id: usize,
+    notes: Vec<Note>,
+    connections: Vec<Connection>,
 }
 
 #[cfg(test)]

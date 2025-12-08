@@ -5,6 +5,7 @@ mod app;
 mod input;
 mod ui;
 mod utils;
+mod serialization;
 use crate::{
     app::App,
     input::handle_events,
@@ -34,6 +35,8 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         // Read terminal events
         handle_events(app)?;
     }
+
+    //app.exit();
 
     Ok(())
 }
