@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{App, Mode, SignedRect, Note, Side, Screen};
+use crate::app::{App, Mode, SignedRect, Note, Side, MapState};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
@@ -19,77 +19,67 @@ const PLAIN_JUNCTIONS: [&str; 4] = ["┴", "┬", "┤", "├"];
 const THICK_JUNCTIONS: [&str; 4] = ["┻", "┳", "┫", "┣"];
 const DOUBLE_JUNCTIONS: [&str; 4] = ["╩", "╦", "╣", "╠"];
 
-/// The main rendering entry point.
-///
-/// This function orchestrates the entire rendering process for a single frame.
-/// It updates the app state with the current screen dimensions and then calls
-/// the specific rendering functions for different parts of the UI.
-pub fn render(frame: &mut Frame, app: &mut App) {
+//fn render_start(frame: &mut Frame, start_state) {
+//    // Clear the frame before drawing anything new.
+//    frame.render_widget(Clear, frame.area());
+//
+//    let start_text_area = Layout::default()
+//        .direction(Direction::Vertical)
+//        .constraints(vec![
+//            Constraint::Percentage(35),
+//            Constraint::Percentage(30),
+//            Constraint::Percentage(35),
+//        ]).split(frame.area());
+//    
+//    let start_menu = vec![
+//        Line::from("tmmpr  v0.1.0").alignment(Alignment::Center),
+//        //Line::from(""),
+//        //Line::from(""),
+//        //Line::from(""),
+//        //Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
+//    ];
+//        
+//    let start_menu: Vec<ListItem> = start_menu
+//        .into_iter()
+//        .map(ListItem::new)
+//        .collect();
+//
+//    let start_menu = List::new(start_menu);
+//
+//    frame.render_widget(start_menu, start_text_area[1]);
+//}
+
+pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {
     // Clear the frame before drawing anything new.
     frame.render_widget(Clear, frame.area());
 
-    match app.current_screen {
-        Screen::Start => render_start(frame, app),
-        Screen::Map => render_map(frame, app),
-        _ => {}
-    }
-}
-
-fn render_start(frame: &mut Frame, app: &mut App) {
-    let start_text_area = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![
-            Constraint::Percentage(35),
-            Constraint::Percentage(30),
-            Constraint::Percentage(35),
-        ]).split(frame.area());
-    
-    let start_menu = vec![
-        Line::from("tmmpr  v0.1.0").alignment(Alignment::Center),
-        //Line::from(""),
-        //Line::from(""),
-        //Line::from(""),
-        //Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
-    ];
-        
-    let start_menu: Vec<ListItem> = start_menu
-        .into_iter()
-        .map(ListItem::new)
-        .collect();
-
-    let start_menu = List::new(start_menu);
-
-    frame.render_widget(start_menu, start_text_area[1]);
-}
-
-fn render_map(frame: &mut Frame, app: &mut App) {
     // Update the app state with the current terminal size. This is crucial for
     // calculations that depend on screen dimensions, like centering new notes.
-    app.screen_width = frame.area().width as usize;
-    app.screen_height = frame.area().height as usize;
+    map_state.screen_width = frame.area().width as usize;
+    map_state.screen_height = frame.area().height as usize;
 
     // Render the main UI components.
-    render_connections(frame, app);
-    render_notes(frame, app); // Notes will be drawn over connections (if any)
-    render_bar(frame, app); // The bar will be drawn over everything
+    render_connections(frame, map_state);
+    render_notes(frame, map_state); // Notes will be drawn over connections (if any)
+    render_bar(frame, map_state); // The bar will be drawn over everything
 }
 
 /// Renders the bottom information bar.
 ///
 /// This bar displays debugging information and the current application state,
 /// such as viewport position, mode, and selected note.
-fn render_bar(frame: &mut Frame, app: &App) {
+fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
 
     // Get the total available screen area.
     let size = frame.area();
 
     // Determine the display text and color for the current application mode.
-    let (mode_text, mode_text_color) = match &app.current_mode {
+    let (mode_text, mode_text_color) = match &map_state.current_mode {
         Mode::Normal => (String::from("[ NORMAL ]"), Style::new().fg(Color::White)),
         Mode::Visual => {
-            if app.visual_move {
+            if map_state.visual_move {
                 (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow))
-            } else if app.visual_connection {
+            } else if map_state.visual_connection {
                 (String::from("[ VISUAL (CONNECTION) ]"), Style::new().fg(Color::Yellow))
             } else {
                 (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow))
@@ -112,8 +102,8 @@ fn render_bar(frame: &mut Frame, app: &App) {
     // This is aligned to the right, with padding on the right side.
     let view_position_display = Paragraph::new(format!(
         "\nView: {},{}",
-        app.view_pos.x,
-        app.view_pos.y,
+        map_state.view_pos.x,
+        map_state.view_pos.y,
     ))
     .alignment(Alignment::Right)
     .block(Block::default().padding(Padding::new(0, 2, 0, 0)));
@@ -151,18 +141,18 @@ fn render_bar(frame: &mut Frame, app: &App) {
     
     // (In Visual Mode only) 
     // -- Middle-Aligned Widget: Color currently set for the selected note/connection --
-    if app.current_mode == Mode::Visual {
+    if map_state.current_mode == Mode::Visual {
                 
         let mut current_color_text = String::from("");
         let mut current_color_name = String::from("");
         let mut current_color = Color::White;
 
-        if let Some(focused_connection) = &app.focused_connection {
+        if let Some(focused_connection) = &map_state.focused_connection {
             current_color_text = String::from("Selected connection color: ");
             current_color_name = get_color_name_in_string(focused_connection.color);
             current_color = focused_connection.color;
         } else {
-            if let Some(note) = app.notes.get(&app.selected_note) {
+            if let Some(note) = map_state.notes.get(&map_state.selected_note) {
                 current_color_text = String::from("Selected note color: ");
                 current_color_name = get_color_name_in_string(note.color);
                 current_color = note.color;
@@ -182,12 +172,12 @@ fn render_bar(frame: &mut Frame, app: &App) {
 ///
 /// This function iterates through all notes and performs a series of calculations
 /// to determine if, where, and how each note should be rendered.
-fn render_notes(frame: &mut Frame, app: &App) {
+fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
     // To ensure consistent rendering and prevent flickering, we must draw notes
     // in a stable order. A HashMap's iterator is not guaranteed to be stable,
     // so we collect the notes into a Vec and sort them by their ID (the key).
     // This acts as a stable z-index, where higher IDs are drawn on top.
-    let mut sorted_notes: Vec<_> = app.notes.iter().collect();
+    let mut sorted_notes: Vec<_> = map_state.notes.iter().collect();
     sorted_notes.sort_by_key(|(id, _note)| **id);
 
     // -- Render the notes --
@@ -204,8 +194,8 @@ fn render_notes(frame: &mut Frame, app: &App) {
         // Convert the note's absolute canvas coordinates into screen-relative coordinates.
         // This can result in negative values if the note is partially off-screen.
         let note_rect = SignedRect {
-            x: note.x as isize - app.view_pos.x as isize,
-            y: note.y as isize - app.view_pos.y as isize,
+            x: note.x as isize - map_state.view_pos.x as isize,
+            y: note.y as isize - map_state.view_pos.y as isize,
             width: note_width as isize,
             height: note_height as isize,
         };
@@ -257,7 +247,7 @@ fn render_notes(frame: &mut Frame, app: &App) {
             // --- 6. Determine border color  ---
             // (based on selection and mode)
             let border_color = if note.selected {
-                match app.current_mode {
+                match map_state.current_mode {
                     Mode::Normal => Color::White,
                     Mode::Visual => Color::Yellow,
                     Mode::Insert => Color::Blue,
@@ -269,7 +259,7 @@ fn render_notes(frame: &mut Frame, app: &App) {
 
             // Determine border type
             let border_type = if note.selected {
-                match app.current_mode {
+                match map_state.current_mode {
                     Mode::Normal => BorderType::Plain,
                     Mode::Visual => BorderType::Thick,
                     Mode::Insert => BorderType::Double,
@@ -299,11 +289,11 @@ fn render_notes(frame: &mut Frame, app: &App) {
             // -- 9. Render the cursor if in Insert Mode on the selected note ---
             // This logic only runs if the app is in Insert mode AND the note currently being
             // drawn is the one that's actively selected.
-            if matches!(app.current_mode, Mode::Insert) && *id == app.selected_note {
+            if matches!(map_state.current_mode, Mode::Insert) && *id == map_state.selected_note {
 
                 // To calculate the cursor's position, we first need a slice of the text
                 // from the beginning of the note's content up to the cursor's byte index.
-                let text_before_cursor = &note.content[..app.cursor_pos];
+                let text_before_cursor = &note.content[..map_state.cursor_pos];
 
                 // --- Calculate cursor's position RELATIVE to the text inside the note ---
 
@@ -315,12 +305,12 @@ fn render_notes(frame: &mut Frame, app: &App) {
                     // If a newline is found, the X position is the number of characters
                     // between that newline and the cursor. `c+1` to skip the newline itself.
                     Some(c) => {
-                        text_before_cursor[c+1..app.cursor_pos].chars().count()
+                        text_before_cursor[c+1..map_state.cursor_pos].chars().count()
                     }
                     // If no newline is found, we're on the first line. The X position is
                     // simply the total number of characters before the cursor.
                     None => { 
-                        text_before_cursor[0..app.cursor_pos].chars().count()
+                        text_before_cursor[0..map_state.cursor_pos].chars().count()
                     }
                 };
                 
@@ -365,20 +355,20 @@ fn render_notes(frame: &mut Frame, app: &App) {
             // it ever becomes a noticeable bottleneck in the future.
 
             // Draw the connecting characters. (A note can have multiple connecting characters)
-            for connection in &app.connections {
-                if let Some(start_note) = app.notes.get(&connection.from_id){
+            for connection in &map_state.connections {
+                if let Some(start_note) = map_state.notes.get(&connection.from_id){
                     // Check if the current note is the *starting* point of the connection.
                     // If it is, draw the character on the "from" side.
                     if *id == connection.from_id {
-                        draw_connecting_character(start_note, connection.from_side, false, border_color, frame, app);
+                        draw_connecting_character(start_note, connection.from_side, false, border_color, frame, map_state);
                     }
 
                     // Then, check if the current note is the *ending* point of the connection.
                     // If it is, draw the character on the "to" side.
                     if let Some(end_note_id) = connection.to_id {
-                        if let Some(end_note) = app.notes.get(&end_note_id) {
+                        if let Some(end_note) = map_state.notes.get(&end_note_id) {
                             if *id == end_note_id {
-                                draw_connecting_character(end_note, connection.to_side.unwrap(), false, border_color, frame, app);
+                                draw_connecting_character(end_note, connection.to_side.unwrap(), false, border_color, frame, map_state);
                             }
                         }
                     }
@@ -388,26 +378,26 @@ fn render_notes(frame: &mut Frame, app: &App) {
     }
 
     // Render the start/end point for the "in progress" connection, if any
-    if let Some(connection) = &app.focused_connection {
+    if let Some(connection) = &map_state.focused_connection {
     
-        if let Some(start_note) = app.notes.get(&connection.from_id){
-            draw_connecting_character(start_note, connection.from_side, true, Color::Yellow, frame, app);
+        if let Some(start_note) = map_state.notes.get(&connection.from_id){
+            draw_connecting_character(start_note, connection.from_side, true, Color::Yellow, frame, map_state);
 
             if let Some(end_note_id) = connection.to_id {
-                if let Some(end_note) = app.notes.get(&end_note_id) {
-                    draw_connecting_character(end_note, connection.to_side.unwrap(), true, Color::Yellow, frame, app);
+                if let Some(end_note) = map_state.notes.get(&end_note_id) {
+                    draw_connecting_character(end_note, connection.to_side.unwrap(), true, Color::Yellow, frame, map_state);
                 }
             }
         }
     }
 }
 
-fn render_connections(frame: &mut Frame, app: &App) {
+fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
 
-    for connection in &app.connections {
-        if let Some(start_note) = app.notes.get(&connection.from_id){
+    for connection in &map_state.connections {
+        if let Some(start_note) = map_state.notes.get(&connection.from_id){
             if let Some(end_note_id) = connection.to_id {
-                if let Some(end_note) = app.notes.get(&end_note_id) {
+                if let Some(end_note) = map_state.notes.get(&end_note_id) {
                     let path = calculate_path(
                         start_note, 
                         connection.from_side, 
@@ -422,8 +412,8 @@ fn render_connections(frame: &mut Frame, app: &App) {
                     // The `.any()` iterator is efficient, stopping as soon as the first visible
                     // point is found.
                     let is_visible = path.iter().any(|point| {
-                        let p_x = point.x - app.view_pos.x as isize;
-                        let p_y = point.y - app.view_pos.y as isize;
+                        let p_x = point.x - map_state.view_pos.x as isize;
+                        let p_y = point.y - map_state.view_pos.y as isize;
                         p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize
                     });
 
@@ -433,19 +423,19 @@ fn render_connections(frame: &mut Frame, app: &App) {
                         continue
                     }
 
-                    draw_connection(path, false, connection.color, frame, app);
+                    draw_connection(path, false, connection.color, frame, map_state);
                 }
             }
         }
     }
         
     // Render the "in progress" connection, if any
-    if let Some(focused_connection) = &app.focused_connection {
+    if let Some(focused_connection) = &map_state.focused_connection {
 
-        if let Some(start_note) = app.notes.get(&focused_connection.from_id){
+        if let Some(start_note) = map_state.notes.get(&focused_connection.from_id){
 
             if let Some(end_note_id) = focused_connection.to_id {
-                if let Some(end_note) = app.notes.get(&end_note_id) {
+                if let Some(end_note) = map_state.notes.get(&end_note_id) {
                     let path = calculate_path(
                         start_note, 
                         focused_connection.from_side, 
@@ -454,7 +444,7 @@ fn render_connections(frame: &mut Frame, app: &App) {
                                                              // end note - there is an end side
                     );
 
-                    draw_connection(path, true, Color::Yellow, frame, app);
+                    draw_connection(path, true, Color::Yellow, frame, map_state);
                 }
             }
         }
@@ -463,7 +453,7 @@ fn render_connections(frame: &mut Frame, app: &App) {
 
 // `in_progess` is a bool argument for whether it is the "in progress" (of making/editing)
 // connection being drawn.
-fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame: &mut Frame, app: &App) {
+fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame: &mut Frame, map_state: &MapState) {
     let connection_charset = if in_progress {
         &IN_PROGRESS_CHARSET
     } else {
@@ -474,8 +464,8 @@ fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame: &mu
     // up a connection (.windows(2) - 2 points that make up a line)
     for points in path.windows(2) {
         // Translate first point absolute coordinates to screen coordinates
-        let p1_x = points[0].x - app.view_pos.x as isize;
-        let p1_y = points[0].y - app.view_pos.y as isize;
+        let p1_x = points[0].x - map_state.view_pos.x as isize;
+        let p1_y = points[0].y - map_state.view_pos.y as isize;
 
         // -- Determine line characters and draw them --
         
@@ -548,8 +538,8 @@ fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame: &mu
     for (i, points) in path.windows(3).enumerate() {
         // Translate points absolute coordinates to screen coordinates
         // points[1] - to draw every 2nd point, so all besides the first and last [1, 0, 0, 0, 1]
-        let p_x = points[1].x - app.view_pos.x as isize;
-        let p_y = points[1].y - app.view_pos.y as isize;
+        let p_x = points[1].x - map_state.view_pos.x as isize;
+        let p_y = points[1].y - map_state.view_pos.y as isize;
 
         let incoming = segment_directions[i];
         let outgoing = segment_directions[i + 1];
@@ -590,10 +580,10 @@ fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame: &mu
 
 // `is_editing` argument is to determine whether the function is called from the
 // block that is responosible for drawing the "in progress" connection (being made or edited)
-fn draw_connecting_character(note: &Note, side: Side, is_editing: bool, color: Color, frame: &mut Frame, app: &App) {
+fn draw_connecting_character(note: &Note, side: Side, is_editing: bool, color: Color, frame: &mut Frame, map_state: &MapState) {
     // Set of connection characters for the selected note (depends on the current_mode)
     let connection_charset = if note.selected || is_editing {
-        match app.current_mode {
+        match map_state.current_mode {
             Mode::Visual => &THICK_JUNCTIONS,
             Mode::Insert => &DOUBLE_JUNCTIONS,
             // For Normal and Delete, we use the plain set
@@ -611,8 +601,8 @@ fn draw_connecting_character(note: &Note, side: Side, is_editing: bool, color: C
     };
 
     let p = note.get_connection_point(side);
-    let p_x = p.0 as isize - app.view_pos.x as isize; // connection start point relative x
-    let p_y = p.1 as isize - app.view_pos.y as isize; // connection start point relative y
+    let p_x = p.0 as isize - map_state.view_pos.x as isize; // connection start point relative x
+    let p_y = p.1 as isize - map_state.view_pos.y as isize; // connection start point relative y
 
     if p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize {
         if let Some(cell) = frame.buffer_mut().cell_mut((p_x as u16, p_y as u16)) {

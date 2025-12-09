@@ -7,9 +7,9 @@ mod ui;
 mod utils;
 mod serialization;
 use crate::{
-    app::App,
+    app::{App, Screen},
     input::handle_events,
-    ui::{render},
+    ui::{render_map},
 };
 
 fn main() -> color_eyre::Result<()> {
@@ -26,10 +26,15 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
 
     // Main application loop
     while app.running {
-        // Draw/Redraw the ui
-        if app.needs_clear_and_redraw {
-            terminal.draw(|frame| render(frame, app))?;
-            app.needs_clear_and_redraw = false;
+
+        match &mut app.screen {
+            Screen::Map(map_state) => {
+                if map_state.needs_clear_and_redraw {
+                    terminal.draw(|frame| render_map(frame, map_state))?;
+                    map_state.needs_clear_and_redraw = false;
+                }
+            }
+            _ => {},
         }
 
         // Read terminal events

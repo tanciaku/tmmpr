@@ -15,8 +15,46 @@ use serde::{Serialize, Deserialize};
 pub struct App {
     /// Controls the main application loop. When set to `false`, the application will exit.
     pub running: bool,
-    /// A flag indicating that the screen needs to be cleared and redrawn on the next frame.
+    pub screen: Screen,
+}
+
+impl App {
+    /// Constructs a new instance of `App`.
+    ///
+    /// Initializes the application state with default values, ready for the main loop.
+    pub fn new() -> App {
+        App {
+            running: true, 
+            screen: Screen::Map(MapState::new()),
+        }
+    }
+
+    pub fn setup(&mut self) {
+    }
+    
+    pub fn exit(&mut self) {
+    }
+
+    /// Signals the application to exit the main loop.
+    pub fn quit(&mut self) {
+        self.running = false;
+    }
+
+}
+
+pub enum Screen {
+    Start(StartState),
+    Map(MapState),
+    Settings(SettingsState),
+    Help,
+}
+
+pub struct StartState {
+}
+
+pub struct MapState {
     pub needs_clear_and_redraw: bool,
+    /// A flag indicating that the screen needs to be cleared and redrawn on the next frame.
     /// The current input mode of the application, similar to Vim modes.
     pub current_mode: Mode,
     /// The position of the viewport (camera) on the infinite canvas.
@@ -41,16 +79,11 @@ pub struct App {
     /// Index of the connection being edited, when it was taken out
     /// out the connections vector.
     pub editing_connection_index: Option<usize>,
-    pub current_screen: Screen,
 }
 
-impl App {
-    /// Constructs a new instance of `App`.
-    ///
-    /// Initializes the application state with default values, ready for the main loop.
-    pub fn new() -> App {
-        App {
-            running: true, 
+impl MapState {
+    pub fn new() -> MapState {
+        MapState {
             needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
             view_pos: ViewPos::new(),
@@ -66,16 +99,7 @@ impl App {
             focused_connection: None,
             visual_editing_a_connection: false,
             editing_connection_index: None,
-            current_screen: Screen::Start,
         }
-    }
-
-    pub fn setup(&mut self) {
-    }
-    
-    pub fn exit(&mut self) {
-        // * handle error cases
-        self.save_map().unwrap();
     }
 
     pub fn save_map(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -96,11 +120,6 @@ impl App {
     /// Sets the flag to force a screen clear and redraw on the next frame.
     pub fn clear_and_redraw(&mut self) {
         self.needs_clear_and_redraw = true;
-    }
-
-    /// Signals the application to exit the main loop.
-    pub fn quit(&mut self) {
-        self.running = false;
     }
 
     /// Adds a new, empty note to the canvas.
@@ -148,6 +167,9 @@ impl App {
             note.selected = true;
         }
     }
+}
+
+pub struct SettingsState {
 }
 
 /// Represents the application's current input mode, similar to Vim.
@@ -318,13 +340,6 @@ pub enum Side {
     Right,
 }
 
-pub enum Screen {
-    Start,
-    Map,
-    Settings,
-    Help,
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct MapData {
     view_pos: ViewPos,
@@ -339,20 +354,20 @@ mod tests {
 
     #[test]
     fn test_add_note() {
-        let mut app = App::new();
-        app.screen_width = 80;
-        app.screen_height = 24;
-        app.view_pos.x = 10;
-        app.view_pos.y = 10;
+        let mut map_state = MapState::new();
+        map_state.screen_width = 80;
+        map_state.screen_height = 24;
+        map_state.view_pos.x = 10;
+        map_state.view_pos.y = 10;
 
-        app.add_note();
+        map_state.add_note();
 
-        assert_eq!(app.notes.len(), 1);
-        assert!(matches!(app.current_mode, Mode::Insert));
-        assert_eq!(app.selected_note, 0);
-        assert_eq!(app.next_note_id, 1);
+        assert_eq!(map_state.notes.len(), 1);
+        assert!(matches!(map_state.current_mode, Mode::Insert));
+        assert_eq!(map_state.selected_note, 0);
+        assert_eq!(map_state.next_note_id, 1);
 
-        let note = app.notes.get(&0).unwrap();
+        let note = map_state.notes.get(&0).unwrap();
         assert_eq!(note.x, 10 + 80 / 2); // view_pos.x + screen_width / 2
         assert_eq!(note.y, 10 + 24 / 2); // view_pos.y + screen_height / 2
         assert_eq!(note.content, "");
@@ -361,31 +376,31 @@ mod tests {
 
     #[test]
     fn test_select_note() {
-        let mut app = App::new();
-        app.screen_width = 80;
-        app.screen_height = 24;
+        let mut map_state = MapState::new();
+        map_state.screen_width = 80;
+        map_state.screen_height = 24;
 
         // --- Scenario 1: No notes ---
-        app.select_note();
-        assert_eq!(app.selected_note, 0); // Should remain default
+        map_state.select_note();
+        assert_eq!(map_state.selected_note, 0); // Should remain default
 
         // --- Scenario 2: One note ---
-        app.notes.insert(0, Note::new(50, 20, "".to_string(), false, Color::White));
-        app.select_note();
-        assert_eq!(app.selected_note, 0);
-        assert_eq!(app.notes.get(&0).unwrap().selected, true);
+        map_state.notes.insert(0, Note::new(50, 20, "".to_string(), false, Color::White));
+        map_state.select_note();
+        assert_eq!(map_state.selected_note, 0);
+        assert_eq!(map_state.notes.get(&0).unwrap().selected, true);
 
         // --- Scenario 3: Multiple notes ---
         // Center of screen is (40, 12)
         // Note 0 is at (50, 20), distance = |50-40| + |20-12| = 10 + 8 = 18
         // Note 1 is at (45, 15), distance = |45-40| + |15-12| = 5 + 3 = 8  <-- Closest
         // Note 2 is at (10, 10), distance = |10-40| + |10-12| = 30 + 2 = 32
-        app.notes.insert(1, Note::new(45, 15, "".to_string(), false, Color::White));
-        app.notes.insert(2, Note::new(10, 10, "".to_string(), false, Color::White));
+        map_state.notes.insert(1, Note::new(45, 15, "".to_string(), false, Color::White));
+        map_state.notes.insert(2, Note::new(10, 10, "".to_string(), false, Color::White));
         
-        app.select_note();
-        assert_eq!(app.selected_note, 1);
-        assert_eq!(app.notes.get(&1).unwrap().selected, true);
+        map_state.select_note();
+        assert_eq!(map_state.selected_note, 1);
+        assert_eq!(map_state.notes.get(&1).unwrap().selected, true);
     }
 
     #[test]
