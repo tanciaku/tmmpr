@@ -69,7 +69,7 @@ pub struct MapState {
     /// A collection of all notes in the mind map, keyed by their unique ID.
     pub notes: HashMap<usize, Note>,
     /// The unique ID of the currently selected note.
-    pub selected_note: usize,
+    pub selected_note: Option<usize>,
     pub cursor_pos: usize,
     pub visual_move: bool,
     pub visual_connection: bool,
@@ -91,7 +91,7 @@ impl MapState {
             screen_height: 0,
             next_note_id: 0,
             notes: HashMap::new(),
-            selected_note: 0,
+            selected_note: None,
             cursor_pos: 0,
             visual_move: false,
             visual_connection: false,
@@ -131,7 +131,7 @@ impl MapState {
         let note_x = self.view_pos.x + self.screen_width/2;
         let note_y = self.view_pos.y + self.screen_height/2;
         self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from(""), true, Color::White));
-        self.selected_note = self.next_note_id;
+        self.selected_note = Some(self.next_note_id);
         self.current_mode = Mode::Insert;
 
         self.next_note_id += 1;
@@ -146,25 +146,23 @@ impl MapState {
         let screen_center_x = self.view_pos.x + self.screen_width / 2;
         let screen_center_y = self.view_pos.y + self.screen_height / 2;
         
-        // Start with a large distance and no selected note.
-        let mut closest_note_id = 0;
-        let mut min_distance = usize::MAX;
+        // Use an iterator to find the closest note ID.
+        let closest_note_id_opt = self.notes.iter()
+            .min_by_key(|(_, note)| {
+                // Calculate Manhattan distance: |x1 - x2| + |y1 - y2|.
+                let distance = (note.x as isize - screen_center_x as isize).abs()
+                           + (note.y as isize - screen_center_y as isize).abs();
+                distance as usize
+            })
+            .map(|(id, _)| *id); // We only care about the ID.
 
-        // Find the note closest to the center of the screen
-        for (id, note) in self.notes.iter() {
-            // Calculate Manhattan distance: |x1 - x2| + |y1 - y2|.
-            let distance = (note.x as isize - screen_center_x as isize).abs() 
-                       + (note.y as isize - screen_center_y as isize).abs();
+        // The result is an Option<usize>
+        self.selected_note = closest_note_id_opt;
 
-            if (distance as usize) < min_distance {
-                min_distance = distance as usize;
-                closest_note_id = *id;
+        if let Some(id) = self.selected_note {
+            if let Some(note) = self.notes.get_mut(&id) {
+                note.selected = true;
             }
-        }
-
-        self.selected_note = closest_note_id;
-        if let Some(note) = self.notes.get_mut(&self.selected_note) {
-            note.selected = true;
         }
     }
 }
@@ -364,7 +362,7 @@ mod tests {
 
         assert_eq!(map_state.notes.len(), 1);
         assert!(matches!(map_state.current_mode, Mode::Insert));
-        assert_eq!(map_state.selected_note, 0);
+        assert_eq!(map_state.selected_note, Some(0));
         assert_eq!(map_state.next_note_id, 1);
 
         let note = map_state.notes.get(&0).unwrap();
@@ -382,12 +380,12 @@ mod tests {
 
         // --- Scenario 1: No notes ---
         map_state.select_note();
-        assert_eq!(map_state.selected_note, 0); // Should remain default
+        assert_eq!(map_state.selected_note, None); // Should remain default
 
         // --- Scenario 2: One note ---
         map_state.notes.insert(0, Note::new(50, 20, "".to_string(), false, Color::White));
         map_state.select_note();
-        assert_eq!(map_state.selected_note, 0);
+        assert_eq!(map_state.selected_note, Some(0));
         assert_eq!(map_state.notes.get(&0).unwrap().selected, true);
 
         // --- Scenario 3: Multiple notes ---
@@ -399,7 +397,7 @@ mod tests {
         map_state.notes.insert(2, Note::new(10, 10, "".to_string(), false, Color::White));
         
         map_state.select_note();
-        assert_eq!(map_state.selected_note, 1);
+        assert_eq!(map_state.selected_note, Some(1));
         assert_eq!(map_state.notes.get(&1).unwrap().selected, true);
     }
 

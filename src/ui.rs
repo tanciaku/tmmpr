@@ -147,15 +147,17 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         let mut current_color_name = String::from("");
         let mut current_color = Color::White;
 
-        if let Some(focused_connection) = &map_state.focused_connection {
-            current_color_text = String::from("Selected connection color: ");
-            current_color_name = get_color_name_in_string(focused_connection.color);
-            current_color = focused_connection.color;
-        } else {
-            if let Some(note) = map_state.notes.get(&map_state.selected_note) {
-                current_color_text = String::from("Selected note color: ");
-                current_color_name = get_color_name_in_string(note.color);
-                current_color = note.color;
+        if let Some(selected_note) = &map_state.selected_note {
+            if let Some(focused_connection) = &map_state.focused_connection {
+                current_color_text = String::from("Selected connection color: ");
+                current_color_name = get_color_name_in_string(focused_connection.color);
+                current_color = focused_connection.color;
+            } else {
+                if let Some(note) = map_state.notes.get(selected_note) {
+                    current_color_text = String::from("Selected note color: ");
+                    current_color_name = get_color_name_in_string(note.color);
+                    current_color = note.color;
+                }
             }
         }
 
@@ -289,52 +291,54 @@ fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
             // -- 9. Render the cursor if in Insert Mode on the selected note ---
             // This logic only runs if the app is in Insert mode AND the note currently being
             // drawn is the one that's actively selected.
-            if matches!(map_state.current_mode, Mode::Insert) && *id == map_state.selected_note {
+            if let Some(selected_note) = &map_state.selected_note {
+                if matches!(map_state.current_mode, Mode::Insert) && *id == *selected_note {
 
-                // To calculate the cursor's position, we first need a slice of the text
-                // from the beginning of the note's content up to the cursor's byte index.
-                let text_before_cursor = &note.content[..map_state.cursor_pos];
+                    // To calculate the cursor's position, we first need a slice of the text
+                    // from the beginning of the note's content up to the cursor's byte index.
+                    let text_before_cursor = &note.content[..map_state.cursor_pos];
 
-                // --- Calculate cursor's position RELATIVE to the text inside the note ---
+                    // --- Calculate cursor's position RELATIVE to the text inside the note ---
 
-                // The Y position (row) is the number of newline characters before the cursor.
-                let cursor_y_relative = text_before_cursor.matches('\n').count();
+                    // The Y position (row) is the number of newline characters before the cursor.
+                    let cursor_y_relative = text_before_cursor.matches('\n').count();
 
-                // The X position (column) is the number of characters since the last newline.
-                let cursor_x_relative = match text_before_cursor.rfind('\n') {
-                    // If a newline is found, the X position is the number of characters
-                    // between that newline and the cursor. `c+1` to skip the newline itself.
-                    Some(c) => {
-                        text_before_cursor[c+1..map_state.cursor_pos].chars().count()
+                    // The X position (column) is the number of characters since the last newline.
+                    let cursor_x_relative = match text_before_cursor.rfind('\n') {
+                        // If a newline is found, the X position is the number of characters
+                        // between that newline and the cursor. `c+1` to skip the newline itself.
+                        Some(c) => {
+                            text_before_cursor[c+1..map_state.cursor_pos].chars().count()
+                        }
+                        // If no newline is found, we're on the first line. The X position is
+                        // simply the total number of characters before the cursor.
+                        None => { 
+                            text_before_cursor[0..map_state.cursor_pos].chars().count()
+                        }
+                    };
+
+                    // --- Check if the calculated position is VISIBLE on screen ---
+                    // The cursor is only visible if its calculated row is within the scrolled view.
+                    // `cursor_y_relative` must be at or after the `vertical_scroll` offset.
+                    // It must also be within the visible height of the note area.
+                    // `note_area.height - 2` accounts for the top and bottom borders.
+                    if cursor_y_relative >= vertical_scroll as usize 
+                       && cursor_y_relative <= (note_area.height - 2) as usize {
+
+                        // --- Translate relative coordinates to absolute screen coordinates ---
+                        let final_cursor_x = note_area.x as usize // Start at the note's visible edge
+                            + 1                                   // Add 1 for the left border
+                            + cursor_x_relative                   // Add the cursor's column in the text
+                            - horizontal_scroll as usize;         // Subtract any horizontal text scrolling
+
+                        let final_cursor_y = note_area.y as usize // Start at the note's visible edge
+                            + 1                                   // Add 1 for the top border
+                            + cursor_y_relative                   // Add the cursor's row in the text
+                            - vertical_scroll as usize;           // Subtract any vertical text scrolling
+
+                        // Finally, place the cursor at the calculated position in the frame.
+                        frame.set_cursor_position(Position::new(final_cursor_x as u16, final_cursor_y as u16));
                     }
-                    // If no newline is found, we're on the first line. The X position is
-                    // simply the total number of characters before the cursor.
-                    None => { 
-                        text_before_cursor[0..map_state.cursor_pos].chars().count()
-                    }
-                };
-                
-                // --- Check if the calculated position is VISIBLE on screen ---
-                // The cursor is only visible if its calculated row is within the scrolled view.
-                // `cursor_y_relative` must be at or after the `vertical_scroll` offset.
-                // It must also be within the visible height of the note area.
-                // `note_area.height - 2` accounts for the top and bottom borders.
-                if cursor_y_relative >= vertical_scroll as usize 
-                   && cursor_y_relative <= (note_area.height - 2) as usize {
-
-                    // --- Translate relative coordinates to absolute screen coordinates ---
-                    let final_cursor_x = note_area.x as usize // Start at the note's visible edge
-                        + 1                                   // Add 1 for the left border
-                        + cursor_x_relative                   // Add the cursor's column in the text
-                        - horizontal_scroll as usize;         // Subtract any horizontal text scrolling
-
-                    let final_cursor_y = note_area.y as usize // Start at the note's visible edge
-                        + 1                                   // Add 1 for the top border
-                        + cursor_y_relative                   // Add the cursor's row in the text
-                        - vertical_scroll as usize;           // Subtract any vertical text scrolling
-
-                    // Finally, place the cursor at the calculated position in the frame.
-                    frame.set_cursor_position(Position::new(final_cursor_x as u16, final_cursor_y as u16));
                 }
             }
             
