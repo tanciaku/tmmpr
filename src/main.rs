@@ -9,7 +9,7 @@ mod serialization;
 use crate::{
     app::{App, Screen},
     input::handle_events,
-    ui::{render_map},
+    ui::{render_start, render_map},
 };
 
 fn main() -> color_eyre::Result<()> {
@@ -28,6 +28,12 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     while app.running {
 
         match &mut app.screen {
+            Screen::Start(start_state) => {
+                if start_state.needs_clear_and_redraw {
+                    terminal.draw(|frame| render_start(frame, start_state))?;
+                    start_state.needs_clear_and_redraw = false;
+                }
+            }
             Screen::Map(map_state) => {
                 if map_state.needs_clear_and_redraw {
                     terminal.draw(|frame| render_map(frame, map_state))?;

@@ -25,14 +25,8 @@ impl App {
     pub fn new() -> App {
         App {
             running: true, 
-            screen: Screen::Map(MapState::new()),
+            screen: Screen::Start(StartState::new()),
         }
-    }
-
-    pub fn setup(&mut self) {
-    }
-    
-    pub fn exit(&mut self) {
     }
 
     /// Signals the application to exit the main loop.
@@ -50,6 +44,19 @@ pub enum Screen {
 }
 
 pub struct StartState {
+    pub needs_clear_and_redraw: bool,
+}
+
+impl StartState {
+    pub fn new() -> StartState {
+        StartState {
+            needs_clear_and_redraw: true,
+        }
+    }
+    
+    pub fn clear_and_redraw(&mut self) {
+        self.needs_clear_and_redraw = true;
+    }
 }
 
 pub struct MapState {

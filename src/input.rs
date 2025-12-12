@@ -1,7 +1,7 @@
 //! This module handles terminal events, focusing on keyboard input
 //! to control the application's state and behavior.
 
-use crate::app::{App, Connection, MapState, Mode, Screen, Side};
+use crate::app::{App, Connection, MapState, StartState, Mode, Screen, Side};
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use std::cmp::Reverse;
@@ -11,24 +11,47 @@ use ratatui::style::Color;
 pub fn handle_events(app: &mut App) -> Result<()> {
     // Poll for an event with a timeout of 50ms. This is the main "tick" rate.
     if event::poll(std::time::Duration::from_millis(50))? {
-        match &mut app.screen {
-            Screen::Map(map_state) => {
-                // Read the event and dispatch to the appropriate handler.
-                match event::read()? {
-                    Event::Key(key) if key.kind == KeyEventKind::Press => { // Handle keyboard input
-                        let app_action = map_kh(map_state, key);
-                        if app_action == AppAction::Quit { app.quit(); }
-                    }
-                    Event::Mouse(_) => {}
-                    // Redraw the UI if terminal window resized
-                    Event::Resize(_, _) => { map_state.needs_clear_and_redraw = true; }
-                    _ => {}
+        // Read the event
+        match event::read()? {
+            // Handle keyboard input
+            Event::Key(key) if key.kind == KeyEventKind::Press => {
+                // Dispatch it to the appropriate handler.
+                let app_action = match &mut app.screen {
+                    Screen::Start(start_state) => start_kh(start_state, key),
+                    Screen::Map(map_state) => map_kh(map_state, key),
+                    _ => AppAction::Continue,
+                };
+
+                if app_action == AppAction::Quit { app.quit(); }
+            }
+
+            // Redraw the UI if terminal window resized
+            Event::Resize(_, _) => {
+                match &mut app.screen {
+                    Screen::Start(start_state) => start_state.needs_clear_and_redraw = true,
+                    Screen::Map(map_state) => map_state.needs_clear_and_redraw = true,
+                    _ => {},
                 }
             }
-            _ => {},
+
+            _ => {}
         }
     }
     Ok(())
+}
+        
+// * Will have "Insert" mode for entering preferred path (paths?)
+/// Key handling for the Start Screen
+fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
+    match key.code {
+
+        KeyCode::Char('q') => return AppAction::Quit,
+
+        _ => {}
+    }
+    
+    start_state.clear_and_redraw();
+    AppAction::Continue
 }
 
 /// Key handling for the Map Screen
@@ -46,16 +69,6 @@ fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         Mode::Delete => map_delete_kh(map_state, key),
     }
 }
-
-// * Will have "Insert" mode for entering preferred path (paths?)
-//fn start_kh(app: &mut App, key: KeyEvent) {
-//    match key.code {
-//
-//        KeyCode::Char('q') => app.quit(),
-//
-//        _ => {}
-//    }
-//}
 
 #[derive(PartialEq)]
 pub enum AppAction {

@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{Mode, SignedRect, Note, Side, MapState};
+use crate::app::{MapState, StartState, Mode, Note, Side, SignedRect};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
@@ -19,35 +19,35 @@ const PLAIN_JUNCTIONS: [&str; 4] = ["┴", "┬", "┤", "├"];
 const THICK_JUNCTIONS: [&str; 4] = ["┻", "┳", "┫", "┣"];
 const DOUBLE_JUNCTIONS: [&str; 4] = ["╩", "╦", "╣", "╠"];
 
-//fn render_start(frame: &mut Frame, start_state) {
-//    // Clear the frame before drawing anything new.
-//    frame.render_widget(Clear, frame.area());
-//
-//    let start_text_area = Layout::default()
-//        .direction(Direction::Vertical)
-//        .constraints(vec![
-//            Constraint::Percentage(35),
-//            Constraint::Percentage(30),
-//            Constraint::Percentage(35),
-//        ]).split(frame.area());
-//    
-//    let start_menu = vec![
-//        Line::from("tmmpr  v0.1.0").alignment(Alignment::Center),
-//        //Line::from(""),
-//        //Line::from(""),
-//        //Line::from(""),
-//        //Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
-//    ];
-//        
-//    let start_menu: Vec<ListItem> = start_menu
-//        .into_iter()
-//        .map(ListItem::new)
-//        .collect();
-//
-//    let start_menu = List::new(start_menu);
-//
-//    frame.render_widget(start_menu, start_text_area[1]);
-//}
+pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
+    // Clear the frame before drawing anything new.
+    frame.render_widget(Clear, frame.area());
+
+    let start_text_area = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(vec![
+            Constraint::Percentage(35),
+            Constraint::Percentage(30),
+            Constraint::Percentage(35),
+        ]).split(frame.area());
+    
+    let start_menu = vec![
+        Line::from("tmmpr  v0.1.0").alignment(Alignment::Center),
+        //Line::from(""),
+        //Line::from(""),
+        //Line::from(""),
+        //Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
+    ];
+        
+    let start_menu: Vec<ListItem> = start_menu
+        .into_iter()
+        .map(ListItem::new)
+        .collect();
+
+    let start_menu = List::new(start_menu);
+
+    frame.render_widget(start_menu, start_text_area[1]);
+}
 
 pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {
     // Clear the frame before drawing anything new.
