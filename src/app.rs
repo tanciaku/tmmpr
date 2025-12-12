@@ -170,7 +170,6 @@ impl MapState {
         }
     }
 
-    // 2 places?
     pub fn stash_connection(&mut self) {
         // Take the connection out, leaving None in its place.
         if let Some(connection) = self.focused_connection.take() {
@@ -191,7 +190,6 @@ impl MapState {
         }
     }
 
-    // 2 places?
     pub fn take_out_connection(&mut self, index: usize) {
         let connection_removed = self.connections.remove(index);
         self.focused_connection = Some(connection_removed);
@@ -208,8 +206,6 @@ impl MapState {
             index_vec.retain(|c| c != &connection_removed);
         }
     }
-
-    // delete associated connections - 1 place, could do inside match arm
 }
 
 pub struct SettingsState {

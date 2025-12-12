@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{App, Mode, SignedRect, Note, Side, MapState};
+use crate::app::{Mode, SignedRect, Note, Side, MapState};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
@@ -344,37 +344,23 @@ fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
             
             // -- 10. Render this note's connecting characters --
             // To fix the visual bug where connection characters were drawn over the notes "above",
-            // this logic now runs *after* each note is drawn. It iterates through all
-            // connections and checks if the current note is a part of any of them. If it
-            // is, it draws the appropriate character (`┬`, `┴`, etc.) on top of the border.
+            // this logic now runs *after* each note is drawn. It looks up the note's id in the
+            // connection_index hash map and loops through the connections associated with that id.
+            // Draws the appropriate character (`┬`, `┴`, etc.) on top of the border.
             // This entire block is inside the `if let` for visible notes as a key
             // optimization, avoiding any of this work for off-screen notes.
-            //
-            // NOTE: This approach of iterating through all connections for every visible
-            // note is not the most performant solution, but it is acceptable for now.
-            // The work inside the loop is minimal (mostly cheap `if` checks), so the
-            // performance impact should be negligible for a reasonable number of notes.
-            // A truly optimized solution would require a more complex data structure for
-            // connections (like a HashMap for O(1) lookups). This can be revisited if
-            // it ever becomes a noticeable bottleneck in the future.
 
-            // Draw the connecting characters. (A note can have multiple connecting characters)
-            for connection in &map_state.connections {
-                if let Some(start_note) = map_state.notes.get(&connection.from_id){
-                    // Check if the current note is the *starting* point of the connection.
-                    // If it is, draw the character on the "from" side.
-                    if *id == connection.from_id {
-                        draw_connecting_character(start_note, connection.from_side, false, border_color, frame, map_state);
-                    }
-
-                    // Then, check if the current note is the *ending* point of the connection.
-                    // If it is, draw the character on the "to" side.
-                    if let Some(end_note_id) = connection.to_id {
-                        if let Some(end_note) = map_state.notes.get(&end_note_id) {
-                            if *id == end_note_id {
-                                draw_connecting_character(end_note, connection.to_side.unwrap(), false, border_color, frame, map_state);
-                            }
-                        }
+            // Get the connections associated with the note's id
+            if let Some(connection_vec) = map_state.connection_index.get(id) {
+                // Loop through the connections in the connection vector that are 
+                // associated with the note's id
+                // NOTE: if there are multiple connections to the same side - it draws
+                //        the connecting character that many times (not a performance issue whatsoever tho)
+                for connection in connection_vec {
+                    if id == &connection.from_id {
+                        draw_connecting_character(note, connection.from_side, false, border_color, frame, map_state);
+                    } else {
+                        draw_connecting_character(note, connection.to_side.unwrap(), false, border_color, frame, map_state);
                     }
                 }
             }
