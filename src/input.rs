@@ -49,6 +49,14 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
 
         KeyCode::Char('q') => return AppAction::Quit,
 
+        KeyCode::Char('k') => start_state.navigate_start_buttons("k"),
+
+        KeyCode::Char('j') => start_state.navigate_start_buttons("j"),
+
+        KeyCode::Enter => {
+
+        }
+
         _ => {}
     }
     

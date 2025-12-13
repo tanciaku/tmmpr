@@ -3,6 +3,7 @@
 
 use crate::states::{MapState, StartState};
 use crate::states::map::{Note, Mode, Side, SignedRect};
+use crate::states::start::{SelectedStartButton};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
@@ -24,20 +25,35 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
     // Clear the frame before drawing anything new.
     frame.render_widget(Clear, frame.area());
 
+    // Determine the area to draw the text in
     let start_text_area = Layout::default()
         .direction(Direction::Vertical)
         .constraints(vec![
             Constraint::Percentage(35),
-            Constraint::Percentage(30),
-            Constraint::Percentage(35),
+            Constraint::Min(12),
+            Constraint::Percentage(45),
+            Constraint::Min(1),
         ]).split(frame.area());
     
+    // Replace the styling logic with:
+    let create_select_style = SelectedStartButton::CreateSelect.get_style(&start_state.selected_button);
+    let recent1_style = SelectedStartButton::Recent1.get_style(&start_state.selected_button);
+    let recent2_style = SelectedStartButton::Recent2.get_style(&start_state.selected_button);
+    let recent3_style = SelectedStartButton::Recent3.get_style(&start_state.selected_button);
+
     let start_menu = vec![
         Line::from("tmmpr  v0.1.0").alignment(Alignment::Center),
-        //Line::from(""),
-        //Line::from(""),
-        //Line::from(""),
-        //Line::from(Span::styled("<Enter>", Style::new().bg(Color::White).fg(Color::Black))).alignment(Alignment::Center)
+        Line::from(""),
+        Line::from(""),
+        Line::from(""),
+        Line::from(Span::styled("[ Create a new map / Select existing map ]", create_select_style)).alignment(Alignment::Center),
+        Line::from(""),
+        Line::from(""),
+        Line::from("Recents:").alignment(Alignment::Center),
+        Line::from(""),
+        Line::from(Span::styled("[ ]", recent1_style)).alignment(Alignment::Center),
+        Line::from(Span::styled("[ ]", recent2_style)).alignment(Alignment::Center),
+        Line::from(Span::styled("[ ]", recent3_style)).alignment(Alignment::Center),
     ];
         
     let start_menu: Vec<ListItem> = start_menu
@@ -47,7 +63,10 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
 
     let start_menu = List::new(start_menu);
 
+    let info_text = Line::from("q - quit      Enter - select button      k - go up       j - go down").alignment(Alignment::Center);
+
     frame.render_widget(start_menu, start_text_area[1]);
+    frame.render_widget(info_text, start_text_area[3]);
 }
 
 pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {
