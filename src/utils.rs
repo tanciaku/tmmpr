@@ -1,4 +1,4 @@
-use crate::app::{Note, Side};
+use crate::states::map::{Note, Side};
 use ratatui::style::Color;
 
 pub fn calculate_path(

@@ -1,7 +1,9 @@
 //! This module handles terminal events, focusing on keyboard input
 //! to control the application's state and behavior.
 
-use crate::app::{App, Connection, MapState, StartState, Mode, Screen, Side};
+use crate::app::{App, Screen,};
+use crate::states::{MapState, StartState};
+use crate::states::map::{Connection, Mode, Side};
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use std::cmp::Reverse;

@@ -1,7 +1,8 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::app::{MapState, StartState, Mode, Note, Side, SignedRect};
+use crate::states::{MapState, StartState};
+use crate::states::map::{Note, Mode, Side, SignedRect};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
