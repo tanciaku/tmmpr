@@ -2,6 +2,7 @@
 //! to control the application's state and behavior.
 
 use crate::app::{App, Screen,};
+use crate::states::start::{SelectedStartButton, FocusedInputBox};
 use crate::states::{MapState, StartState};
 use crate::states::map::{Connection, Mode, Side};
 use color_eyre::Result;
@@ -45,6 +46,69 @@ pub fn handle_events(app: &mut App) -> Result<()> {
 // * Will have "Insert" mode for entering preferred path (paths?)
 /// Key handling for the Start Screen
 fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
+    // Take all input if in input_path mode
+    if start_state.input_path {
+
+        // Keys independent of which input box is in focus
+        match key.code {
+            KeyCode::Esc => {
+                start_state.input_path = false;
+                start_state.input_path_string = None;
+                start_state.input_path_name = None;
+            }
+            _ => {}
+        }
+
+        // Which input box is in focus?
+        match start_state.focused_input_box {
+            FocusedInputBox::InputBox1 => {
+                if let Some(path) = &mut start_state.input_path_string {
+                    match key.code {
+                        KeyCode::Char(c) => {
+                            if path.len() < 46 {
+                                path.push(c);
+                            }
+                        }
+                        KeyCode::Backspace => {
+                            if path.len() > 0 {
+                                path.pop();
+                            }
+                        }
+                        KeyCode::Enter => {
+
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            FocusedInputBox::InputBox2 => {
+                if let Some(map_name) = &mut start_state.input_path_name {
+                    match key.code {
+                        KeyCode::Char(c) => {
+                            if map_name.len() < 26 {
+                                map_name.push(c);
+                            }
+                        }
+                        KeyCode::Backspace => {
+                            if map_name.len() > 0 {
+                                map_name.pop();
+                            }
+                        }
+                        KeyCode::Enter => {
+
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+
+        // match on .save_map result
+
+        start_state.clear_and_redraw();
+        return AppAction::Continue
+    }
+
     match key.code {
 
         KeyCode::Char('q') => return AppAction::Quit,
@@ -54,7 +118,14 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
         KeyCode::Char('j') => start_state.navigate_start_buttons("j"),
 
         KeyCode::Enter => {
-
+            match start_state.selected_button {
+                SelectedStartButton::CreateSelect => {
+                    start_state.input_path = true;
+                    start_state.input_path_string = Some(String::new());
+                    start_state.input_path_name = Some(String::new());
+                }
+                _ => {}
+            }
         }
 
         _ => {}

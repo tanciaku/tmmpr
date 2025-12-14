@@ -3,7 +3,7 @@
 
 use crate::states::{MapState, StartState};
 use crate::states::map::{Note, Mode, Side, SignedRect};
-use crate::states::start::{SelectedStartButton};
+use crate::states::start::{FocusedInputBox, SelectedStartButton};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
@@ -67,6 +67,108 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
 
     frame.render_widget(start_menu, start_text_area[1]);
     frame.render_widget(info_text, start_text_area[3]);
+
+    // If entering a path for the map, also render this over everything else
+    if start_state.input_path {
+        // Set the area for the input menu block
+        let input_menu_area = Layout::default() // Split the available area vertically
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Fill(1),
+                Constraint::Length(20),
+                Constraint::Fill(1),
+            ]).split(frame.area()); 
+        let input_menu_area = Layout::default() // Split the previous again horizontally
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Fill(1),
+                Constraint::Length(70),
+                Constraint::Fill(1),
+            ]).split(input_menu_area[1]);
+        
+        // Split the area that's gonna cointain the input menu contents (text and input boxes)
+        let input_menu_areas = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Min(2),
+                Constraint::Length(1), // Text 1
+                Constraint::Length(1), // Text 2
+                Constraint::Length(3), // Input box 1 [3]
+                Constraint::Length(2),
+                Constraint::Length(1), // Text 3 [5]
+                Constraint::Length(3), // Input box 2 [6]
+                Constraint::Min(2),
+            ]).split(input_menu_area[1]);
+        
+        // Assign the areas for the input boxes
+        let input_box_area_1 = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Fill(1),
+                Constraint::Length(50),
+                Constraint::Fill(1),
+            ]).split(input_menu_areas[3]);
+        let input_box_area_2 = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![
+                Constraint::Fill(1),
+                Constraint::Length(50),
+                Constraint::Fill(1),
+            ]).split(input_menu_areas[6]);
+
+
+        // Create the text lines
+        let text_line_1 = Paragraph::new(Line::from("The path to - store the map file at / the map file is stored at").alignment(Alignment::Center));
+        let text_line_2 = Paragraph::new(Line::from("(e.g.  /home/user  /home/user/maps):").alignment(Alignment::Center));
+        let text_line_3 = Paragraph::new(Line::from("Enter the name for/of the map:").alignment(Alignment::Center));
+
+        // Clear the area and draw the bordered block
+        frame.render_widget(Clear, input_menu_area[1]);
+        frame.render_widget(Block::bordered(), input_menu_area[1]);
+
+        // Render the text
+        frame.render_widget(text_line_1, input_menu_areas[1]);
+        frame.render_widget(text_line_2, input_menu_areas[2]);
+        frame.render_widget(text_line_3, input_menu_areas[5]);
+
+
+        // Determine the block styles to use for input boxes
+        let input_box_1_block = FocusedInputBox::InputBox1.get_style(&start_state.focused_input_box);
+        let input_box_2_block = FocusedInputBox::InputBox2.get_style(&start_state.focused_input_box);
+
+        // Create and render the input boxes
+        if let Some(input_path_string) = &start_state.input_path_string {
+            let input_box_1 = Paragraph::new(Line::from(input_path_string.as_str())).block(input_box_1_block);
+            frame.render_widget(input_box_1, input_box_area_1[1]);
+        }
+        if let Some(input_path_name) = &start_state.input_path_name {
+            let input_box_2 = Paragraph::new(Line::from(input_path_name.as_str())).block(input_box_2_block);
+            frame.render_widget(input_box_2, input_box_area_2[1]);
+        }
+
+        // Draw the cursor for the selected input box
+        match start_state.focused_input_box {
+            FocusedInputBox::InputBox1 => {
+                if let Some(input_path_string) = &start_state.input_path_string {
+                    // x coordinate on screen of the input_box_area_1, 
+                    //      +the length of the inputted string (path), +1 to clear border
+                    let x = input_box_area_1[1].x + input_path_string.len() as u16 + 1;
+                    // y coordinate on screen of the input_box_area_1, +1 to clear border
+                    let y = input_box_area_1[1].y + 1;
+
+                    frame.set_cursor_position(Position::new(x, y));
+                }
+            }
+            FocusedInputBox::InputBox2 => {
+                if let Some(input_path_name) = &start_state.input_path_name {
+                    let x = input_box_area_2[1].x + input_path_name.len() as u16 + 1;
+                    let y = input_box_area_2[1].y + 1;
+
+                    frame.set_cursor_position(Position::new(x, y));
+                }
+            }
+        }
+    }
 }
 
 pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {

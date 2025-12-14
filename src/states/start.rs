@@ -1,9 +1,17 @@
 
-use ratatui::style::{Color, Style};
+use ratatui::{
+    style::{Color, Style},
+    widgets::{Block, BorderType},
+};
 
 pub struct StartState {
     pub needs_clear_and_redraw: bool,
     pub selected_button: SelectedStartButton,
+    /// Is user entering a path for the map?
+    pub input_path: bool,
+    pub focused_input_box: FocusedInputBox,
+    pub input_path_string: Option<String>,
+    pub input_path_name: Option<String>,
 }
 
 impl StartState {
@@ -11,6 +19,10 @@ impl StartState {
         StartState {
             needs_clear_and_redraw: true,
             selected_button: SelectedStartButton::CreateSelect,
+            input_path: false,
+            focused_input_box: FocusedInputBox::InputBox1,
+            input_path_string: None,
+            input_path_name: None,
         }
     }
     
@@ -54,15 +66,41 @@ pub enum SelectedStartButton {
     Recent3,
 }
 
+#[derive(PartialEq)]
+pub enum FocusedInputBox {
+    InputBox1,
+    InputBox2,
+}
+
 impl SelectedStartButton {
     /// Determines the style based on if the button is selected
     pub fn get_style(&self, selected_button: &SelectedStartButton) -> Style {
         if self == selected_button {
-            // Selected button style
+            // Selected button
             Style::new().bg(Color::White).fg(Color::Black)
         } else {
-            // Default style
+            // Default
             Style::new()
         }
     }
-}    
+}
+
+#[allow(mismatched_lifetime_syntaxes)]
+impl FocusedInputBox {
+    /// Determines the block style based on if the input box is in focus
+    pub fn get_style(&self, focused_input_box: &FocusedInputBox) -> Block {
+        if self == focused_input_box {
+            // Input box is in focus
+            Block::bordered()
+                .border_style(Color::Blue)
+                .border_type(BorderType::Double)
+        } else {
+            // Default
+            Block::bordered()
+                .border_style(Color::White)
+                .border_type(BorderType::Plain)
+        }
+    }
+}
+
+
