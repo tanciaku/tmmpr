@@ -7,7 +7,7 @@ use crate::{
 };
 use crate::states::{
     MapState, StartState,
-    start::{SelectedStartButton, FocusedInputBox, ErrMsg},
+    start::{SelectedStartButton, FocusedInputBox},
     map::{Connection, Mode, Side},
 };
 use color_eyre::Result;
@@ -33,8 +33,8 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                 match app_action {
                     AppAction::Continue => {}
                     AppAction::Quit => app.quit(),
-                    AppAction::ReadMapFile(path) => load_map(app, path),
-                    AppAction::WriteMapFile(path) => save_map_with_context(app, path),
+                    AppAction::ReadMapFile(path) => load_map(app, &path),
+                    AppAction::WriteMapFile(path) => save_map_with_context(app, &path),
                 }
             }
 
@@ -190,13 +190,16 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         KeyCode::Char('L') => map_state.view_pos.x += 5,
 
         // --- Note Manipulation ---
-        // Add note
+        // Add a note
         KeyCode::Char('a') => map_state.add_note(),
-        // Select note (first selects closest to the center of the screen)
+        // Select note (selects the closest one to the center of the screen)
         KeyCode::Char('v') => {
             map_state.select_note();
             map_state.current_mode = Mode::Visual;
         }
+
+        // Save the map file
+        KeyCode::Char('s') => return AppAction::WriteMapFile(map_state.file_write_path.clone()),
 
         _ => {}
     }

@@ -1,10 +1,5 @@
 
-use std::{
-    io,
-    fs,
-    path::PathBuf,
-};
-
+use std::fs;
 use ratatui::{
     style::{Color, Style},
     widgets::{Block, BorderType},
@@ -168,3 +163,9 @@ pub enum ErrMsg {
     FileRead,
     FileWrite,
 }
+
+//pub struct RecentPaths {
+//    pub recent_path_1: Option<String>,
+//    pub recent_path_2: Option<String>,
+//    pub recent_path_3: Option<String>,
+//}

@@ -1,5 +1,5 @@
 
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
 
@@ -35,10 +35,14 @@ pub struct MapState {
     /// Index of the connection being edited, when it was taken out
     /// out the connections vector.
     pub editing_connection_index: Option<usize>,
+    /// The path provided by the user to write the map data to
+    /// e.g /home/user/maps/map_0.json
+    pub file_write_path: PathBuf,
+    pub show_notification: Option<Notification>,
 }
 
 impl MapState {
-    pub fn new() -> MapState {
+    pub fn new(file_write_path: PathBuf) -> MapState {
         MapState {
             needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
@@ -56,6 +60,8 @@ impl MapState {
             focused_connection: None,
             visual_editing_a_connection: false,
             editing_connection_index: None,
+            file_write_path,
+            show_notification: None,
         }
     }
 
@@ -324,13 +330,19 @@ pub struct MapData {
     pub connection_index: HashMap<usize, Vec<Connection>>,
 }
 
+/// Which notification to display at the bottom of the screen
+pub enum Notification {
+    SaveSuccess,
+    SaveFail,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_add_note() {
-        let mut map_state = MapState::new();
+        let mut map_state = MapState::new(PathBuf::new());
         map_state.screen_width = 80;
         map_state.screen_height = 24;
         map_state.view_pos.x = 10;
@@ -352,7 +364,7 @@ mod tests {
 
     #[test]
     fn test_select_note() {
-        let mut map_state = MapState::new();
+        let mut map_state = MapState::new(PathBuf::new());
         map_state.screen_width = 80;
         map_state.screen_height = 24;
 

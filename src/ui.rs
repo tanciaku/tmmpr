@@ -2,7 +2,7 @@
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
 use crate::states::{MapState, StartState};
-use crate::states::map::{Note, Mode, Side, SignedRect};
+use crate::states::map::{Note, Mode, Side, SignedRect, Notification};
 use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::{
@@ -318,6 +318,24 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         ]).alignment(Alignment::Center);
 
         frame.render_widget(current_color_widget, middle_bar);
+    }
+
+    // Render a notification message if need to
+    if let Some(notification) = &map_state.show_notification {
+        let notification_message = match notification {
+            Notification::SaveSuccess => {
+                Line::from(Span::styled("Map file saved successfully", Style::new().fg(Color::Green))).alignment(Alignment::Center)
+            }
+            Notification::SaveFail => {
+                Line::from(Span::styled("Error saving the map file", Style::new().fg(Color::Red))).alignment(Alignment::Center)
+            }
+        };
+        
+        // Render the message once
+        frame.render_widget(notification_message, middle_bar);
+
+        // Reset what notification to show
+        map_state.show_notification = None;
     }
 }
 
