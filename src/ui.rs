@@ -3,7 +3,7 @@
 
 use crate::states::{MapState, StartState};
 use crate::states::map::{Note, Mode, Side, SignedRect};
-use crate::states::start::{FocusedInputBox, SelectedStartButton};
+use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
@@ -63,7 +63,7 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
 
     let start_menu = List::new(start_menu);
 
-    let info_text = Line::from("q - quit      Enter - select button      k - go up       j - go down").alignment(Alignment::Center);
+    let info_text = Line::from("q - quit      Enter - choose option      k - go up       j - go down").alignment(Alignment::Center);
 
     frame.render_widget(start_menu, start_text_area[1]);
     frame.render_widget(info_text, start_text_area[3]);
@@ -97,6 +97,8 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
                 Constraint::Length(2),
                 Constraint::Length(1), // Text 3 [5]
                 Constraint::Length(3), // Input box 2 [6]
+                Constraint::Length(1),
+                Constraint::Length(1), // Text 4 (Error msg) [8]
                 Constraint::Min(2),
             ]).split(input_menu_area[1]);
         
@@ -118,13 +120,18 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
 
 
         // Create the text lines
-        let text_line_1 = Paragraph::new(Line::from("The path to - store the map file at / the map file is stored at").alignment(Alignment::Center));
-        let text_line_2 = Paragraph::new(Line::from("(e.g.  /home/user  /home/user/maps):").alignment(Alignment::Center));
-        let text_line_3 = Paragraph::new(Line::from("Enter the name for/of the map:").alignment(Alignment::Center));
+        let text_line_1 = Paragraph::new(Line::from("Directory path for your map file:").alignment(Alignment::Center));
+        let text_line_2 = Paragraph::new(Line::from("(Relative to your home directory, e.g. maps/):").alignment(Alignment::Center));
+        let text_line_3 = Paragraph::new(Line::from("Enter the map name:").alignment(Alignment::Center));
 
         // Clear the area and draw the bordered block
         frame.render_widget(Clear, input_menu_area[1]);
         frame.render_widget(Block::bordered(), input_menu_area[1]);
+
+        // Clear and update the help text area to input menu controls
+        let info_text = Line::from("Esc - Cancel      Enter - confirm field").alignment(Alignment::Center);
+        frame.render_widget(Clear, start_text_area[3]);
+        frame.render_widget(info_text, start_text_area[3]);
 
         // Render the text
         frame.render_widget(text_line_1, input_menu_areas[1]);
@@ -165,6 +172,28 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
                     let y = input_box_area_2[1].y + 1;
 
                     frame.set_cursor_position(Position::new(x, y));
+                }
+            }
+        }
+
+        // Display the error message if need to
+        if let Some(err) = &start_state.display_err_msg {
+            match err {
+                ErrMsg::DirFind => {
+                  let error_text = Line::from(Span::styled("Error finding the home directory", Style::new().fg(Color::Red))).alignment(Alignment::Center);
+                  frame.render_widget(error_text, input_menu_areas[8]);
+                }
+                ErrMsg::DirCreate => {
+                  let error_text = Line::from(Span::styled("Error creating the directory", Style::new().fg(Color::Red))).alignment(Alignment::Center);
+                  frame.render_widget(error_text, input_menu_areas[8]);
+                }
+                ErrMsg::FileWrite => {
+                  let error_text = Line::from(Span::styled("Error creating the map file", Style::new().fg(Color::Red))).alignment(Alignment::Center);
+                  frame.render_widget(error_text, input_menu_areas[8]);
+                }
+                ErrMsg::FileRead => {
+                  let error_text = Line::from(Span::styled("Error reading the map file", Style::new().fg(Color::Red))).alignment(Alignment::Center);
+                  frame.render_widget(error_text, input_menu_areas[8]);
                 }
             }
         }

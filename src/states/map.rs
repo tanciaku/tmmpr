@@ -1,5 +1,5 @@
 
-use std::{fs, collections::HashMap};
+use std::collections::HashMap;
 use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
 
@@ -11,8 +11,10 @@ pub struct MapState {
     /// The position of the viewport (camera) on the infinite canvas.
     /// Position can only be positive.
     pub view_pos: ViewPos,
+    /// Store screen dimensions in the MapState to be able to access them in modules besides ui.rs
     /// The current width of the terminal screen in cells. Updated on every frame.
     pub screen_width: usize,
+    /// Store screen dimensions in the MapState to be able to access them in modules besides ui.rs
     /// The current height of the terminal screen in cells. Updated on every frame.
     pub screen_height: usize,
     /// A counter to ensure each new note gets a unique ID.
@@ -55,21 +57,6 @@ impl MapState {
             visual_editing_a_connection: false,
             editing_connection_index: None,
         }
-    }
-
-    pub fn save_map(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let map_data = MapData {
-            view_pos: self.view_pos.clone(),
-            next_note_id: self.next_note_id,
-            notes: self.notes.clone(),
-            connections: self.connections.clone(),
-        };
-
-        let json_string = serde_json::to_string_pretty(&map_data)?;
-
-        fs::write("map.json", json_string)?;
-
-        Ok(())
     }
 
     /// Sets the flag to force a screen clear and redraw on the next frame.
@@ -327,12 +314,14 @@ pub enum Side {
     Right,
 }
 
+/// A type for reading and writing relevant data from MapState
 #[derive(Serialize, Deserialize)]
 pub struct MapData {
-    view_pos: ViewPos,
-    next_note_id: usize,
-    notes: HashMap<usize, Note>,
-    connections: Vec<Connection>,
+    pub view_pos: ViewPos,
+    pub next_note_id: usize,
+    pub notes: HashMap<usize, Note>,
+    pub connections: Vec<Connection>,
+    pub connection_index: HashMap<usize, Vec<Connection>>,
 }
 
 #[cfg(test)]

@@ -1,13 +1,18 @@
 //! This module handles terminal events, focusing on keyboard input
 //! to control the application's state and behavior.
 
-use crate::app::{App, Screen,};
-use crate::states::start::{SelectedStartButton, FocusedInputBox};
-use crate::states::{MapState, StartState};
-use crate::states::map::{Connection, Mode, Side};
+use crate::{
+    app::{App, Screen},
+    utils::{save_map_with_context, load_map}
+};
+use crate::states::{
+    MapState, StartState,
+    start::{SelectedStartButton, FocusedInputBox, ErrMsg},
+    map::{Connection, Mode, Side},
+};
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
-use std::cmp::Reverse;
+use std::{cmp::Reverse, path::PathBuf};
 use ratatui::style::Color;
 
 /// Reads the terminal events.
@@ -25,7 +30,12 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                     _ => AppAction::Continue,
                 };
 
-                if app_action == AppAction::Quit { app.quit(); }
+                match app_action {
+                    AppAction::Continue => {}
+                    AppAction::Quit => app.quit(),
+                    AppAction::ReadMapFile(path) => load_map(app, path),
+                    AppAction::WriteMapFile(path) => save_map_with_context(app, path),
+                }
             }
 
             // Redraw the UI if terminal window resized
@@ -42,11 +52,11 @@ pub fn handle_events(app: &mut App) -> Result<()> {
     }
     Ok(())
 }
-        
-// * Will have "Insert" mode for entering preferred path (paths?)
+
 /// Key handling for the Start Screen
 fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
-    // Take all input if in input_path mode
+    // Take all input if in the Input Menu screen
+    // (Entering a path for the map file)
     if start_state.input_path {
 
         // Keys independent of which input box is in focus
@@ -75,7 +85,7 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
                             }
                         }
                         KeyCode::Enter => {
-
+                            start_state.focused_input_box = FocusedInputBox::InputBox2;
                         }
                         _ => {}
                     }
@@ -95,7 +105,8 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
                             }
                         }
                         KeyCode::Enter => {
-
+                            start_state.clear_and_redraw();
+                            return start_state.submit_path()
                         }
                         _ => {}
                     }
@@ -103,12 +114,11 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
             }
         }
 
-        // match on .save_map result
-
         start_state.clear_and_redraw();
         return AppAction::Continue
     }
 
+    // If in the start menu
     match key.code {
 
         KeyCode::Char('q') => return AppAction::Quit,
@@ -155,6 +165,8 @@ fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 pub enum AppAction {
     Continue,
     Quit,
+    WriteMapFile(PathBuf),
+    ReadMapFile(PathBuf),
 }
 
 /// Key handling for Normal Mode in the Map Screen

@@ -1,8 +1,16 @@
 
+use std::{
+    io,
+    fs,
+    path::PathBuf,
+};
+
 use ratatui::{
     style::{Color, Style},
     widgets::{Block, BorderType},
 };
+
+use crate::{input::AppAction};
 
 pub struct StartState {
     pub needs_clear_and_redraw: bool,
@@ -12,6 +20,9 @@ pub struct StartState {
     pub focused_input_box: FocusedInputBox,
     pub input_path_string: Option<String>,
     pub input_path_name: Option<String>,
+    /// Which error message to display in case handling
+    /// the map file fails
+    pub display_err_msg: Option<ErrMsg>,
 }
 
 impl StartState {
@@ -23,6 +34,7 @@ impl StartState {
             focused_input_box: FocusedInputBox::InputBox1,
             input_path_string: None,
             input_path_name: None,
+            display_err_msg: None,
         }
     }
     
@@ -55,8 +67,54 @@ impl StartState {
             SelectedStartButton::Recent3 => SelectedStartButton::Recent3,
         }
     }
-}
 
+    pub fn submit_path(&mut self) -> AppAction {
+        // Get the provided path and name
+        // Both fields will always be Some in this scenario, so it's safe.
+        let path = &self.input_path_string.as_ref().unwrap(); // provided path (relative to home path, e.g. maps/)
+        let name = &self.input_path_name.as_ref().unwrap(); // provided map file name
+
+        // Get the user's home directory path 
+        //  or display an error and stop there
+        let home_path = match home::home_dir() {
+            Some(path) => path,
+            None => {
+                self.handle_submit_error(ErrMsg::DirFind);
+                return AppAction::Continue
+            }
+        };
+
+        // Make the path to the file's directory (e.g. /home/user/maps/)
+        let map_path = home_path.join(path);
+
+        // Create the directory if it doesn't exist
+        //  or display an error and stop there
+        if let Err(_) = fs::create_dir_all(&map_path) {
+            self.handle_submit_error(ErrMsg::DirCreate);
+            return AppAction::Continue
+        };
+
+        // Make the full path to the file (e.g. /home/user/maps/map)
+        let map_file_path = map_path.join(name).with_extension("json");
+
+        // -- 2. File Creation (Conditional) --
+        // Load the file if it exits:
+        if map_file_path.exists() {
+            AppAction::ReadMapFile(map_file_path)
+        } else { // Otherwise create it
+            AppAction::WriteMapFile(map_file_path)
+        }
+    }         
+    
+    /// Helper function for clearing input fields and displaying error messages
+    /// for the input menu
+    pub fn handle_submit_error(&mut self, err_msg: ErrMsg) {
+        self.input_path_string = Some(String::new()); // Reset fields
+        self.input_path_name = Some(String::new()); // Reset fields 
+        self.focused_input_box = FocusedInputBox::InputBox1; // Switch back to the first input box
+        self.display_err_msg = Some(err_msg); // Show corresponding error message
+    }
+}             
 
 #[derive(PartialEq)]
 pub enum SelectedStartButton {
@@ -103,4 +161,10 @@ impl FocusedInputBox {
     }
 }
 
-
+/// Which error message to display when accessing/creating a map fails
+pub enum ErrMsg {
+    DirFind,
+    DirCreate,
+    FileRead,
+    FileWrite,
+}
