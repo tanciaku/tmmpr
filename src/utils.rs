@@ -596,72 +596,69 @@ pub fn read_map_data(path: &Path) -> Result<MapData, Box<dyn std::error::Error>>
     Ok(map_data)
 }
 
-/// Saves map data to file with context-aware behavior.
+/// Creates a new map file.
 /// 
-/// When called from the Start screen: Creates a new map file with default MapState values.
-/// When called from the Map screen: Updates the existing map file with current state.
-/// 
-/// Handles file write errors by displaying appropriate error messages to the user
-/// and prevents screen transitions on failure.
-pub fn save_map_with_context(app: &mut App, path: &Path) {
-    match &app.screen {
-        Screen::Start(_) => {
-            // Create a new Map State for creating a new map file
-            let map_state = MapState::new(path.to_path_buf()); // Only clone when storing
-            // Take the default values from that to write to the file
-            let map_data = MapData {
-                view_pos: map_state.view_pos,
-                next_note_id: map_state.next_note_id,
-                notes: map_state.notes,
-                connections: map_state.connections,
-                connection_index: map_state.connection_index,
-            };
+/// Handles file write error by displaying appropriate error message to the user.
+pub fn create_map_file(app: &mut App, path: &Path) {
+    // Create a new Map State for creating a new map file
+    let map_state = MapState::new(path.to_path_buf()); // Only clone when storing
+    // Take the default values from that to write to the file
+    let map_data = MapData {
+        view_pos: map_state.view_pos,
+        next_note_id: map_state.next_note_id,
+        notes: map_state.notes,
+        connections: map_state.connections,
+        connection_index: map_state.connection_index,
+    };
 
-            // Attempt to write that data to the file
-            match write_map_data(path, &map_data) {
-                Ok(_) => {}
-                Err(_) => {
-                    // 
-                    if let Screen::Start(start_state) = &mut app.screen {
-                        start_state.handle_submit_error(ErrMsg::FileWrite);
-                    }
-                    return // Stop here without switching screens.
+    // Attempt to write that data to the file
+    match write_map_data(path, &map_data) {
+        Ok(_) => {}
+        Err(_) => {
+            // 
+            if let Screen::Start(start_state) = &mut app.screen {
+                start_state.handle_submit_error(ErrMsg::FileWrite);
+            }
+            return // Stop here without switching screens.
+        }
+    }
+
+    // If successful in the previous step -
+    // switch to the Map Screen, with the newly created Map State
+    app.screen = Screen::Map(MapState::new(path.to_path_buf())); // Only clone when storing
+}
+
+/// Saves map data to a file.
+/// 
+/// Handles file write error by displaying appropriate error message to the user.
+pub fn save_map_file(app: &mut App, path: &Path) {
+    if let Screen::Map(map_state) = &app.screen {
+        // Get the relevant values from the current Map State
+        let map_data = MapData {
+            view_pos: map_state.view_pos.clone(), // necessary
+            next_note_id: map_state.next_note_id,
+            notes: map_state.notes.clone(), // necessary
+            connections: map_state.connections.clone(), // necessary
+            connection_index: map_state.connection_index.clone(), // necessary
+        };
+
+        // Attempt to write map data to the file
+        match write_map_data(path, &map_data) {
+            Ok(_) => {
+                // Show successfully saved the map file message and redraw
+                if let Screen::Map(map_state) = &mut app.screen {
+                    map_state.show_notification = Some(Notification::SaveSuccess);
+                    map_state.needs_clear_and_redraw = true;
                 }
             }
-
-            // If successful in the previous step -
-            // switch to the Map Screen, with the newly created Map State
-            app.screen = Screen::Map(MapState::new(path.to_path_buf())); // Only clone when storing
-        }
-        Screen::Map(map_state) => {
-            // Get the relevant values from the current Map State
-            let map_data = MapData {
-                view_pos: map_state.view_pos.clone(), // necessary
-                next_note_id: map_state.next_note_id,
-                notes: map_state.notes.clone(), // necessary
-                connections: map_state.connections.clone(), // necessary
-                connection_index: map_state.connection_index.clone(), // necessary
-            };
-
-            // Attempt to write map data to the file
-            match write_map_data(path, &map_data) {
-                Ok(_) => {
-                    // Show successfully saved the map file message and redraw
-                    if let Screen::Map(map_state) = &mut app.screen {
-                        map_state.show_notification = Some(Notification::SaveSuccess);
-                        map_state.needs_clear_and_redraw = true;
-                    }
+            Err(_) => {
+                // Show failed saving the map file message and redraw
+                if let Screen::Map(map_state) = &mut app.screen {
+                    map_state.show_notification = Some(Notification::SaveFail);
+                    map_state.needs_clear_and_redraw = true;
                 }
-                Err(_) => {
-                    // Show failed saving the map file message and redraw
-                    if let Screen::Map(map_state) = &mut app.screen {
-                        map_state.show_notification = Some(Notification::SaveFail);
-                        map_state.needs_clear_and_redraw = true;
-                    }
-                }
-            }            
-        }
-        _ => {}
+            }
+        }            
     }
 }
 
@@ -673,7 +670,7 @@ pub fn save_map_with_context(app: &mut App, path: &Path) {
 /// 
 /// If the file cannot be read or contains invalid data, the function will show
 /// an error message via the Start screen's error handling and prevent screen transition.
-pub fn load_map(app: &mut App, path: &Path) {
+pub fn load_map_file(app: &mut App, path: &Path) {
     // Initialize a default MapState that will be populated with loaded data.
     // This ensures we have valid defaults for any fields not present in the file.
     let mut map_state = MapState::new(path.to_path_buf()); // Only clone when storing

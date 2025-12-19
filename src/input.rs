@@ -3,7 +3,7 @@
 
 use crate::{
     app::{App, Screen},
-    utils::{save_map_with_context, load_map}
+    utils::{create_map_file,save_map_file, load_map_file}
 };
 use crate::states::{
     MapState, StartState,
@@ -33,8 +33,9 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                 match app_action {
                     AppAction::Continue => {}
                     AppAction::Quit => app.quit(),
-                    AppAction::ReadMapFile(path) => load_map(app, &path),
-                    AppAction::WriteMapFile(path) => save_map_with_context(app, &path),
+                    AppAction::CreateMapFile(path) => create_map_file(app, &path),
+                    AppAction::SaveMapFile(path) => save_map_file(app, &path),
+                    AppAction::LoadMapFile(path) => load_map_file(app, &path),
                 }
             }
 
@@ -165,8 +166,9 @@ fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 pub enum AppAction {
     Continue,
     Quit,
-    WriteMapFile(PathBuf),
-    ReadMapFile(PathBuf),
+    CreateMapFile(PathBuf),
+    SaveMapFile(PathBuf),
+    LoadMapFile(PathBuf),
 }
 
 /// Key handling for Normal Mode in the Map Screen
@@ -199,7 +201,7 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         }
 
         // Save the map file
-        KeyCode::Char('s') => return AppAction::WriteMapFile(map_state.file_write_path.clone()),
+        KeyCode::Char('s') => return AppAction::SaveMapFile(map_state.file_write_path.clone()),
 
         _ => {}
     }

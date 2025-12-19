@@ -95,9 +95,9 @@ impl StartState {
         // -- 2. File Creation (Conditional) --
         // Load the file if it exits:
         if map_file_path.exists() {
-            AppAction::ReadMapFile(map_file_path)
+            AppAction::LoadMapFile(map_file_path)
         } else { // Otherwise create it
-            AppAction::WriteMapFile(map_file_path)
+            AppAction::CreateMapFile(map_file_path)
         }
     }         
     
