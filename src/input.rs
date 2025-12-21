@@ -64,8 +64,9 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
         match key.code {
             KeyCode::Esc => {
                 start_state.input_path = false;
-                start_state.input_path_string = None;
-                start_state.input_path_name = None;
+                start_state.focused_input_box = FocusedInputBox::InputBox1; // if already isn't
+                start_state.input_path_string = None; // reset input fields
+                start_state.input_path_name = None; // reset input fields
             }
             _ => {}
         }
@@ -107,7 +108,7 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
                         }
                         KeyCode::Enter => {
                             start_state.clear_and_redraw();
-                            return start_state.submit_path()
+                            return start_state.submit_path(None)
                         }
                         _ => {}
                     }
@@ -132,6 +133,7 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
             match start_state.selected_button {
                 SelectedStartButton::CreateSelect => {
                     start_state.input_path = true;
+                    start_state.display_err_msg = None; // if already isn't
                     start_state.input_path_string = Some(String::new());
                     start_state.input_path_name = Some(String::new());
                 }
@@ -140,6 +142,33 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
         }
 
         _ => {}
+    }
+
+    // If able to use the "recent paths" functionality (no errors)
+    if let Ok(recent_paths) = &start_state.recent_paths {
+        match key.code {
+            KeyCode::Enter => {
+                match start_state.selected_button {
+                    SelectedStartButton::Recent1 => {
+                        if let Some(path) = &recent_paths.recent_path_1 {
+                            return start_state.submit_path(Some(path.to_path_buf()))
+                        }
+                    }
+                    SelectedStartButton::Recent2 => {
+                        if let Some(path) = &recent_paths.recent_path_2 {
+                            return start_state.submit_path(Some(path.to_path_buf()))
+                        }
+                    }
+                    SelectedStartButton::Recent3 => {
+                        if let Some(path) = &recent_paths.recent_path_3 {
+                            return start_state.submit_path(Some(path.to_path_buf()))
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
     }
     
     start_state.clear_and_redraw();

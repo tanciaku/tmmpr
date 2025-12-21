@@ -578,22 +578,24 @@ fn u_shapes(start: Point, start_off: Point, end: Point, end_off: Point) -> Vec<P
     ]
 }
 
-/// Writes the relevant Map Data to a file
-pub fn write_map_data(path: &Path, map_data: &MapData) -> Result<(), Box<dyn std::error::Error>> {
-    let json_string = serde_json::to_string_pretty(map_data)?;
-
+/// Writes the relevant data to a file
+pub fn write_json_data<T>(path: &Path, data: &T) -> Result<(), Box<dyn std::error::Error>>
+where
+    T: serde::Serialize,
+{
+    let json_string = serde_json::to_string_pretty(data)?;
     fs::write(path, json_string)?;
-
     Ok(())
 }
 
-/// Reads the relevant Map Data from a file
-pub fn read_map_data(path: &Path) -> Result<MapData, Box<dyn std::error::Error>> {
+/// Reads the relevant data from a file
+pub fn read_json_data<T>(path: &Path) -> Result<T, Box<dyn std::error::Error>>
+where
+    T: serde::de::DeserializeOwned,
+{
     let json_string = fs::read_to_string(path)?;
-    
-    let map_data: MapData = serde_json::from_str(&json_string)?;
-
-    Ok(map_data)
+    let data: T = serde_json::from_str(&json_string)?;
+    Ok(data)
 }
 
 /// Creates a new map file.
@@ -612,14 +614,25 @@ pub fn create_map_file(app: &mut App, path: &Path) {
     };
 
     // Attempt to write that data to the file
-    match write_map_data(path, &map_data) {
-        Ok(_) => {}
-        Err(_) => {
-            // 
-            if let Screen::Start(start_state) = &mut app.screen {
-                start_state.handle_submit_error(ErrMsg::FileWrite);
+    if let Err(_) = write_json_data(path, &map_data) {
+        // Display an error
+        if let Screen::Start(start_state) = &mut app.screen {
+            start_state.handle_submit_error(ErrMsg::FileWrite);
+        }
+        return // Stop here without switching screens.
+    }
+
+    // Adding the path to the newly created map file to recent_paths
+    if let Screen::Start(start_state) = &mut app.screen { // guaranteed
+        // If recent_paths functionality available
+        if let Ok(recent_paths) = &mut start_state.recent_paths {
+            // Add the file path to recent_paths (if not already there)
+            if !recent_paths.contains_path(path) {
+                recent_paths.add(path.to_path_buf());
+
+                // Save the recent_paths file
+                recent_paths.save();
             }
-            return // Stop here without switching screens.
         }
     }
 
@@ -643,7 +656,7 @@ pub fn save_map_file(app: &mut App, path: &Path) {
         };
 
         // Attempt to write map data to the file
-        match write_map_data(path, &map_data) {
+        match write_json_data(path, &map_data) {
             Ok(_) => {
                 // Show successfully saved the map file message and redraw
                 if let Screen::Map(map_state) = &mut app.screen {
@@ -675,7 +688,7 @@ pub fn load_map_file(app: &mut App, path: &Path) {
     // This ensures we have valid defaults for any fields not present in the file.
     let mut map_state = MapState::new(path.to_path_buf()); // Only clone when storing
 
-    match read_map_data(path) {
+    match read_json_data::<MapData>(path) {
         Ok(map_data) => {
             // Successfully loaded data from file - now populate the MapState
             // with the saved values, overriding the defaults
@@ -687,11 +700,29 @@ pub fn load_map_file(app: &mut App, path: &Path) {
         }
         Err(_) => {
             // Failed to read or parse the map file - show error to user
-            // and stay on the Start screen to allow them to try again
+            // and stay on the Start screen/Input menu to allow them to try again
+            //
+            // If an error occurs when using the "recent paths" functionality (in the start screen)
+            // handle_submit_error will also unnecessarily reset the input fields, even though
+            // the user is not in the input menu (affects nothing).
             if let Screen::Start(start_state) = &mut app.screen {
                 start_state.handle_submit_error(ErrMsg::FileRead);
             }
             return; // Early return prevents screen transition
+        }
+    }
+
+    // Adding the path to the map file to recent_paths
+    if let Screen::Start(start_state) = &mut app.screen { // guaranteed
+        // If recent_paths functionality available
+        if let Ok(recent_paths) = &mut start_state.recent_paths {
+            // Add the file path to recent_paths (if not already there)
+            if !recent_paths.contains_path(path) {
+                recent_paths.add(path.to_path_buf());
+
+                // Save the recent_paths file
+                recent_paths.save();
+            }
         }
     }
 

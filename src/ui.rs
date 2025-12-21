@@ -35,12 +35,44 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
             Constraint::Min(1),
         ]).split(frame.area());
     
-    // Replace the styling logic with:
+    // Styling for buttons (whether selected or not)
     let create_select_style = SelectedStartButton::CreateSelect.get_style(&start_state.selected_button);
     let recent1_style = SelectedStartButton::Recent1.get_style(&start_state.selected_button);
     let recent2_style = SelectedStartButton::Recent2.get_style(&start_state.selected_button);
     let recent3_style = SelectedStartButton::Recent3.get_style(&start_state.selected_button);
 
+    // "Recents:", "Error ... recents" message
+    let recents_text = match &start_state.display_err_msg {
+        Some(_) => {
+            Line::from(Span::styled("File doesn't exist or there was an error reading it", Style::new().fg(Color::Red))).alignment(Alignment::Center)
+        }
+        None => {
+            match &start_state.recent_paths {
+                Ok(_) => Line::from("Recents:").alignment(Alignment::Center),
+                Err(ErrMsg::DirFind) => Line::from(Span::styled("Error finding the home directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                Err(ErrMsg::DirCreate) => Line::from(Span::styled("Error creating the config directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                Err(ErrMsg::FileRead) => Line::from(Span::styled("Error reading recent_paths file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                Err(ErrMsg::FileWrite) => Line::from(Span::styled("Error creating recent_paths file", Style::new().fg(Color::Red))).alignment(Alignment::Center), 
+            }
+        }
+    };
+
+    // "Paths" texts
+    let (recent1_text, recent2_text, recent3_text) = if let Ok(recent_paths) = &start_state.recent_paths {
+        (
+            recent_paths.recent_path_1.as_ref().map_or(String::new(), |p| p.to_string_lossy().into_owned()),
+            recent_paths.recent_path_2.as_ref().map_or(String::new(), |p| p.to_string_lossy().into_owned()),
+            recent_paths.recent_path_3.as_ref().map_or(String::new(), |p| p.to_string_lossy().into_owned()),
+        )
+    } else {
+        (String::new(), String::new(), String::new())
+    };
+    // Format them like so: [ /home/user/... ]
+    let recent1_text = format!("[ {} ]", recent1_text);
+    let recent2_text = format!("[ {} ]", recent2_text);
+    let recent3_text = format!("[ {} ]", recent3_text);
+
+    
     let start_menu = vec![
         Line::from("tmmpr  v0.1.0").alignment(Alignment::Center),
         Line::from(""),
@@ -49,11 +81,11 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
         Line::from(Span::styled("[ Create a new map / Select existing map ]", create_select_style)).alignment(Alignment::Center),
         Line::from(""),
         Line::from(""),
-        Line::from("Recents:").alignment(Alignment::Center),
+        recents_text,
         Line::from(""),
-        Line::from(Span::styled("[ ]", recent1_style)).alignment(Alignment::Center),
-        Line::from(Span::styled("[ ]", recent2_style)).alignment(Alignment::Center),
-        Line::from(Span::styled("[ ]", recent3_style)).alignment(Alignment::Center),
+        Line::from(Span::styled(recent1_text, recent1_style)).alignment(Alignment::Center),
+        Line::from(Span::styled(recent2_text, recent2_style)).alignment(Alignment::Center),
+        Line::from(Span::styled(recent3_text, recent3_style)).alignment(Alignment::Center),
     ];
         
     let start_menu: Vec<ListItem> = start_menu
