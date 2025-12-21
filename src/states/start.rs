@@ -76,10 +76,11 @@ impl StartState {
                     AppAction::LoadMapFile(path)
                 } else {
                     self.display_err_msg = Some(ErrMsg::FileRead);
+                    self.clear_and_redraw();
                     AppAction::Continue
                 }
             }
-            // Entering a new path
+            // Entered a new path
             None => {
                 // Get the provided path and name
                 // Both fields will always be Some in this scenario, so it's safe.

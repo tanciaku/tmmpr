@@ -38,5 +38,4 @@ pub enum Screen {
     Start(StartState),
     Map(MapState),
     Settings(SettingsState),
-    Help,
 }

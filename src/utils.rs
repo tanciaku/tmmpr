@@ -660,6 +660,9 @@ pub fn save_map_file(app: &mut App, path: &Path) {
             Ok(_) => {
                 // Show successfully saved the map file message and redraw
                 if let Screen::Map(map_state) = &mut app.screen {
+                    // Can exit the app - now that have successfully saved the map file.
+                    map_state.can_exit = true;
+
                     map_state.show_notification = Some(Notification::SaveSuccess);
                     map_state.needs_clear_and_redraw = true;
                 }

@@ -2,8 +2,7 @@
 //! to control the application's state and behavior.
 
 use crate::{
-    app::{App, Screen},
-    utils::{create_map_file,save_map_file, load_map_file}
+    app::{App, Screen}, utils::{create_map_file, load_map_file, save_map_file}
 };
 use crate::states::{
     MapState, StartState,
@@ -177,17 +176,28 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
 
 /// Key handling for the Map Screen
 fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
-    match map_state.current_mode {
-        // Normal mode is for navigation and high-level commands.
-        Mode::Normal => map_normal_kh(map_state, key),
 
+    // Normal mode is for navigation and high-level commands.
+    // (First, check if the user wants to exit the application or switch screens.
+    if let Mode::Normal = map_state.current_mode {
+        return map_normal_kh(map_state, key)
+    }
+    
+    // Any action perfomed on the MapState must be saved to the map file 
+    // or discarded - before the user can switch screens or exit the application.
+    map_state.can_exit = false;
+
+    match map_state.current_mode {
         // Visual mode for selections.
         Mode::Visual => map_visual_kh(map_state, key),
 
         // Insert mode is for editing the content of a note.
         Mode::Insert => map_insert_kh(map_state, key),
     
+        // Delete mode is a confirmation to delete a note
         Mode::Delete => map_delete_kh(map_state, key),
+
+        _ => AppAction::Continue,
     }
 }
 
@@ -202,10 +212,44 @@ pub enum AppAction {
 
 /// Key handling for Normal Mode in the Map Screen
 fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
-    match key.code {
-        // --- Application Commands ---
-        KeyCode::Char('q') => return AppAction::Quit,
+    
+    // Confirm discard unsaved changes menu (takes all input if triggered)
+    if map_state.confirm_discard_menu {
+        match key.code {
+            // Cancel
+            KeyCode::Esc => {
+                map_state.confirm_discard_menu = false;
+                map_state.needs_clear_and_redraw = true;
+            }
+            // Confirm exiting and discarding unsaved changes
+            KeyCode::Char('q') => {
+                return AppAction::Quit
+            }
+            _ => {}
+        }
 
+        return AppAction::Continue // Stop here
+    } 
+
+    
+    // --- Map Screen Normal Mode Commands ---
+    
+    // First, check if the user wants to exit
+    if let KeyCode::Char('q') = key.code {
+        // Can exit the app if saved the changes
+        if map_state.can_exit {
+            return AppAction::Quit
+        } else { // Otherwise show the confirmation to discard unsaved changes menu
+            map_state.confirm_discard_menu = true;
+            map_state.needs_clear_and_redraw = true;
+        }
+    }
+
+    // Any action perfomed on the MapState must be saved to the map file 
+    // or discarded, before the user can switch screens or exit the application.
+    map_state.can_exit = false;
+
+    match key.code {
         // --- Viewport Navigation ---
         // Move left
         KeyCode::Char('h') => map_state.view_pos.x = map_state.view_pos.x.saturating_sub(1),

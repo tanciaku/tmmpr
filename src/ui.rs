@@ -369,6 +369,50 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         // Reset what notification to show
         map_state.show_notification = None;
     }
+
+    // Render a confirmation menu to discard changes if need to
+    if map_state.confirm_discard_menu {
+        // Define the area for the menu
+        let confirm_discard_menu_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Length(1),
+                Constraint::Length(7),
+            ])
+            .split(frame.area());
+
+        // Clear the area and render an empty bordered block
+        frame.render_widget(Clear, confirm_discard_menu_area[1]);
+        frame.render_widget(Clear, confirm_discard_menu_area[2]);
+        frame.render_widget(Block::bordered(), confirm_discard_menu_area[2]);
+
+        // Define the text areas for inside the menu area
+        let confirm_discard_menu_text_areas = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(2),
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Length(2),
+            ])
+            .split(confirm_discard_menu_area[2]);
+        
+        // Make the text itself
+        let line_1 = Line::from("Discard unsaved changes to this map?").alignment(Alignment::Center);
+        let line_2 = Line::from(
+            vec![
+                Span::styled("[ ESC ] - Cancel", Style::new().fg(Color::Green)), 
+                Span::raw("      "),
+                Span::styled("[ q ] - Confirm discard and exit", Style::new().fg(Color::Red)), 
+
+            ]).alignment(Alignment::Center);
+        
+        // Render the text
+        frame.render_widget(line_1, confirm_discard_menu_text_areas[1]);
+        frame.render_widget(line_2, confirm_discard_menu_text_areas[3]);
+    }
 }
 
 /// Renders the main canvas where notes are displayed.

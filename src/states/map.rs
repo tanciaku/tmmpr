@@ -39,6 +39,12 @@ pub struct MapState {
     /// e.g /home/user/maps/map_0.json
     pub file_write_path: PathBuf,
     pub show_notification: Option<Notification>,
+    /// Determines whether the user has saved the changes
+    /// to the map file, before switching screens or exiting.
+    pub can_exit: bool,
+    /// Whether to render a menu for confirming to discard 
+    /// unsaved changes
+    pub confirm_discard_menu: bool,
 }
 
 impl MapState {
@@ -62,6 +68,8 @@ impl MapState {
             editing_connection_index: None,
             file_write_path,
             show_notification: None,
+            can_exit: true,
+            confirm_discard_menu: false,
         }
     }
 
