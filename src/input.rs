@@ -450,21 +450,22 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     // and not currently making a new one
                     if map_state.visual_editing_a_connection {
 
-                        // 2. Stash the Current Connection
+                        // Stash the Current Connection
                         map_state.stash_connection();
-
                         // Index of the connection just stashed
                         let start_index = map_state.editing_connection_index.unwrap();
-                        let mut next_index_option = None; // Start by assuming we haven't found it.
+
+                        // Start by assuming we haven't found it.
+                        let mut next_index_option = None;
 
                         // Only search the latter part of the vector if it's safe to do so.
-                        if start_index + 1 < map_state.connections.len() {
-                            next_index_option = map_state.connections[start_index + 1..]
+                        if start_index < map_state.connections.len() {
+                            next_index_option = map_state.connections[start_index..]
                                 .iter()
                                 .position(|c| {
                                     selected_note == c.from_id || selected_note == c.to_id.unwrap()
                                 })
-                                .map(|i| i + start_index + 1);
+                                .map(|i| i + start_index);
                         }
 
                         // If that connection was last in the vector or no match was found after it -
