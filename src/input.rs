@@ -175,19 +175,11 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
 }
 
 /// Key handling for the Map Screen
-fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
-
-    // Normal mode is for navigation and high-level commands.
-    // (First, check if the user wants to exit the application or switch screens.
-    if let Mode::Normal = map_state.current_mode {
-        return map_normal_kh(map_state, key)
-    }
-    
-    // Any action perfomed on the MapState must be saved to the map file 
-    // or discarded - before the user can switch screens or exit the application.
-    map_state.can_exit = false;
-
+fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
     match map_state.current_mode {
+        // Normal mode is for navigation and high-level commands.
+        Mode::Normal => map_normal_kh(map_state, key),
+
         // Visual mode for selections.
         Mode::Visual => map_visual_kh(map_state, key),
 
@@ -196,8 +188,6 @@ fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     
         // Delete mode is a confirmation to delete a note
         Mode::Delete => map_delete_kh(map_state, key),
-
-        _ => AppAction::Continue,
     }
 }
 
@@ -229,42 +219,66 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         }
 
         return AppAction::Continue // Stop here
-    } 
-
+    }
     
     // --- Map Screen Normal Mode Commands ---
-    
-    // First, check if the user wants to exit
-    if let KeyCode::Char('q') = key.code {
-        // Can exit the app if saved the changes
-        if map_state.can_exit {
-            return AppAction::Quit
-        } else { // Otherwise show the confirmation to discard unsaved changes menu
-            map_state.confirm_discard_menu = true;
-            map_state.needs_clear_and_redraw = true;
-        }
-    }
-
-    // Any action perfomed on the MapState must be saved to the map file 
-    // or discarded, before the user can switch screens or exit the application.
-    map_state.can_exit = false;
-
     match key.code {
+
+        // Exiting the app
+        KeyCode::Char('q') => {
+            // Can exit the app if saved the changes
+            if map_state.can_exit {
+                return AppAction::Quit
+            } else { // Otherwise show the confirmation to discard unsaved changes menu
+                map_state.confirm_discard_menu = true;
+                map_state.needs_clear_and_redraw = true;
+            }
+        }
+
+        // Save the map file
+        KeyCode::Char('s') => return AppAction::SaveMapFile(map_state.file_write_path.clone()),
+
         // --- Viewport Navigation ---
+
         // Move left
-        KeyCode::Char('h') => map_state.view_pos.x = map_state.view_pos.x.saturating_sub(1),
-        KeyCode::Char('H') => map_state.view_pos.x = map_state.view_pos.x.saturating_sub(5),
+        KeyCode::Char('h') => {
+            map_state.view_pos.x = map_state.view_pos.x.saturating_sub(1);
+            map_state.can_exit = false;
+        }
+        KeyCode::Char('H') => {
+            map_state.view_pos.x = map_state.view_pos.x.saturating_sub(5);
+            map_state.can_exit = false;
+        }
         // Move down
-        KeyCode::Char('j') => map_state.view_pos.y += 1,
-        KeyCode::Char('J') => map_state.view_pos.y += 5,
+        KeyCode::Char('j') => {
+            map_state.view_pos.y += 1;
+            map_state.can_exit = false;
+        }
+        KeyCode::Char('J') => {
+            map_state.view_pos.y += 5;
+            map_state.can_exit = false;
+        }
         // Move up
-        KeyCode::Char('k') => map_state.view_pos.y = map_state.view_pos.y.saturating_sub(1),
-        KeyCode::Char('K') => map_state.view_pos.y = map_state.view_pos.y.saturating_sub(5),
+        KeyCode::Char('k') => {
+            map_state.view_pos.y = map_state.view_pos.y.saturating_sub(1);
+            map_state.can_exit = false;
+        }
+        KeyCode::Char('K') => {
+            map_state.view_pos.y = map_state.view_pos.y.saturating_sub(5);
+            map_state.can_exit = false;
+        }
         // Move right 
-        KeyCode::Char('l') => map_state.view_pos.x += 1,
-        KeyCode::Char('L') => map_state.view_pos.x += 5,
+        KeyCode::Char('l') => {
+            map_state.view_pos.x += 1;
+            map_state.can_exit = false;
+        }
+        KeyCode::Char('L') => {
+            map_state.view_pos.x += 5;
+            map_state.can_exit = false;
+        }
 
         // --- Note Manipulation ---
+
         // Add a note
         KeyCode::Char('a') => map_state.add_note(),
         // Select note (selects the closest one to the center of the screen)
@@ -272,12 +286,10 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             map_state.select_note();
             map_state.current_mode = Mode::Visual;
         }
-
-        // Save the map file
-        KeyCode::Char('s') => return AppAction::SaveMapFile(map_state.file_write_path.clone()),
-
+    
         _ => {}
     }
+
     // Any action in Normal mode triggers a redraw.
     map_state.clear_and_redraw();
 
@@ -286,7 +298,8 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
 fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
     if let Some(selected_note) = map_state.selected_note {
-        // If Move State for Visual Mode is enabled 
+
+        // -- If Move State for Visual Mode is enabled --
         if map_state.visual_move {
             // Get the currently selected note.
             if let Some(note) = map_state.notes.get_mut(&selected_note) {
@@ -314,6 +327,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
                     // Move the note up
                     KeyCode::Char('k') => {
+                        map_state.can_exit = false;
                         // First, update the note's y-coordinate.
                         note.y = note.y.saturating_sub(1);
                         // Then, check if the top edge of the note is now above the top edge of the viewport.
@@ -323,6 +337,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         }
                     }
                     KeyCode::Char('K') => {
+                        map_state.can_exit = false;
                         note.y = note.y.saturating_sub(5);
                         if note.y < map_state.view_pos.y {
                             map_state.view_pos.y = map_state.view_pos.y.saturating_sub(5);
@@ -331,6 +346,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
                     // Move the note down
                     KeyCode::Char('j') => {
+                        map_state.can_exit = false;
                         // First, update the note's y-coordinate.
                         note.y += 1; 
                         // Check if the bottom edge of the note is below the visible screen area.
@@ -341,6 +357,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         }
                     }
                     KeyCode::Char('J') => {
+                        map_state.can_exit = false;
                         note.y += 5;
                         if note.y as isize + note_height as isize > map_state.view_pos.y as isize + map_state.screen_height as isize - 2 {
                             map_state.view_pos.y += 5;
@@ -349,6 +366,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
                     // Move the note left
                     KeyCode::Char('h') => {
+                        map_state.can_exit = false;
                         // First, update the note's x-coordinate.
                         note.x = note.x.saturating_sub(1);
                         // Then, check if the left edge of the note is now to the left of the viewport's edge.
@@ -358,6 +376,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         }
                     }
                     KeyCode::Char('H') => {
+                        map_state.can_exit = false;
                         note.x = note.x.saturating_sub(5);
                         if note.x < map_state.view_pos.x {
                             map_state.view_pos.x = map_state.view_pos.x.saturating_sub(5);
@@ -366,6 +385,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
                     // Move the note right 
                     KeyCode::Char('l') => {
+                        map_state.can_exit = false;
                         // First, update the note's x-coordinate.
                         note.x += 1;
                         // Check if the right edge of the note is past the right edge of the screen.
@@ -375,6 +395,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         }
                     }
                     KeyCode::Char('L') => {
+                        map_state.can_exit = false;
                         note.x += 5;
                         if note.x + note_width as usize > map_state.view_pos.x + map_state.screen_width {
                             map_state.view_pos.x += 5;
@@ -390,6 +411,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             }
         }
 
+        // -- If Connection State for Visual Mode is enabled -- 
         if map_state.visual_connection {
             match key.code {
                 // Switch back to Visual Mode Normal State
@@ -402,7 +424,9 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     map_state.editing_connection_index = None; // (if already isn't)
                 }
 
+                // Rotating the start/end side of the connection 
                 KeyCode::Char('r') => {
+                    map_state.can_exit = false;
                     if let Some(focused_connection) = map_state.focused_connection.as_mut() {
                         if focused_connection.from_id == selected_note {
                             focused_connection.from_side = cycle_side(focused_connection.from_side);
@@ -417,6 +441,9 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     }
                 }
 
+                // Cycling through the available connections (to select the one the
+                // user wants) associated with this note - so this note can be the 
+                // start point or end point of a connection the user can edit.
                 KeyCode::Char('n') => {
                     // Can only cycle through the available connections on this note if
                     // entered the visual_connection mode to edit existing connections
@@ -461,6 +488,8 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
                 KeyCode::Char('d') => {
                     if map_state.visual_editing_a_connection {
+                        map_state.can_exit = false;
+
                         // Delete that connection
                         map_state.focused_connection = None;
 
@@ -474,16 +503,29 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 // -- Target Note Selection --
                 // Reuse the focus switching logic to select a target note for the new connection.
                 // Right
-                KeyCode::Char('j') => { switch_notes_focus(map_state, 'j'); }
+                KeyCode::Char('j') => {
+                    map_state.can_exit = false;
+                    switch_notes_focus(map_state, 'j');
+                }
                 // Above
-                KeyCode::Char('k') => { switch_notes_focus(map_state, 'k'); }
+                KeyCode::Char('k') => {
+                    map_state.can_exit = false;
+                    switch_notes_focus(map_state, 'k');
+                }
                 // Left
-                KeyCode::Char('h') => { switch_notes_focus(map_state, 'h'); }
+                KeyCode::Char('h') => {
+                    map_state.can_exit = false;
+                    switch_notes_focus(map_state, 'h');
+                }
                 // Right
-                KeyCode::Char('l') => { switch_notes_focus(map_state, 'l'); }
+                KeyCode::Char('l') => {
+                    map_state.can_exit = false;
+                    switch_notes_focus(map_state, 'l');
+                }
 
                 // Cycle through colors for the "in progress"/focused connection
                 KeyCode::Char('e') => {
+                    map_state.can_exit = false;
                     if let Some(focused_connection) = map_state.focused_connection.as_mut() {
                         focused_connection.color = cycle_color(focused_connection.color)
                     }
@@ -513,6 +555,8 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Char('m') => map_state.visual_move = true,
 
             // Switch to Connection Sate for Visual Mode
+            // This block selects the "first" connection that this note
+            // is associated with, if it has any.
             KeyCode::Char('c') => {
 
                 if let Some(index) = map_state.connections.iter().position(|c| {
@@ -529,6 +573,8 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
             // Add a new Connection for the selected note
             KeyCode::Char('C') => {
+                map_state.can_exit = false;
+
                 map_state.focused_connection = Some(
                     Connection {
                         from_id: selected_note,
@@ -557,6 +603,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
             // Cycle through colors for the selected note
             KeyCode::Char('e') => {
+                map_state.can_exit = false;
                 if let Some(note) = map_state.notes.get_mut(&selected_note) {
                     note.color = cycle_color(note.color);
                 }
@@ -586,6 +633,7 @@ fn map_insert_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
             // --- Text Editing ---
             KeyCode::Char(c) => {
+                map_state.can_exit = false;
                 if let Some(note) = map_state.notes.get_mut(selected_note) {
                     // Insert the typed character at the cursor's current position.
                     note.content.insert(map_state.cursor_pos, c);
@@ -594,6 +642,7 @@ fn map_insert_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 }
             }
             KeyCode::Enter => {
+                map_state.can_exit = false;
                 if let Some(note) = map_state.notes.get_mut(selected_note) {
                     // Insert a newline character at the cursor's position.
                     note.content.insert(map_state.cursor_pos, '\n');
@@ -602,6 +651,7 @@ fn map_insert_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 }
             }
             KeyCode::Backspace => {
+                map_state.can_exit = false;
                 if let Some(note) = map_state.notes.get_mut(selected_note) {
                     // We can only backspace if the cursor is not at the very beginning of the text.
                     if map_state.cursor_pos > 0 {
@@ -630,8 +680,10 @@ fn map_insert_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             _ => {}
         }
     }
+
     // Any action in Insert mode triggers a redraw.
     map_state.clear_and_redraw();
+
     AppAction::Continue
 }
 
@@ -642,7 +694,10 @@ fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Esc => {
                 map_state.current_mode = Mode::Visual;
             }
+            // Confirm deleting the selected note
             KeyCode::Char('d') => {
+                map_state.can_exit = false;
+                
                 map_state.notes.remove(selected_note);
 
                 // -- Updating the connections Vec --

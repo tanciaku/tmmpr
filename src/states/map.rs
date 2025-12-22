@@ -84,6 +84,8 @@ impl MapState {
     /// selected, and the application switches to `Mode::Insert` to allow for
     /// immediate text entry.
     pub fn add_note(&mut self) {
+        self.can_exit = false;
+
         let note_x = self.view_pos.x + self.screen_width/2;
         let note_y = self.view_pos.y + self.screen_height/2;
         self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from(""), true, Color::White));
