@@ -2,6 +2,9 @@
 use std::{collections::HashMap, path::PathBuf};
 use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
+use std::time::{Duration, Instant};
+
+use crate::input::AppAction;
 
 pub struct MapState {
     pub needs_clear_and_redraw: bool,
@@ -45,6 +48,8 @@ pub struct MapState {
     /// Whether to render a menu for confirming to discard 
     /// unsaved changes
     pub confirm_discard_menu: bool,
+    /// Timer for automatically saving changes
+    pub timer: Instant,
 }
 
 impl MapState {
@@ -70,6 +75,7 @@ impl MapState {
             show_notification: None,
             can_exit: true,
             confirm_discard_menu: false,
+            timer: Instant::now(),
         }
     }
 
@@ -158,6 +164,17 @@ impl MapState {
         if let Some(index_vec) = self.connection_index.get_mut(&connection_removed.to_id.unwrap()) {
             // Keep only the connections that are NOT the one we just removed.
             index_vec.retain(|c| c != &connection_removed);
+        }
+    }
+
+    /// Save changes to the map file every 20 seconds
+    pub fn on_tick_save_changes(&mut self) -> AppAction {
+        // If there were changes made to the map and 20 seconds have passed
+        if self.can_exit == false && self.timer.elapsed() > Duration::from_secs(20) {
+            self.timer = Instant::now();
+            return AppAction::SaveMapFile(self.file_write_path.clone())
+        } else {
+            AppAction::Continue
         }
     }
 }

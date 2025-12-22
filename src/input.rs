@@ -33,7 +33,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                     AppAction::Continue => {}
                     AppAction::Quit => app.quit(),
                     AppAction::CreateMapFile(path) => create_map_file(app, &path),
-                    AppAction::SaveMapFile(path) => save_map_file(app, &path),
+                    AppAction::SaveMapFile(path) => save_map_file(app, &path, true),
                     AppAction::LoadMapFile(path) => load_map_file(app, &path),
                 }
             }

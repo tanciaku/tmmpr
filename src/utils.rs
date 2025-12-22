@@ -644,7 +644,9 @@ pub fn create_map_file(app: &mut App, path: &Path) {
 /// Saves map data to a file.
 /// 
 /// Handles file write error by displaying appropriate error message to the user.
-pub fn save_map_file(app: &mut App, path: &Path) {
+/// 
+/// 
+pub fn save_map_file(app: &mut App, path: &Path, show_save_notification: bool) {
     if let Screen::Map(map_state) = &app.screen {
         // Get the relevant values from the current Map State
         let map_data = MapData {
@@ -663,15 +665,19 @@ pub fn save_map_file(app: &mut App, path: &Path) {
                     // Can exit the app - now that have successfully saved the map file.
                     map_state.can_exit = true;
 
-                    map_state.show_notification = Some(Notification::SaveSuccess);
-                    map_state.needs_clear_and_redraw = true;
+                    if show_save_notification {
+                        map_state.show_notification = Some(Notification::SaveSuccess);
+                        map_state.needs_clear_and_redraw = true;
+                    }
                 }
             }
             Err(_) => {
                 // Show failed saving the map file message and redraw
                 if let Screen::Map(map_state) = &mut app.screen {
-                    map_state.show_notification = Some(Notification::SaveFail);
-                    map_state.needs_clear_and_redraw = true;
+                    if show_save_notification {
+                        map_state.show_notification = Some(Notification::SaveFail);
+                        map_state.needs_clear_and_redraw = true;
+                    }
                 }
             }
         }            
