@@ -44,8 +44,8 @@ impl StartState {
 
     pub fn navigate_start_buttons(&mut self, key: &str) {
         match key {
-            "k" => self.button_list_go_up(),
-            "j" => self.button_list_go_down(),
+            "k" | "Up" => self.button_list_go_up(),
+            "j" | "Down" => self.button_list_go_down(),
             _ => {}
         }
     }

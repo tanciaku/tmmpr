@@ -2,15 +2,16 @@
 //! to control the application's state and behavior.
 
 use crate::{
-    app::{App, Screen}, utils::{create_map_file, load_map_file, save_map_file}
-};
-use crate::states::{
-    MapState, StartState,
-    start::{SelectedStartButton, FocusedInputBox},
-    map::{Connection, Mode, Side},
+    app::{App, Screen},
+    utils::{create_map_file, load_map_file, save_map_file},
+    states::{
+        MapState, StartState,
+        start::{SelectedStartButton, FocusedInputBox},
+        map::{Connection, Mode, Side},
+    },
 };
 use color_eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use std::{cmp::Reverse, path::PathBuf};
 use ratatui::style::Color;
 
@@ -125,8 +126,10 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
         KeyCode::Char('q') => return AppAction::Quit,
 
         KeyCode::Char('k') => start_state.navigate_start_buttons("k"),
+        KeyCode::Up => start_state.navigate_start_buttons("Up"),
 
         KeyCode::Char('j') => start_state.navigate_start_buttons("j"),
+        KeyCode::Down => start_state.navigate_start_buttons("Down"),
 
         KeyCode::Enter => {
             match start_state.selected_button {
@@ -240,42 +243,34 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
         // --- Viewport Navigation ---
 
-        // Move left
-        KeyCode::Char('h') => {
-            map_state.view_pos.x = map_state.view_pos.x.saturating_sub(1);
-            map_state.can_exit = false;
-        }
-        KeyCode::Char('H') => {
-            map_state.view_pos.x = map_state.view_pos.x.saturating_sub(5);
-            map_state.can_exit = false;
-        }
-        // Move down
-        KeyCode::Char('j') => {
-            map_state.view_pos.y += 1;
-            map_state.can_exit = false;
-        }
-        KeyCode::Char('J') => {
-            map_state.view_pos.y += 5;
-            map_state.can_exit = false;
-        }
-        // Move up
-        KeyCode::Char('k') => {
-            map_state.view_pos.y = map_state.view_pos.y.saturating_sub(1);
-            map_state.can_exit = false;
-        }
-        KeyCode::Char('K') => {
-            map_state.view_pos.y = map_state.view_pos.y.saturating_sub(5);
-            map_state.can_exit = false;
-        }
-        // Move right 
-        KeyCode::Char('l') => {
-            map_state.view_pos.x += 1;
-            map_state.can_exit = false;
-        }
-        KeyCode::Char('L') => {
-            map_state.view_pos.x += 5;
-            map_state.can_exit = false;
-        }
+        // Move left by 1   (h, Left)
+        KeyCode::Char('h') => move_viewport(map_state, "x", -1),
+        KeyCode::Left if key.modifiers == KeyModifiers::NONE => move_viewport(map_state, "x", -1),
+        // Move left by 5   (H, Shift + Left)
+        KeyCode::Char('H') => move_viewport(map_state, "x", -5),
+        KeyCode::Left if key.modifiers == KeyModifiers::SHIFT => move_viewport(map_state, "x", -5),
+
+        // Move down by 1   (j, Down)
+        KeyCode::Char('j') => move_viewport(map_state, "y", 1),
+        KeyCode::Down if key.modifiers == KeyModifiers::NONE => move_viewport(map_state, "y", 1),
+        // Move down by 5   (J, Shift + Down)
+        KeyCode::Char('J') => move_viewport(map_state, "y", 5),
+        KeyCode::Down if key.modifiers == KeyModifiers::SHIFT => move_viewport(map_state, "y", 5),
+
+        // Move up by 1   (k, Up)
+        KeyCode::Char('k') => move_viewport(map_state, "y", -1),
+        KeyCode::Up if key.modifiers == KeyModifiers::NONE => move_viewport(map_state, "y", -1),
+        // Move up by 5   (K, Shift + Up)
+        KeyCode::Char('K') => move_viewport(map_state, "y", -5),
+        KeyCode::Up if key.modifiers == KeyModifiers::SHIFT => move_viewport(map_state, "y", -5),
+
+        // Move right by 1   (l, Right)
+        KeyCode::Char('l') => move_viewport(map_state, "x", 1),
+        KeyCode::Right if key.modifiers == KeyModifiers::NONE => move_viewport(map_state, "x", 1),
+        // Move right by 5   (L, Shift + Right)
+        KeyCode::Char('L') => move_viewport(map_state, "x", 5),
+        KeyCode::Right if key.modifiers == KeyModifiers::SHIFT => move_viewport(map_state, "x", 5),
+
 
         // --- Note Manipulation ---
 
@@ -297,135 +292,80 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 }
 
 fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
-    if let Some(selected_note) = map_state.selected_note {
 
-        // -- If Move State for Visual Mode is enabled --
-        if map_state.visual_move {
-            // Get the currently selected note.
-            if let Some(note) = map_state.notes.get_mut(&selected_note) {
+    // -- If Move State for Visual Mode is enabled --
+    if map_state.visual_move {
+        match key.code {
+            // Switch back to Visual Mode Normal State
+            KeyCode::Char('m') => map_state.visual_move = false,
 
-                // Get note dimensions
-                let (mut note_width, mut note_height) = note.get_dimensions();
-                // Enforce a minimum size for readability.
-                if note_width < 20 { note_width = 20; }
-                if note_height < 4 { note_height = 4; }
-                // Add space for cursor
-                note_width+=1;
+            // Switch back to Normal Mode
+            KeyCode::Esc => {
+                map_state.current_mode = Mode::Normal;
+                map_state.visual_move = false;
 
-                match key.code {
-                    // Switch back to Visual Mode Normal State
-                    KeyCode::Char('m') => map_state.visual_move = false,
-
-                    // Switch back to Normal Mode
-                    KeyCode::Esc => {
-                        map_state.current_mode = Mode::Normal;
-                            note.selected = false;
-                            map_state.visual_move = false;
+                if let Some(selected_note) = map_state.selected_note {
+                    if let Some(note) = map_state.notes.get_mut(&selected_note) {
+                        note.selected = false;
                     }
-
-                    // --- Moving the note ---
-
-                    // Move the note up
-                    KeyCode::Char('k') => {
-                        map_state.can_exit = false;
-                        // First, update the note's y-coordinate.
-                        note.y = note.y.saturating_sub(1);
-                        // Then, check if the top edge of the note is now above the top edge of the viewport.
-                        if note.y < map_state.view_pos.y {
-                            // If it is, move the viewport up by the same amount to "follow" the note.
-                            map_state.view_pos.y -= 1;
-                        }
-                    }
-                    KeyCode::Char('K') => {
-                        map_state.can_exit = false;
-                        note.y = note.y.saturating_sub(5);
-                        if note.y < map_state.view_pos.y {
-                            map_state.view_pos.y = map_state.view_pos.y.saturating_sub(5);
-                        }
-                    }
-
-                    // Move the note down
-                    KeyCode::Char('j') => {
-                        map_state.can_exit = false;
-                        // First, update the note's y-coordinate.
-                        note.y += 1; 
-                        // Check if the bottom edge of the note is below the visible screen area.
-                        // We subtract 2 from the screen height to account for the bottom info bar.
-                        if note.y as isize + note_height as isize > map_state.view_pos.y as isize + map_state.screen_height as isize - 2 {
-                            // If it is, move the viewport down to keep the note in view.
-                            map_state.view_pos.y += 1;
-                        }
-                    }
-                    KeyCode::Char('J') => {
-                        map_state.can_exit = false;
-                        note.y += 5;
-                        if note.y as isize + note_height as isize > map_state.view_pos.y as isize + map_state.screen_height as isize - 2 {
-                            map_state.view_pos.y += 5;
-                        }
-                    }
-
-                    // Move the note left
-                    KeyCode::Char('h') => {
-                        map_state.can_exit = false;
-                        // First, update the note's x-coordinate.
-                        note.x = note.x.saturating_sub(1);
-                        // Then, check if the left edge of the note is now to the left of the viewport's edge.
-                        if note.x < map_state.view_pos.x {
-                            // If it is, move the viewport left to keep it in view.
-                            map_state.view_pos.x -= 1;
-                        }
-                    }
-                    KeyCode::Char('H') => {
-                        map_state.can_exit = false;
-                        note.x = note.x.saturating_sub(5);
-                        if note.x < map_state.view_pos.x {
-                            map_state.view_pos.x = map_state.view_pos.x.saturating_sub(5);
-                        }
-                    }
-
-                    // Move the note right 
-                    KeyCode::Char('l') => {
-                        map_state.can_exit = false;
-                        // First, update the note's x-coordinate.
-                        note.x += 1;
-                        // Check if the right edge of the note is past the right edge of the screen.
-                        if note.x + note_width as usize > map_state.view_pos.x + map_state.screen_width {
-                            // If it is, move the viewport right to keep up.
-                            map_state.view_pos.x += 1;
-                        }
-                    }
-                    KeyCode::Char('L') => {
-                        map_state.can_exit = false;
-                        note.x += 5;
-                        if note.x + note_width as usize > map_state.view_pos.x + map_state.screen_width {
-                            map_state.view_pos.x += 5;
-                        }
-                    }
-
-                    _ => {}
                 }
-
-                // Trigger a redraw and stop there
-                map_state.clear_and_redraw(); 
-                return AppAction::Continue
             }
+
+
+            // --- Moving the note ---
+
+            // Move the note left by 1   (h, Left)
+            KeyCode::Char('h') => move_note(map_state, "x", -1),
+            KeyCode::Left if key.modifiers == KeyModifiers::NONE => move_note(map_state, "x", -1),
+            // Move the note left by 5   (H, Shift + Left)
+            KeyCode::Char('H') => move_note(map_state, "x", -5),
+            KeyCode::Left if key.modifiers == KeyModifiers::SHIFT => move_note(map_state, "x", -5),
+            
+            // Move the note down by 1   (j, Down)
+            KeyCode::Char('j') => move_note(map_state, "y", 1),
+            KeyCode::Down if key.modifiers == KeyModifiers::NONE => move_note(map_state, "y", 1),
+            // Move the note down by 5   (J, Shift + Down)
+            KeyCode::Char('J') => move_note(map_state, "y", 5),
+            KeyCode::Down if key.modifiers == KeyModifiers::SHIFT => move_note(map_state, "y", 5),
+            
+            // Move the note up by 1   (k, Up)
+            KeyCode::Char('k') => move_note(map_state, "y", -1),
+            KeyCode::Up if key.modifiers == KeyModifiers::NONE => move_note(map_state, "y", -1),
+            // Move the note up by 5   (K, Shift + Up)
+            KeyCode::Char('K') => move_note(map_state, "y", -5),
+            KeyCode::Up if key.modifiers == KeyModifiers::SHIFT => move_note(map_state, "y", -5),
+            
+            // Move the note right by 1   (l, Right)
+            KeyCode::Char('l') => move_note(map_state, "x", 1),
+            KeyCode::Right if key.modifiers == KeyModifiers::NONE => move_note(map_state, "x", 1),
+            // Move the note right by 5   (L, Shift + Right)
+            KeyCode::Char('L') => move_note(map_state, "x", 5),
+            KeyCode::Right if key.modifiers == KeyModifiers::SHIFT => move_note(map_state, "x", 5),
+
+            _ => {}
         }
 
-        // -- If Connection State for Visual Mode is enabled -- 
-        if map_state.visual_connection {
-            match key.code {
-                // Switch back to Visual Mode Normal State
-                KeyCode::Char('c') => {
+        // Trigger a redraw and stop there
+        map_state.clear_and_redraw(); 
+        return AppAction::Continue
+    }
 
-                    map_state.stash_connection();
+    // -- If Connection State for Visual Mode is enabled -- 
+    if map_state.visual_connection {
+        match key.code {
+            // Switch back to Visual Mode Normal State
+            KeyCode::Char('c') => {
 
-                    map_state.visual_connection = false;
-                    map_state.visual_editing_a_connection = false; // (if already isn't)
-                    map_state.editing_connection_index = None; // (if already isn't)
-                }
+                map_state.stash_connection();
 
-                // Rotating the start/end side of the connection 
-                KeyCode::Char('r') => {
+                map_state.visual_connection = false;
+                map_state.visual_editing_a_connection = false; // (if already isn't)
+                map_state.editing_connection_index = None; // (if already isn't)
+            }
+
+            // Rotating the start/end side of the connection 
+            KeyCode::Char('r') => {
+                if let Some(selected_note) = map_state.selected_note {
                     map_state.can_exit = false;
                     if let Some(focused_connection) = map_state.focused_connection.as_mut() {
                         if focused_connection.from_id == selected_note {
@@ -440,11 +380,13 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         }
                     }
                 }
+            }
 
-                // Cycling through the available connections (to select the one the
-                // user wants) associated with this note - so this note can be the 
-                // start point or end point of a connection the user can edit.
-                KeyCode::Char('n') => {
+            // Cycling through the available connections (to select the one the
+            // user wants) associated with this note - so this note can be the 
+            // start point or end point of a connection the user can edit.
+            KeyCode::Char('n') => {
+                if let Some(selected_note) = map_state.selected_note {
                     // Can only cycle through the available connections on this note if
                     // entered the visual_connection mode to edit existing connections
                     // and not currently making a new one
@@ -486,80 +428,77 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         }
                     }
                 }
-
-                KeyCode::Char('d') => {
-                    if map_state.visual_editing_a_connection {
-                        map_state.can_exit = false;
-
-                        // Delete that connection
-                        map_state.focused_connection = None;
-
-                        // Exit
-                        map_state.visual_connection = false;
-                        map_state.visual_editing_a_connection = false;
-                        map_state.editing_connection_index = None;
-                    }
-                }
-
-                // -- Target Note Selection --
-                // Reuse the focus switching logic to select a target note for the new connection.
-                // Right
-                KeyCode::Char('j') => {
-                    map_state.can_exit = false;
-                    switch_notes_focus(map_state, 'j');
-                }
-                // Above
-                KeyCode::Char('k') => {
-                    map_state.can_exit = false;
-                    switch_notes_focus(map_state, 'k');
-                }
-                // Left
-                KeyCode::Char('h') => {
-                    map_state.can_exit = false;
-                    switch_notes_focus(map_state, 'h');
-                }
-                // Right
-                KeyCode::Char('l') => {
-                    map_state.can_exit = false;
-                    switch_notes_focus(map_state, 'l');
-                }
-
-                // Cycle through colors for the "in progress"/focused connection
-                KeyCode::Char('e') => {
-                    map_state.can_exit = false;
-                    if let Some(focused_connection) = map_state.focused_connection.as_mut() {
-                        focused_connection.color = cycle_color(focused_connection.color)
-                    }
-                }
-
-                _ => {}
             }
 
-            // Trigger a redraw and stop there
-            map_state.clear_and_redraw(); 
-            return AppAction::Continue
+            // Delete the selected connection
+            KeyCode::Char('d') => {
+                if map_state.visual_editing_a_connection {
+                    map_state.can_exit = false;
+
+                    // Delete that connection
+                    map_state.focused_connection = None;
+
+                    // Exit
+                    map_state.visual_connection = false;
+                    map_state.visual_editing_a_connection = false;
+                    map_state.editing_connection_index = None;
+                }
+            }
+
+            // -- Target Note Selection --
+            // Reuse the focus switching logic to select a target note for the new connection.
+            // Below
+            KeyCode::Char('j') => switch_notes_focus(map_state, "j"),
+            KeyCode::Down => switch_notes_focus(map_state, "Down"),
+            // Above
+            KeyCode::Char('k') => switch_notes_focus(map_state, "k"),
+            KeyCode::Up => switch_notes_focus(map_state, "Up"),
+            // Left
+            KeyCode::Char('h') => switch_notes_focus(map_state, "h"),
+            KeyCode::Left => switch_notes_focus(map_state, "Left"),
+            // Right
+            KeyCode::Char('l') => switch_notes_focus(map_state, "l"),
+            KeyCode::Right => switch_notes_focus(map_state, "Right"),
+
+            // Cycle through colors for the "in progress"/focused connection
+            KeyCode::Char('e') => {
+                if let Some(focused_connection) = map_state.focused_connection.as_mut() {
+                    focused_connection.color = cycle_color(focused_connection.color);
+                    map_state.can_exit = false;
+                }
+            }
+
+            _ => {}
         }
 
-        // If Visual Mode is in Normal State
-        match key.code {
-            // Switch back to Normal Mode
-            KeyCode::Esc => {
+        // Trigger a redraw and stop there
+        map_state.clear_and_redraw(); 
+        return AppAction::Continue
+    }
+
+    // If Visual Mode is in Normal State
+    match key.code {
+        // Switch back to Normal Mode
+        KeyCode::Esc => {
+            map_state.current_mode = Mode::Normal;
+
+            if let Some(selected_note) = map_state.selected_note {
                 if let Some(note) = map_state.notes.get_mut(&selected_note) {
-                    map_state.current_mode = Mode::Normal;
                     note.selected = false;
                 }
             }
-            // Switch to Insert mode
-            KeyCode::Char('i') => map_state.current_mode = Mode::Insert,
+        }
+        // Switch to Insert mode
+        KeyCode::Char('i') => map_state.current_mode = Mode::Insert,
 
-            // Switch to Move State for the Visual Mode
-            KeyCode::Char('m') => map_state.visual_move = true,
+        // Switch to Move State for the Visual Mode
+        KeyCode::Char('m') => map_state.visual_move = true,
 
-            // Switch to Connection Sate for Visual Mode
-            // This block selects the "first" connection that this note
-            // is associated with, if it has any.
-            KeyCode::Char('c') => {
-
+        // Switch to Connection Sate for Visual Mode
+        // This block selects the "first" connection that this note
+        // is associated with, if it has any.
+        KeyCode::Char('c') => {
+            if let Some(selected_note) = map_state.selected_note {
                 if let Some(index) = map_state.connections.iter().position(|c| {
                     selected_note == c.from_id || selected_note == c.to_id.unwrap()
                     // unwrap() is safe here since all the connections have an endpoint if
@@ -571,11 +510,11 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     map_state.visual_editing_a_connection = true;
                 }
             }
+        }
 
-            // Add a new Connection for the selected note
-            KeyCode::Char('C') => {
-                map_state.can_exit = false;
-
+        // Add a new Connection for the selected note
+        KeyCode::Char('C') => {
+            if let Some(selected_note) = map_state.selected_note {
                 map_state.focused_connection = Some(
                     Connection {
                         from_id: selected_note,
@@ -587,31 +526,41 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 );
 
                 map_state.visual_connection = true;
-            }
-
-            // Switch to Delete Mode
-            KeyCode::Char('d') => map_state.current_mode = Mode::Delete,
-
-            // -- Switching focus between notes --
-            // Switch focus to the closest note below the currently selected one
-            KeyCode::Char('j') => { switch_notes_focus(map_state, 'j'); }
-            // Above
-            KeyCode::Char('k') => { switch_notes_focus(map_state, 'k'); }
-            // Left
-            KeyCode::Char('h') => { switch_notes_focus(map_state, 'h'); }
-            // Right
-            KeyCode::Char('l') => { switch_notes_focus(map_state, 'l'); }
-
-            // Cycle through colors for the selected note
-            KeyCode::Char('e') => {
+                
                 map_state.can_exit = false;
+            }
+        }
+
+        // Switch to Delete Mode
+        KeyCode::Char('d') => map_state.current_mode = Mode::Delete,
+
+        // -- Switching focus between notes --
+        // Switch focus to the closest note below the currently selected one
+        // Below
+        KeyCode::Char('j') => switch_notes_focus(map_state, "j"),
+        KeyCode::Down => switch_notes_focus(map_state, "Down"),
+        // Above
+        KeyCode::Char('k') => switch_notes_focus(map_state, "k"),
+        KeyCode::Up => switch_notes_focus(map_state, "Up"),
+        // Left
+        KeyCode::Char('h') => switch_notes_focus(map_state, "h"),
+        KeyCode::Left => switch_notes_focus(map_state, "Left"),
+        // Right
+        KeyCode::Char('l') => switch_notes_focus(map_state, "l"),
+        KeyCode::Right => switch_notes_focus(map_state, "Right"),
+
+        // Cycle through colors for the selected note
+        KeyCode::Char('e') => {
+            if let Some(selected_note) = map_state.selected_note {
                 if let Some(note) = map_state.notes.get_mut(&selected_note) {
                     note.color = cycle_color(note.color);
+                    
+                    map_state.can_exit = false;
                 }
             }
-
-            _ => {}
         }
+
+        _ => {}
     }
 
     // Any action in Visual mode triggers a redraw.
@@ -742,7 +691,94 @@ fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 }
 
 
-fn switch_notes_focus(map_state: &mut MapState, key: char) {
+fn move_viewport(map_state: &mut MapState, axis: &str, amount: isize) {
+    match axis {
+        "x" => {
+            if amount > 0 {
+                map_state.view_pos.x += amount as usize;
+            } else {
+                map_state.view_pos.x = map_state.view_pos.x.saturating_sub(amount.abs() as usize);
+            }
+        }
+        "y" => {
+            if amount > 0 {
+                map_state.view_pos.y += amount as usize;
+            } else {
+                map_state.view_pos.y = map_state.view_pos.y.saturating_sub(amount.abs() as usize);
+            }
+        }
+        _ => {}
+    }
+    
+    map_state.can_exit = false;
+}
+
+fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {    
+    if let Some(selected_note) = map_state.selected_note {
+        // Get note dimensions for:
+        // When a note moves beyond the screen edge, automatically adjust the viewport to keep it visible.
+        let (mut note_width,
+            mut note_height) = if let Some(note) = map_state.notes.get_mut(&selected_note) { 
+                note.get_dimensions()
+        } else {
+            unreachable!()
+        };
+        // Enforce a minimum size for readability.
+        if note_width < 20 { note_width = 20; }
+        if note_height < 4 { note_height = 4; }
+        // Add space for cursor
+        note_width+=1;
+
+        if let Some(note) = map_state.notes.get_mut(&selected_note) {
+            match axis {
+                "x" => {
+                    if amount > 0 {
+                        // First, update the note's x-coordinate.
+                        note.x += amount as usize;
+                        // Check if the right edge of the note is past the right edge of the screen.
+                        if note.x + note_width as usize > map_state.view_pos.x + map_state.screen_width {
+                            // If it is, move the viewport right to keep the note in view.
+                            map_state.view_pos.x += amount as usize;
+                        }
+                    } else {
+                        // First, update the note's x-coordinate.
+                        note.x = note.x.saturating_sub(amount.abs() as usize);
+                        // Then, check if the left edge of the note is now to the left of the viewport's edge.
+                        if note.x < map_state.view_pos.x {
+                            // If it is, move the viewport left to keep the note in view.
+                            map_state.view_pos.x = map_state.view_pos.x.saturating_sub(amount.abs() as usize);
+                        }
+                    }
+                }
+                "y" => {
+                    if amount > 0 {
+                        // Update the note's y-coordinate.
+                        note.y += amount as usize; 
+                        // Check if the bottom edge of the note is below the visible screen area.
+                        // We subtract 2 from the screen height to account for the bottom info bar.
+                        if note.y as isize + note_height as isize > map_state.view_pos.y as isize + map_state.screen_height as isize - 2 {
+                            // If it is, move the viewport down to keep the note in view.
+                            map_state.view_pos.y += amount as usize;
+                        }
+                    } else {
+                        // Update the note's y-coordinate.
+                        note.y = note.y.saturating_sub(amount.abs() as usize);
+                        // Then, check if the top edge of the note is now above the top edge of the viewport.
+                        if note.y < map_state.view_pos.y {
+                            // If it is, move the viewport down to up the note in view.
+                            map_state.view_pos.y = map_state.view_pos.y.saturating_sub(amount.abs() as usize);
+                        }
+                    }
+                }
+                _ => {}
+            }
+            
+            map_state.can_exit = false;
+        }
+    }
+}
+
+fn switch_notes_focus(map_state: &mut MapState, key: &str) {
     if let Some(selected_note) = map_state.selected_note {
         // --- 1. Get the starting position ---
         // Safely get the coordinates of the currently selected note.
@@ -772,11 +808,11 @@ fn switch_notes_focus(map_state: &mut MapState, key: char) {
                 // First, determine if the note is a valid candidate based on the direction.
                 let is_in_direction = match key {
                     // For vertical movement ('j'/'k'), the vertical distance must be greater.
-                    'j' => note.y > selected_note_y && dy > dx,
-                    'k' => note.y < selected_note_y && dy > dx,
+                    "j" | "Down" => note.y > selected_note_y && dy > dx,
+                    "k" | "Up" => note.y < selected_note_y && dy > dx,
                     // For horizontal movement ('l'/'h'), the horizontal distance must be greater.
-                    'l' => note.x > selected_note_x && dx > dy,
-                    'h' => note.x < selected_note_x && dx > dy,
+                    "l" | "Right" => note.x > selected_note_x && dx > dy,
+                    "h" | "Left" => note.x < selected_note_x && dx > dy,
                     // If an invalid character is passed, no notes will be candidates.
                     _ => false,
                 };
@@ -790,7 +826,7 @@ fn switch_notes_focus(map_state: &mut MapState, key: char) {
 
         // --- 3. Find the single best candidate ---
         let closest_note_id_option = match key {
-            'j' => {
+            "j" | "Down" => {
                 // Find the closest note below
                 candidate_ids.iter().min_by_key(|&&id| {
                     let note = &map_state.notes[&id];
@@ -803,7 +839,7 @@ fn switch_notes_focus(map_state: &mut MapState, key: char) {
                     (note.y, x_dist)
                 })
             }
-            'k' => {
+            "k" | "Up" => {
                 // Find the closest note above
                 candidate_ids.iter().max_by_key(|&&id| {
                     let note = &map_state.notes[&id];
@@ -812,7 +848,7 @@ fn switch_notes_focus(map_state: &mut MapState, key: char) {
                     (note.y, Reverse(x_dist))
                 })
             }
-            'l' => {
+            "l" | "Right" => {
                 // Find the closest note to the right
                 candidate_ids.iter().min_by_key(|&&id| {
                     let note = &map_state.notes[&id];
@@ -821,7 +857,7 @@ fn switch_notes_focus(map_state: &mut MapState, key: char) {
                     (note.x, y_dist)
                 })
             }
-            'h' => {
+            "h" | "Left" => {
                 candidate_ids.iter().max_by_key(|&&id| {
                     let note = &map_state.notes[&id];
                     let y_dist = (note.y as isize - selected_note_y as isize).abs() as usize;
@@ -870,6 +906,8 @@ fn switch_notes_focus(map_state: &mut MapState, key: char) {
                         focused_connection.to_id = Some(id); // id of the note that just jumped to
                         focused_connection.to_side = Some(Side::Right); // default side
                     }
+
+                    map_state.can_exit = false;
                 }
             }
         }

@@ -95,7 +95,7 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
 
     let start_menu = List::new(start_menu);
 
-    let info_text = Line::from("q - quit      Enter - choose option      k - go up       j - go down").alignment(Alignment::Center);
+    let info_text = Line::from("q - quit      Enter - choose option      k / Up - go up       j / Down - go down").alignment(Alignment::Center);
 
     frame.render_widget(start_menu, start_text_area[1]);
     frame.render_widget(info_text, start_text_area[3]);
