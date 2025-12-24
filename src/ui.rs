@@ -5,6 +5,7 @@ use crate::states::{MapState, StartState};
 use crate::states::map::{Note, Mode, Side, SignedRect, Notification};
 use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
+use ratatui::layout::Margin;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
     prelude::Rect,
@@ -236,7 +237,13 @@ pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {
     // Clear the frame before drawing anything new.
     frame.render_widget(Clear, frame.area());
 
-    // Update the app state with the current terminal size. This is crucial for
+    // If help page toggled, show it and stop there.
+    if let Some(page_number) = map_state.help_screen {
+        render_map_help_page(frame, page_number);
+        return;
+    }
+
+    // Update the  map_state with the current terminal size. This is crucial for
     // calculations that depend on screen dimensions, like centering new notes.
     map_state.screen_width = frame.area().width as usize;
     map_state.screen_height = frame.area().height as usize;
@@ -245,6 +252,308 @@ pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {
     render_connections(frame, map_state);
     render_notes(frame, map_state); // Notes will be drawn over connections (if any)
     render_bar(frame, map_state); // The bar will be drawn over everything
+}
+
+pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
+        // Assign the area for page number, page area and control text's
+        let help_screen_layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(1), // Page number
+                Constraint::Fill(1), // Page area itself
+                Constraint::Length(1), // Controls
+            ])
+            .split(frame.area());
+
+        // Render the controls text (same for all pages)
+        let help_screen_controls_text = Line::from("? / F1 - toggle help page        l / Right / Tab - go forward a page        h / Left - go back a page").alignment(Alignment::Center);
+        frame.render_widget(help_screen_controls_text, help_screen_layout[2]);
+
+        // Render the page number _
+        match page_number {
+            1 => {
+                // Render the bordered block (borders)
+                frame.render_widget(Block::bordered().border_style(Color::White), help_screen_layout[1]);
+                
+                // Render the page number
+                let page_ind_1_text = Line::from("  Page 1/5: General");
+                frame.render_widget(page_ind_1_text, help_screen_layout[0]);
+
+                // Page content lines
+                let page_1_content = vec![
+                    Line::from(""),
+                    Line::from("Page contents:"),
+                    Line::from(""),
+                    Line::from("1 - General"),
+                    Line::from("2 - Normal Mode"),
+                    Line::from("3 - Visual Mode"),
+                    Line::from("4 - Visual (Move), Visual (Connection)"),
+                    Line::from("5 - Insert Mode"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("General info:"),
+                    Line::from(""),
+                    Line::from("Cannot exit the app from the help screen,"),
+                    Line::from("  can do so from the Map Screen, Normal Mode."),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("Terminal cells are coordinates."),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("There are only positive coordinates, think of it as a whiteboard"),
+                    Line::from("starting from the top left corner and going right and bottom infinitely."),
+                    Line::from(""),
+                    Line::from("0 x-------->"),
+                    Line::from("y"),
+                    Line::from("|"),
+                    Line::from("|"),
+                    Line::from("|"),
+                    Line::from("v"),
+                ];
+
+                // Create a list widget to render
+                let page_1_content: Vec<ListItem> = page_1_content
+                    .into_iter()
+                    .map(ListItem::new)
+                    .collect();
+                let page_1_content = List::new(page_1_content);
+
+                // Render the page content
+                frame.render_widget(page_1_content, help_screen_layout[1].inner(Margin::new(3, 1)));
+            }
+            2 => {
+                // Render the bordered block (borders)
+                frame.render_widget(Block::bordered().border_style(Color::White), help_screen_layout[1]);
+                
+                // Render the page number
+                let page_ind_2_text = Line::from("  Page 2/5: Normal Mode");
+                frame.render_widget(page_ind_2_text, help_screen_layout[0]);
+                
+                // Page content lines
+                let page_2_content = vec![
+                    Line::from(""),
+                    Line::from("General Commands"),
+                    Line::from(""),
+                    Line::from("F1 / ?: Toggle help screen"),
+                    Line::from("q:      Quit (if saved) or show confirm discard menu"),
+                    Line::from("s:      Save map file"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("Viewport Navigation"),
+                    Line::from(""),
+                    Line::from("h / Left Arrow:        Move viewport left by 1"),
+                    Line::from("H / Shift+Left Arrow:  Move viewport left by 5"),
+                    Line::from(""),
+                    Line::from("j / Down Arrow:        Move viewport down by 1"),
+                    Line::from("J / Shift+Down Arrow:  Move viewport down by 5"),
+                    Line::from(""),
+                    Line::from("k / Up Arrow:          Move viewport up by 1"),
+                    Line::from("K / Shift+Up Arrow:    Move viewport up by 5"),
+                    Line::from(""),
+                    Line::from("l / Right Arrow:       Move viewport right by 1"),
+                    Line::from("L / Shift+Right Arrow: Move viewport right by 5"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("Note Operations"),
+                    Line::from(""),
+                    Line::from("a: Add a new note"),
+                    Line::from("v: Select closest note to the center of the screen"),
+                    Line::from("     and switch to Visual Mode"),
+                ];
+
+                // Create a list widget to render
+                let page_2_content: Vec<ListItem> = page_2_content
+                    .into_iter()
+                    .map(ListItem::new)
+                    .collect();
+                let page_2_content = List::new(page_2_content);
+
+                // Render the page content
+                frame.render_widget(page_2_content, help_screen_layout[1].inner(Margin::new(3, 1)));
+            }
+            3 => {
+                // Render the bordered block (borders)
+                frame.render_widget(Block::bordered().border_style(Color::Yellow), help_screen_layout[1]);
+                
+                // Render the page number
+                let page_ind_3_text = Line::from(vec![Span::raw("  Page 3/5: "), Span::styled("Visual Mode", Style::new().fg(Color::Yellow))]);
+                frame.render_widget(page_ind_3_text, help_screen_layout[0]);
+
+                // Page content lines
+                let page_3_content = vec![
+                    Line::from(""),
+                    Line::from("General Commands"),
+                    Line::from(""),
+                    Line::from("ESC: Switch back to Normal mode"),
+                    Line::from("i:   Switch to Insert mode"),
+                    Line::from("m:   Switch to Move state"),
+                    Line::from("c:   Switch to Connection state (edit existing connection(s))"),
+                    Line::from("C:   Add a new connection from the selected note"),
+                    Line::from("d:   Choose the selected note for deletion."),
+                    Line::from("       (brings up the confirm to delete prompt)"),
+                    Line::from("e:   Cycle through note colors"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("Note Focus Switching"),
+                    Line::from(""),
+                    Line::from("h / Left Arrow:  Switch focus to note on the left"),
+                    Line::from("j / Down Arrow:  Switch focus to note below"),
+                    Line::from("k / Up Arrow:    Switch focus to note above"),
+                    Line::from("l / Right Arrow: Switch focus to note on the right"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("NOTE: Focus switching uses directional logic - notes must be primarily"),
+                    Line::from("in the intended direction to be selectable. Meaning that sometimes you "),
+                    Line::from("might not be able to switch focus to a particular note. In that case "),
+                    Line::from("either move the view to be centered with the note and reselect, or move"),
+                    Line::from("the note currently selected to a different spot and try to switching"),
+                    Line::from("focus from it again."),
+                ];
+
+                // Create a list widget to render
+                let page_3_content: Vec<ListItem> = page_3_content
+                    .into_iter()
+                    .map(ListItem::new)
+                    .collect();
+                let page_3_content = List::new(page_3_content);
+
+                // Render the page content
+                frame.render_widget(page_3_content, help_screen_layout[1].inner(Margin::new(3, 1)));
+            }
+            4 => {
+                // Split the page area in two
+                let help_page_4_layout = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([
+                        Constraint::Percentage(50),
+                        Constraint::Percentage(50),
+                    ])
+                    .split(help_screen_layout[1]);
+                // Render the two bordered blocks (borders)
+                frame.render_widget(Block::bordered().border_style(Color::Yellow), help_page_4_layout[0]);
+                frame.render_widget(Block::bordered().border_style(Color::Yellow), help_page_4_layout[1]);
+                
+                // Render the page number
+                let page_ind_4_text = Line::from(vec![Span::raw("  Page 4/5: "), Span::styled("Visual (Move), Visual (Connection)", Style::new().fg(Color::Yellow))]);
+                frame.render_widget(page_ind_4_text, help_screen_layout[0]);
+
+                // Left page content lines
+                let page_4_content_left = vec![
+                    Line::from(""),
+                    Line::from("Visual (Move)"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("m:   Switch back to Visual mode normal state"),
+                    Line::from("ESC: Switch back to Normal mode"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("h / Left Arrow:        Move note left by 1"),
+                    Line::from("H / Shift+Left Arrow:  Move note left by 5"),
+                    Line::from(""),
+                    Line::from("j / Down Arrow:        Move note down by 1"),
+                    Line::from("J / Shift+Down Arrow:  Move note down by 5"),
+                    Line::from(""),
+                    Line::from("k / Up Arrow:          Move note up by 1"),
+                    Line::from("K / Shift+Up Arrow:    Move note up by 5"),
+                    Line::from(""),
+                    Line::from("l / Right Arrow:       Move note right by 1"),
+                    Line::from("L / Shift+Right Arrow: Move note right by 5"),
+                ];
+
+                // Create a list widget to render
+                let page_4_content_left: Vec<ListItem> = page_4_content_left
+                    .into_iter()
+                    .map(ListItem::new)
+                    .collect();
+                let page_4_content_left = List::new(page_4_content_left);
+
+                // Render left page content
+                frame.render_widget(page_4_content_left, help_page_4_layout[0].inner(Margin::new(3, 1)));
+
+
+                // Right page content lines
+                let page_4_content_right = vec![
+                    Line::from(""),
+                    Line::from("Visual (Connection)"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("c: Switch back to Visual mode normal state"),
+                    Line::from("r: Rotate connection start/end side"),
+                    Line::from("n: Cycle through available connections on this note"),
+                    Line::from("d: Delete selected connection"),
+                    Line::from("e: Cycle through connection colors"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("Target Note Selection (selecting connection endpoint)"),
+                    Line::from(""),
+                    Line::from("h / Left Arrow:  Switch focus to note on the left"),
+                    Line::from("j / Down Arrow:  Switch focus to note below"),
+                    Line::from("k / Up Arrow:    Switch focus to note above"),
+                    Line::from("l / Right Arrow: Switch focus to note on the right"),
+                ];
+
+                // Create a list widget to render
+                let page_4_content_right: Vec<ListItem> = page_4_content_right
+                    .into_iter()
+                    .map(ListItem::new)
+                    .collect();
+                let page_4_content_right = List::new(page_4_content_right);
+
+                // Render right page content
+                frame.render_widget(page_4_content_right, help_page_4_layout[1].inner(Margin::new(3, 1)));
+            }
+            5 => {
+                // Render the bordered block (borders)
+                frame.render_widget(Block::bordered().border_style(Color::Blue), help_screen_layout[1]);
+                
+                // Render the page number
+                let page_ind_5_text = Line::from(vec![Span::raw("  Page 5/5: "), Span::styled("Insert Mode", Style::new().fg(Color::Blue))]);
+                frame.render_widget(page_ind_5_text, help_screen_layout[0]);
+
+                // Page content lines
+                let page_5_content = vec![
+                    Line::from(""),
+                    Line::from("Insert Mode (text editing)"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("ESC:           Switch back to Normal mode"),
+                    Line::from("Any character: Insert character at cursor position"),
+                    Line::from("Enter:         Insert newline at cursor position"),
+                    Line::from("Backspace:     Delete character before cursor"),
+                    Line::from("Left Arrow:    Move cursor left"),
+                    Line::from("Right Arrow:   Move cursor right"),
+                    Line::from("Up Arrow:      Move cursor up one line"),
+                    Line::from("Down Arrow:    Move cursor down one line"),
+                ];
+
+                // Create a list widget to render
+                let page_5_content: Vec<ListItem> = page_5_content
+                    .into_iter()
+                    .map(ListItem::new)
+                    .collect();
+                let page_5_content = List::new(page_5_content);
+
+                // Render page content
+                frame.render_widget(page_5_content, help_screen_layout[1].inner(Margin::new(3, 1)));
+            }
+            _ => {}
+        }
 }
 
 /// Renders the bottom information bar.

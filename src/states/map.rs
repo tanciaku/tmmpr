@@ -50,6 +50,9 @@ pub struct MapState {
     pub confirm_discard_menu: bool,
     /// Timer for automatically saving changes
     pub timer: Instant,
+    /// Whether to show the help screen, and take all input for it
+    /// usize - represents the page of the help screen
+    pub help_screen: Option<usize>,
 }
 
 impl MapState {
@@ -76,6 +79,7 @@ impl MapState {
             can_exit: true,
             confirm_discard_menu: false,
             timer: Instant::now(),
+            help_screen: None,
         }
     }
 

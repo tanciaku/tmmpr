@@ -205,6 +205,25 @@ pub enum AppAction {
 
 /// Key handling for Normal Mode in the Map Screen
 fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
+    // Showing help page (takes all input if toggled)
+    if let Some(_) = map_state.help_screen {
+        match key.code {
+            // F1, ? - toggle the help page
+            KeyCode::F(1) | KeyCode::Char('?') | KeyCode::Esc => map_state.help_screen = None,
+
+            // Right, l, Tab - go forward a page in the help screen.
+            KeyCode::Right | KeyCode::Char('l') | KeyCode::Tab => help_next_page(map_state),
+
+            // Left, h - go back a page in the help screen.
+            KeyCode::Left | KeyCode::Char('h') => help_previous_page(map_state),
+
+            _ => {}
+        }
+
+        map_state.clear_and_redraw(); 
+
+        return AppAction::Continue // Stop here
+    }
     
     // Confirm discard unsaved changes menu (takes all input if triggered)
     if map_state.confirm_discard_menu {
@@ -237,6 +256,9 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 map_state.needs_clear_and_redraw = true;
             }
         }
+
+        // F1, ? - toggle the help page
+        KeyCode::F(1) | KeyCode::Char('?') => map_state.help_screen = Some(1),
 
         // Save the map file
         KeyCode::Char('s') => return AppAction::SaveMapFile(map_state.file_write_path.clone()),
@@ -690,6 +712,36 @@ fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     AppAction::Continue
 }
 
+
+/// Go forward a page in the help screen
+fn help_next_page(map_state: &mut MapState) {
+    if let Some(current_page) = &mut map_state.help_screen {
+        map_state.help_screen = Some(
+            match current_page {
+                1 => 2,
+                2 => 3,
+                3 => 4,
+                4 => 5,
+                5 => 1,
+                _ => unreachable!(),
+        });
+    }
+}
+
+/// Go back a page in the help screen
+fn help_previous_page(map_state: &mut MapState) {
+    if let Some(current_page) = &mut map_state.help_screen {
+        map_state.help_screen = Some(
+            match current_page {
+                1 => 5,
+                2 => 1,
+                3 => 2,
+                4 => 3,
+                5 => 4,
+                _ => unreachable!(),
+        });
+    }
+}
 
 fn move_viewport(map_state: &mut MapState, axis: &str, amount: isize) {
     match axis {
