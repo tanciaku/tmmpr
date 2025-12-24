@@ -578,7 +578,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
             }
         }
         Mode::Insert => (String::from("[ INSERT ]"), Style::new().fg(Color::Blue)),
-        Mode::Delete => (String::from("Delete the selected note [d]            Go back to Visual Mode [ESC]"), Style::new().fg(Color::Red)),
+        Mode::Delete => (String::from("[ DELETE ]"), Style::new().fg(Color::Red)),
     };
 
     // --- Left-Aligned Widget: Mode Display ---
@@ -615,7 +615,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         .direction(Direction::Horizontal)
         .constraints([
             Constraint::Percentage(33), // Left side gets 33% of the width.
-            Constraint::Percentage(34), // Middle area gets 34% of the width.
+            Constraint::Min(70), // Middle area gets at least 70 cells
             Constraint::Percentage(33), // Right side gets the other 33%.
         ])
         .split(bottom_rect);
@@ -630,7 +630,17 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     frame.render_widget(Clear, bottom_rect); // First, clear the entire bar area.
     frame.render_widget(mode_display, left_bar); // Render the mode display to the left chunk.
     frame.render_widget(view_position_display, right_bar); // Render the position to the right chunk.
-    
+
+    // Render the confirm delete note prompt if need to  (Delete "Mode")
+    if let Mode::Delete = &map_state.current_mode {
+        let delete_note_prompt = Line::from(Span::styled(
+            String::from("d - Delete the selected note          Esc - Go back to Visual Mode"),
+            Style::new().fg(Color::Red)
+            ));
+        
+        frame.render_widget(delete_note_prompt, middle_bar);
+    }
+
     // (In Visual Mode only) 
     // -- Middle-Aligned Widget: Color currently set for the selected note/connection --
     if map_state.current_mode == Mode::Visual {
