@@ -6,6 +6,7 @@ use std::time::{Duration, Instant};
 
 use crate::input::AppAction;
 
+#[derive(PartialEq)]
 pub struct MapState {
     pub needs_clear_and_redraw: bool,
     /// A flag indicating that the screen needs to be cleared and redrawn on the next frame.
@@ -196,7 +197,7 @@ pub enum Mode {
 }
 
 /// Represents a single note on the canvas.
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(PartialEq, Serialize, Deserialize, Clone)]
 pub struct Note {
     /// The absolute x-coordinate of the note's top-left corner on the canvas.
     pub x: usize,
@@ -269,7 +270,7 @@ impl Note {
 }
 
 /// Represents the top-left corner of the viewport on the infinite canvas.
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(PartialEq, Serialize, Deserialize, Clone)]
 pub struct ViewPos {
     pub x: usize,
     pub y: usize,
@@ -362,6 +363,7 @@ pub struct MapData {
 }
 
 /// Which notification to display at the bottom of the screen
+#[derive(PartialEq)]
 pub enum Notification {
     SaveSuccess,
     SaveFail,

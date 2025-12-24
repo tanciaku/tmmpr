@@ -33,6 +33,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                 match app_action {
                     AppAction::Continue => {}
                     AppAction::Quit => app.quit(),
+                    AppAction::Switch(screen) => app.screen = screen,
                     AppAction::CreateMapFile(path) => create_map_file(app, &path),
                     AppAction::SaveMapFile(path) => save_map_file(app, &path, true),
                     AppAction::LoadMapFile(path) => load_map_file(app, &path),
@@ -198,6 +199,7 @@ fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 pub enum AppAction {
     Continue,
     Quit,
+    Switch(Screen),
     CreateMapFile(PathBuf),
     SaveMapFile(PathBuf),
     LoadMapFile(PathBuf),
@@ -235,7 +237,7 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             }
             // Confirm exiting and discarding unsaved changes
             KeyCode::Char('q') => {
-                return AppAction::Quit
+                return AppAction::Switch(Screen::Start(StartState::new()))
             }
             _ => {}
         }
@@ -250,7 +252,7 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         KeyCode::Char('q') => {
             // Can exit the app if saved the changes
             if map_state.can_exit {
-                return AppAction::Quit
+                return AppAction::Switch(Screen::Start(StartState::new()))
             } else { // Otherwise show the confirmation to discard unsaved changes menu
                 map_state.confirm_discard_menu = true;
                 map_state.needs_clear_and_redraw = true;

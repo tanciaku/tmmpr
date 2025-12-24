@@ -34,6 +34,7 @@ impl App {
 
 }
 
+#[derive(PartialEq)]
 pub enum Screen {
     Start(StartState),
     Map(MapState),
