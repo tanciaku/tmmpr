@@ -4,7 +4,9 @@ use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
 use std::time::{Duration, Instant};
 
-use crate::input::AppAction;
+use crate::{
+    input::AppAction, states::{settings::{Settings, SettingsType, get_settings}, start::ErrMsg},
+};
 
 #[derive(PartialEq)]
 pub struct MapState {
@@ -48,16 +50,38 @@ pub struct MapState {
     pub can_exit: bool,
     /// Whether to render a menu for confirming to discard 
     /// unsaved changes
-    pub confirm_discard_menu: bool,
+    pub confirm_discard_menu: Option<DiscardMenuType>,
     /// Timer for automatically saving changes
     pub timer: Instant,
     /// Whether to show the help screen, and take all input for it
     /// usize - represents the page of the help screen
     pub help_screen: Option<usize>,
+    /// Settings
+    pub settings: Settings,
+    /// Whether to notify the user that something went wrong with
+    /// using the settings functionality
+    pub settings_err_msg: Option<ErrMsg>,
 }
 
 impl MapState {
     pub fn new(file_write_path: PathBuf) -> MapState {
+
+        // Set the settings, scenarios:
+        // 1. Using default because settings file doesn't exist (first boot)
+        // 2. Using default because there was an error (notify the user about it)
+        // 3. Using custom - settings file exists
+        let (settings, settings_err_msg) = match get_settings() {
+            SettingsType::Default(settings, err_opt) => (settings, err_opt),
+            SettingsType::Custom(settings) => (settings, None),
+        };
+
+        // Whether to notify the user that something went wrong with
+        // using the settings functionality
+        let settings_err_msg = match settings_err_msg {
+            Some(err_msg) => Some(err_msg),
+            None => None,
+        };
+
         MapState {
             needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
@@ -78,9 +102,11 @@ impl MapState {
             file_write_path,
             show_notification: None,
             can_exit: true,
-            confirm_discard_menu: false,
+            confirm_discard_menu: None,
             timer: Instant::now(),
             help_screen: None,
+            settings: settings, // set the settings
+            settings_err_msg: settings_err_msg,
         }
     }
 
@@ -367,6 +393,14 @@ pub struct MapData {
 pub enum Notification {
     SaveSuccess,
     SaveFail,
+}
+
+/// A type to determine where the user is trying to exit to
+/// without saving changes to the map file.
+#[derive(PartialEq)]
+pub enum DiscardMenuType {
+    Start,
+    Settings
 }
 
 #[cfg(test)]

@@ -1,8 +1,9 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::states::{MapState, StartState};
-use crate::states::map::{Note, Mode, Side, SignedRect, Notification};
+use crate::states::settings::SettingsType;
+use crate::states::{MapState, SettingsState, StartState};
+use crate::states::map::{DiscardMenuType, Mode, Note, Notification, Side, SignedRect};
 use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::layout::Margin;
@@ -231,6 +232,82 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
             }
         }
     }
+}
+
+/// Render the settings menu
+pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
+
+    // If there was an error with using settings functionality -
+    // render this and stop there.
+    if let SettingsType::Default(_, error_message) = &settings_state.settings {
+        if let Some(err_msg) = error_message {
+            // Assign area for the settings error page
+            let settings_error_area = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Fill(1),
+                    Constraint::Length(1), // error message line 1
+                    Constraint::Length(1), // error message line 2
+                    Constraint::Length(1),
+                    Constraint::Length(1), // keybinds 
+                    Constraint::Fill(1),
+                ])
+                .split(frame.area());
+
+            // Create the error and controls text
+            let error_text1 = Line::from(Span::styled("There was an error with using the settings functionality:", Style::new().fg(Color::Red))).alignment(Alignment::Center);
+            let error_text2 = match err_msg {
+                ErrMsg::DirFind => Line::from(Span::styled("no home directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                ErrMsg::DirCreate => Line::from(Span::styled("can't create config directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                ErrMsg::FileWrite => Line::from(Span::styled("can't create settings file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                ErrMsg::FileRead => Line::from(Span::styled("can't read settings file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+            };
+            let settings_error_controls_text = Line::from("q - exit to start screen      o - go back to the map screen").alignment(Alignment::Center);
+
+            // Render the error and controls text
+            frame.render_widget(error_text1, settings_error_area[1]);
+            frame.render_widget(error_text2, settings_error_area[2]);
+            frame.render_widget(settings_error_controls_text, settings_error_area[4]);
+
+            return; // Stop here
+        }
+    }
+
+    // Assign area for the settings menu (split vertically)
+    let settings_menu_area = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Fill(1),
+            Constraint::Length(40),
+            Constraint::Length(1),
+            Constraint::Length(1), // keybinds text 1
+            Constraint::Length(1),
+            Constraint::Length(1), // keybinds text 2
+            Constraint::Fill(1),
+        ])
+        .split(frame.area());
+    
+    // Render the controls text, before splitting the area again
+    let settings_screen_controls_text1 = Line::from("q - exit to start screen      o - go back to the map screen      s - save the settings").alignment(Alignment::Center);
+    let settings_screen_controls_text2 = Line::from("Enter - toggle option      k / Up - go up       j / Down - go down").alignment(Alignment::Center);
+
+    frame.render_widget(settings_screen_controls_text1, settings_menu_area[3]);
+    frame.render_widget(settings_screen_controls_text2, settings_menu_area[5]);
+
+    // Split the previous area (split horizontally)
+    let settings_menu_area = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Fill(1),
+            Constraint::Length(60),
+            Constraint::Fill(1),
+        ])
+        .split(settings_menu_area[1]);
+
+    // Render the bordered block (borders for the settings menu)
+    frame.render_widget(Block::bordered(), settings_menu_area[1]);
+
+    // ...
 }
 
 pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {
@@ -671,6 +748,24 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         frame.render_widget(current_color_widget, middle_bar);
     }
 
+    // Whether to render a notification, that something went wrong with using
+    // the settings functionality.
+    if let Some(err_msg) = &map_state.settings_err_msg {
+        // Create the error message text line.
+        let settings_err_msg = match err_msg {
+            ErrMsg::DirFind => Line::from(Span::styled("Settings error: no home directory - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+            ErrMsg::DirCreate => Line::from(Span::styled("Settings error: can't create config directory - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+            ErrMsg::FileWrite => Line::from(Span::styled("Settings error: can't create settings file - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+            ErrMsg::FileRead => Line::from(Span::styled("Settings error: can't read settings file - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+        };
+        
+        // Render the error message once
+        frame.render_widget(settings_err_msg, middle_bar);
+
+        // Reset to show settings error message
+        map_state.settings_err_msg = None;
+    }
+
     // Render a notification message if need to
     if let Some(notification) = &map_state.show_notification {
         let notification_message = match notification {
@@ -688,16 +783,15 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         // Reset what notification to show
         map_state.show_notification = None;
     }
-
     // Render a confirmation menu to discard changes if need to
-    if map_state.confirm_discard_menu {
+    if let Some(discard_menu_type) = &map_state.confirm_discard_menu {
         // Define the area for the menu
         let confirm_discard_menu_area = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
                 Constraint::Fill(1),
                 Constraint::Length(1),
-                Constraint::Length(7),
+                Constraint::Length(8),
             ])
             .split(frame.area());
 
@@ -714,23 +808,45 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
                 Constraint::Length(1),
                 Constraint::Length(1),
                 Constraint::Length(1),
+                Constraint::Length(1),
                 Constraint::Length(2),
             ])
             .split(confirm_discard_menu_area[2]);
         
-        // Make the text itself
-        let line_1 = Line::from("Discard unsaved changes to this map?").alignment(Alignment::Center);
-        let line_2 = Line::from(
-            vec![
-                Span::styled("[ ESC ] - Cancel", Style::new().fg(Color::Green)), 
-                Span::raw("      "),
-                Span::styled("[ q ] - Confirm discard and exit", Style::new().fg(Color::Red)), 
+        match discard_menu_type {
+            DiscardMenuType::Start => {
+                // Make the text itself
+                let line_1 = Line::from("Discard unsaved changes to this map?").alignment(Alignment::Center);
+                let line_2 = Line::from(
+                    vec![
+                        Span::styled("[ ESC ] - Cancel", Style::new().fg(Color::Green)), 
+                        Span::raw("      "),
+                        Span::styled("[ q ] - Confirm discard and exit", Style::new().fg(Color::Red)), 
 
-            ]).alignment(Alignment::Center);
+                    ]).alignment(Alignment::Center);
         
-        // Render the text
-        frame.render_widget(line_1, confirm_discard_menu_text_areas[1]);
-        frame.render_widget(line_2, confirm_discard_menu_text_areas[3]);
+                // Render the text
+                frame.render_widget(line_1, confirm_discard_menu_text_areas[1]);
+                frame.render_widget(line_2, confirm_discard_menu_text_areas[4]);
+            }
+            DiscardMenuType::Settings => {
+                // Make the text itself
+                let line_1 = Line::from("Discard unsaved changes to this map and go to settings?").alignment(Alignment::Center);
+                let line_2 = Line::from("(You must save changes or discard them before you can open the settings menu)").alignment(Alignment::Center);
+                let line_3 = Line::from(
+                    vec![
+                        Span::styled("[ ESC ] - Cancel", Style::new().fg(Color::Green)), 
+                        Span::raw("      "),
+                        Span::styled("[ q ] - Confirm discard and go to settings", Style::new().fg(Color::Red)), 
+
+                    ]).alignment(Alignment::Center);
+        
+                // Render the text
+                frame.render_widget(line_1, confirm_discard_menu_text_areas[1]);
+                frame.render_widget(line_2, confirm_discard_menu_text_areas[2]);
+                frame.render_widget(line_3, confirm_discard_menu_text_areas[4]);
+            }
+        }
     }
 }
 

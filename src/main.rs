@@ -10,7 +10,7 @@ mod serialization;
 use crate::{
     app::{App, Screen},
     input::{AppAction, handle_events},
-    ui::{render_map, render_start}, 
+    ui::{render_map, render_settings, render_start}, 
     utils::save_map_file,
 };
 
@@ -37,6 +37,16 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
 
                 None // No save action for start screen
             }
+            Screen::Settings(settings_state) => {
+                // Clear and redraw the screen if need to
+                if settings_state.needs_clear_and_redraw {
+                    terminal.draw(|frame| render_settings(frame, settings_state))?;
+                    settings_state.needs_clear_and_redraw = false;
+                }
+
+                // temp?
+                None
+            }
             Screen::Map(map_state) => {
                 // Extract the save action
                 let action = map_state.on_tick_save_changes();
@@ -54,7 +64,6 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                     _ => None, // on_tick_save_changes can only return the two above
                 }
             }
-            _ => None,
         };
         
         // Handle the save action outside the match (no borrow conflicts)

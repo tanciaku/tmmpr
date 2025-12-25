@@ -2,13 +2,9 @@
 //! to control the application's state and behavior.
 
 use crate::{
-    app::{App, Screen},
-    utils::{create_map_file, load_map_file, save_map_file},
-    states::{
-        MapState, StartState,
-        start::{SelectedStartButton, FocusedInputBox},
-        map::{Connection, Mode, Side},
-    },
+    app::{App, Screen}, states::{
+        MapState, SettingsState, StartState, map::{Connection, DiscardMenuType, Mode, Side}, settings::{DiscardExitTo, SettingsType}, start::{FocusedInputBox, SelectedStartButton}
+    }, utils::{create_map_file, load_map_file, save_map_file}
 };
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
@@ -26,8 +22,8 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                 // Dispatch it to the appropriate handler.
                 let app_action = match &mut app.screen {
                     Screen::Start(start_state) => start_kh(start_state, key),
+                    Screen::Settings(settings_state) => settings_kh(settings_state, key),
                     Screen::Map(map_state) => map_kh(map_state, key),
-                    _ => AppAction::Continue,
                 };
 
                 match app_action {
@@ -44,8 +40,8 @@ pub fn handle_events(app: &mut App) -> Result<()> {
             Event::Resize(_, _) => {
                 match &mut app.screen {
                     Screen::Start(start_state) => start_state.needs_clear_and_redraw = true,
+                    Screen::Settings(settings_state) => settings_state.needs_clear_and_redraw = true,
                     Screen::Map(map_state) => map_state.needs_clear_and_redraw = true,
-                    _ => {},
                 }
             }
 
@@ -178,6 +174,68 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
     AppAction::Continue
 }
 
+/// Key handling for the Settings Screen
+fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
+
+    // If there was an error with using settings functionality - take only this input
+    if let SettingsType::Default(_, error_message) = &settings_state.settings {
+        if let Some(_) = error_message {
+            match key.code {
+                KeyCode::Char('q') => return AppAction::Switch(Screen::Start(StartState::new())),
+                KeyCode::Char('o') => return AppAction::LoadMapFile(settings_state.map_file_path.clone()),
+                _ => {}
+            }
+        }
+    }
+
+    // If in the prompt to discard changes - take all input
+    if let Some(exit_to) = &settings_state.confirm_discard_menu {
+        match key.code {
+            // Cancel
+            KeyCode::Esc => {
+                settings_state.confirm_discard_menu = None;
+                settings_state.needs_clear_and_redraw = true;
+            }
+            // Confirm exiting and discarding unsaved changes
+            KeyCode::Char('q') => {
+                match exit_to {
+                    DiscardExitTo::StartScreen => return AppAction::Switch(Screen::Start(StartState::new())),
+                    DiscardExitTo::MapScreen => return AppAction::LoadMapFile(settings_state.map_file_path.clone()),
+                }
+            }
+            _ => {}
+        }
+    }
+
+    match key.code {
+        // Go to the start screen
+        KeyCode::Char('q') => {
+            if settings_state.can_exit {
+                return AppAction::Switch(Screen::Start(StartState::new()))
+            } else {
+                settings_state.confirm_discard_menu = Some(DiscardExitTo::StartScreen);
+                settings_state.needs_clear_and_redraw = true;
+            }            
+        }
+        // Go back to the map screen
+        KeyCode::Char('o') => {
+            if settings_state.can_exit {
+                return AppAction::LoadMapFile(settings_state.map_file_path.clone())
+            } else {
+                settings_state.confirm_discard_menu = Some(DiscardExitTo::MapScreen);
+                settings_state.needs_clear_and_redraw = true;
+            }            
+        }
+        // Save settings
+        KeyCode::Char('s') => {
+
+        }
+        _ => {}
+    }
+
+    AppAction::Continue
+}
+
 /// Key handling for the Map Screen
 fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
     match map_state.current_mode {
@@ -228,16 +286,26 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     }
     
     // Confirm discard unsaved changes menu (takes all input if triggered)
-    if map_state.confirm_discard_menu {
+    if let Some(discard_menu_type) = &map_state.confirm_discard_menu {
         match key.code {
             // Cancel
             KeyCode::Esc => {
-                map_state.confirm_discard_menu = false;
+                map_state.confirm_discard_menu = None;
                 map_state.needs_clear_and_redraw = true;
             }
             // Confirm exiting and discarding unsaved changes
             KeyCode::Char('q') => {
-                return AppAction::Switch(Screen::Start(StartState::new()))
+                match discard_menu_type {
+                    DiscardMenuType::Start => {
+                        return AppAction::Switch(Screen::Start(StartState::new()))
+                    }
+                    DiscardMenuType::Settings => {
+                        return AppAction::Switch(
+                            Screen::Settings(SettingsState::new(
+                                // Pass in the file path that was opened to return to it after closing settings
+                                map_state.file_write_path.clone())))
+                    }
+                }
             }
             _ => {}
         }
@@ -250,11 +318,11 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
         // Exiting the app
         KeyCode::Char('q') => {
-            // Can exit the app if saved the changes
+            // Can exit to start screen if saved the changes
             if map_state.can_exit {
                 return AppAction::Switch(Screen::Start(StartState::new()))
             } else { // Otherwise show the confirmation to discard unsaved changes menu
-                map_state.confirm_discard_menu = true;
+                map_state.confirm_discard_menu = Some(DiscardMenuType::Start);
                 map_state.needs_clear_and_redraw = true;
             }
         }
@@ -264,6 +332,20 @@ fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
         // Save the map file
         KeyCode::Char('s') => return AppAction::SaveMapFile(map_state.file_write_path.clone()),
+
+        // Open the settings
+        KeyCode::Char('o') => {
+            // Can exit to settings if saved the changes
+            if map_state.can_exit {
+                return AppAction::Switch(
+                    Screen::Settings(SettingsState::new(
+                        // Pass in the file path that was opened to return to it after closing settings
+                        map_state.file_write_path.clone())))
+            } else { // Otherwise show the confirmation to discard unsaved changes menu
+                map_state.confirm_discard_menu = Some(DiscardMenuType::Settings);
+                map_state.needs_clear_and_redraw = true;
+            }
+        }
 
         // --- Viewport Navigation ---
 
