@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::states::settings::SettingsType;
+use crate::states::settings::{SettingsNotification, SettingsType};
 use crate::states::{MapState, SettingsState, StartState};
 use crate::states::map::{DiscardMenuType, Mode, Note, Notification, Side, SignedRect};
 use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
@@ -280,6 +280,8 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             Constraint::Fill(1),
             Constraint::Length(40),
             Constraint::Length(1),
+            Constraint::Length(1), // notification
+            Constraint::Length(1),
             Constraint::Length(1), // keybinds text 1
             Constraint::Length(1),
             Constraint::Length(1), // keybinds text 2
@@ -291,8 +293,27 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     let settings_screen_controls_text1 = Line::from("q - exit to start screen      o - go back to the map screen      s - save the settings").alignment(Alignment::Center);
     let settings_screen_controls_text2 = Line::from("Enter - toggle option      k / Up - go up       j / Down - go down").alignment(Alignment::Center);
 
-    frame.render_widget(settings_screen_controls_text1, settings_menu_area[3]);
-    frame.render_widget(settings_screen_controls_text2, settings_menu_area[5]);
+    frame.render_widget(settings_screen_controls_text1, settings_menu_area[5]);
+    frame.render_widget(settings_screen_controls_text2, settings_menu_area[7]);
+
+    // Render the notification if need to
+    if let Some(notification) = &settings_state.notification {
+        // Create the notification text
+        let notification_text = match notification {
+            SettingsNotification::SaveSuccess => {
+                Line::from(Span::styled("Settings saved successfully.", Style::new().fg(Color::Green))).alignment(Alignment::Center)
+            }
+            SettingsNotification::SaveFail => {
+                Line::from(Span::styled("There was an error saving to settings file. (Write Error)", Style::new().fg(Color::Red))).alignment(Alignment::Center)
+            }
+        };
+
+        // Render it
+        frame.render_widget(notification_text, settings_menu_area[3]);
+
+        // Render it only once
+        settings_state.notification = None;
+    }
 
     // Split the previous area (split horizontally)
     let settings_menu_area = Layout::default()
@@ -384,12 +405,19 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("There are only positive coordinates, think of it as a whiteboard"),
                     Line::from("starting from the top left corner and going right and bottom infinitely."),
                     Line::from(""),
-                    Line::from("0 x-------->"),
+                    Line::from("0,0 x-------->"),
                     Line::from("y"),
                     Line::from("|"),
                     Line::from("|"),
                     Line::from("|"),
                     Line::from("v"),
+                    Line::from(""),
+                    Line::from(""),
+                    Line::from("Changes are automatically saved to the map file every 20 seconds."),
+                    Line::from("You can adjust the auto-save interval or disable it in the settings menu."),
+                    Line::from(""),
+                    Line::from("If you make changes and try to quit before saving them / before the changes are"),
+                    Line::from("automatically saved - you will be prompted to either cancel exiting or discard those changes."),
                 ];
 
                 // Create a list widget to render
@@ -416,8 +444,9 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("General Commands"),
                     Line::from(""),
                     Line::from("F1 / ?: Toggle help screen"),
-                    Line::from("q:      Quit (if saved) or show confirm discard menu"),
+                    Line::from("q:      Quit to start screen (if saved) or show confirm discard menu"),
                     Line::from("s:      Save map file"),
+                    Line::from("o:      Open the settings"),
                     Line::from(""),
                     Line::from(""),
                     Line::from(""),

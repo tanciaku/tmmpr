@@ -258,7 +258,7 @@ impl RecentPaths {
 
     /// There cannot be an error here since - if the user cannot use the
     /// recent_paths functionality - this will never be called.
-    /// If the directories didn't exist before, they would at this point.
+    /// If the directories didn't exist before - they would at this point.
     pub fn save(&self) {
         // Get the user's home directory path
         let home_path = match home::home_dir() {
@@ -266,7 +266,7 @@ impl RecentPaths {
             None => return,
         };
 
-        // Make the full path to the file (e.g. /home/user/.config/tmmpr/recent_paths.json)
+        // Make the full path to the file (/home/user/.config/tmmpr/recent_paths.json)
         let recent_paths_file_path = home_path.join(".config/tmmpr/recent_paths").with_extension("json");
 
         // Write the data (guaranteed at this point)

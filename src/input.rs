@@ -3,7 +3,7 @@
 
 use crate::{
     app::{App, Screen}, states::{
-        MapState, SettingsState, StartState, map::{Connection, DiscardMenuType, Mode, Side}, settings::{DiscardExitTo, SettingsType}, start::{FocusedInputBox, SelectedStartButton}
+        MapState, SettingsState, StartState, map::{Connection, DiscardMenuType, Mode, Side}, settings::{DiscardExitTo, SettingsType, save_settings}, start::{FocusedInputBox, SelectedStartButton}
     }, utils::{create_map_file, load_map_file, save_map_file}
 };
 use color_eyre::Result;
@@ -214,7 +214,6 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
                 return AppAction::Switch(Screen::Start(StartState::new()))
             } else {
                 settings_state.confirm_discard_menu = Some(DiscardExitTo::StartScreen);
-                settings_state.needs_clear_and_redraw = true;
             }            
         }
         // Go back to the map screen
@@ -223,16 +222,14 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
                 return AppAction::LoadMapFile(settings_state.map_file_path.clone())
             } else {
                 settings_state.confirm_discard_menu = Some(DiscardExitTo::MapScreen);
-                settings_state.needs_clear_and_redraw = true;
             }            
         }
         // Save settings
-        KeyCode::Char('s') => {
-
-        }
+        KeyCode::Char('s') => save_settings(settings_state),
         _ => {}
     }
 
+    settings_state.needs_clear_and_redraw = true;
     AppAction::Continue
 }
 

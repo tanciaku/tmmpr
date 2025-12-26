@@ -18,6 +18,7 @@ pub struct SettingsState {
     /// Whether to render a menu for confirming to discard 
     /// unsaved changes
     pub confirm_discard_menu: Option<DiscardExitTo>,
+    pub notification: Option<SettingsNotification>,
 }
 
 impl SettingsState {
@@ -29,6 +30,7 @@ impl SettingsState {
             settings: get_settings(),
             can_exit: true,
             confirm_discard_menu: None,
+            notification: None,
         }
     }
 }
@@ -40,7 +42,7 @@ pub struct Settings {
 
 impl Settings {
     pub fn new() -> Settings {
-        Settings { }
+        Settings {}
     }
 }
 
@@ -77,6 +79,36 @@ pub fn get_settings() -> SettingsType {
     }
 }
 
+/// This is (can) only be called if user can use the settings 
+/// functionality - directories (already) exist in that case.
+pub fn save_settings(settings_state: &mut SettingsState) {
+    // Get the user's home directory path
+    let home_path = match home::home_dir() {
+        Some(path) => path,
+        None => return,
+    };
+
+    // Make the full path to the file (/home/user/.config/tmmpr/settings.json)
+    let settings_file_path = home_path.join(".config/tmmpr/settings").with_extension("json");
+
+    // Write the data
+    match &settings_state.settings {
+        SettingsType::Custom(settings) => {
+            match write_json_data(&settings_file_path, &settings) {
+                Ok(_) => {
+                    settings_state.can_exit = true;
+                    settings_state.notification = Some(SettingsNotification::SaveSuccess);
+                }
+                Err(_) => settings_state.notification = Some(SettingsNotification::SaveFail),
+            }
+        }
+        // Default settings are automatically written upon creation already.
+        // Default settings become "custom" when you modify them or the settings file already existed.
+        // Nothing happens if user tries rewrite the default settings to the file. (first boot)
+        _ => {}
+    }
+}
+
 /// Type to distinguish between whether successfully loaded the
 /// settings file and to know to notify the user if didn't.
 #[derive(PartialEq)]
@@ -90,4 +122,10 @@ pub enum SettingsType {
 pub enum DiscardExitTo {
     StartScreen,
     MapScreen,
+}
+
+#[derive(PartialEq)]
+pub enum SettingsNotification {
+    SaveSuccess,
+    SaveFail,
 }
