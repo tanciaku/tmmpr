@@ -3,7 +3,7 @@
 
 use crate::{
     app::{App, Screen}, states::{
-        MapState, SettingsState, StartState, map::{Connection, DiscardMenuType, Mode, Side}, settings::{DiscardExitTo, SettingsType, save_settings}, start::{FocusedInputBox, SelectedStartButton}
+        MapState, SettingsState, StartState, map::{Connection, DiscardMenuType, Mode, Side}, settings::{DiscardExitTo, SelectedToggle, SettingsType, save_settings}, start::{FocusedInputBox, SelectedStartButton}
     }, utils::{create_map_file, load_map_file, save_map_file}
 };
 use color_eyre::Result;
@@ -224,8 +224,37 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
                 settings_state.confirm_discard_menu = Some(DiscardExitTo::MapScreen);
             }            
         }
+
         // Save settings
         KeyCode::Char('s') => save_settings(settings_state),
+
+        // Go down a toggle
+        KeyCode::Char('j') | KeyCode::Down => settings_state.selected_toggle = settings_state.selected_toggle.toggle_go_down(),
+        // Go up a toggle
+        KeyCode::Char('k') | KeyCode::Up =>  settings_state.selected_toggle = settings_state.selected_toggle.toggle_go_up(),
+
+        // Toggle the selected setting
+        KeyCode::Enter => {
+            // Have to save or discard changes before exiting
+            settings_state.can_exit = false;
+
+            // Which setting is currently selected?
+            match settings_state.selected_toggle {
+                // Map changes save interval
+                SelectedToggle::Toggle1 => {
+                    match &mut settings_state.settings {
+                        // In case editing on first boot
+                        SettingsType::Default(settings, _) => {
+                            settings.save_interval = settings.cycle_save_intervals();
+                        }
+                        // Everything after first boot
+                        SettingsType::Custom(settings) => {
+                            settings.save_interval = settings.cycle_save_intervals();
+                        }
+                    }
+                }
+            }
+        }
         _ => {}
     }
 

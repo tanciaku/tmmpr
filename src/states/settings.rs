@@ -1,5 +1,6 @@
 use std::{fs, path::PathBuf};
 
+use ratatui::style::{Color, Style};
 use serde::{Deserialize, Serialize};
 
 use crate::{states::start::ErrMsg, utils::{read_json_data, write_json_data}};
@@ -19,6 +20,8 @@ pub struct SettingsState {
     /// unsaved changes
     pub confirm_discard_menu: Option<DiscardExitTo>,
     pub notification: Option<SettingsNotification>,
+    /// Which toggle is selected in the settings menu
+    pub selected_toggle: SelectedToggle,
 }
 
 impl SettingsState {
@@ -31,18 +34,34 @@ impl SettingsState {
             can_exit: true,
             confirm_discard_menu: None,
             notification: None,
+            selected_toggle: SelectedToggle::Toggle1,
         }
     }
 }
 
 #[derive(PartialEq, Serialize, Deserialize)]
 pub struct Settings {
-
+    pub save_interval: Option<usize>
 }
 
 impl Settings {
+    // Get default setttings
     pub fn new() -> Settings {
-        Settings {}
+        Settings {
+            save_interval: Some(20),
+        }
+    }
+
+    /// Cycles through the available saving intervals, for changes made to the map
+    pub fn cycle_save_intervals(&self) -> Option<usize> {
+        match self.save_interval {
+            None => Some(10),
+            Some(10) => Some(20),
+            Some(20) => Some(30),
+            Some(30) => Some(60),
+            Some(60) => None,
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -96,7 +115,9 @@ pub fn save_settings(settings_state: &mut SettingsState) {
         SettingsType::Custom(settings) => {
             match write_json_data(&settings_file_path, &settings) {
                 Ok(_) => {
+                    // Saved changes to a file - so can now exit the settings menu.
                     settings_state.can_exit = true;
+
                     settings_state.notification = Some(SettingsNotification::SaveSuccess);
                 }
                 Err(_) => settings_state.notification = Some(SettingsNotification::SaveFail),
@@ -124,8 +145,44 @@ pub enum DiscardExitTo {
     MapScreen,
 }
 
+/// Which notification to show in the settings menu.
 #[derive(PartialEq)]
 pub enum SettingsNotification {
     SaveSuccess,
     SaveFail,
 }
+
+/// Which toggle is selected in the settings menu.
+#[derive(PartialEq)]
+pub enum SelectedToggle {
+    /// Save map interval
+    Toggle1,
+}
+
+impl SelectedToggle {
+    /// Go down a toggle in the settings menu.
+    pub fn toggle_go_down(&self) -> SelectedToggle {
+        match self {
+            SelectedToggle::Toggle1 => SelectedToggle::Toggle1
+        }
+    }
+
+    /// Go up a toggle in the settings menu.
+    pub fn toggle_go_up(&self) -> SelectedToggle {
+        match self {
+            SelectedToggle::Toggle1 => SelectedToggle::Toggle1
+        }
+    }
+
+    /// Determines the style based on if the toggle is selected
+    pub fn get_style(&self, selected_button: &SelectedToggle) -> Style {
+        if self == selected_button {
+            // Selected button
+            Style::new().bg(Color::White).fg(Color::Black)
+        } else {
+            // Default
+            Style::new()
+        }
+    }
+}
+

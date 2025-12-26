@@ -200,12 +200,20 @@ impl MapState {
 
     /// Save changes to the map file every 20 seconds
     pub fn on_tick_save_changes(&mut self) -> AppAction {
-        // If there were changes made to the map and 20 seconds have passed
-        if self.can_exit == false && self.timer.elapsed() > Duration::from_secs(20) {
-            self.timer = Instant::now();
-            return AppAction::SaveMapFile(self.file_write_path.clone())
-        } else {
-            AppAction::Continue
+        // Which save interval is currently set?
+        match self.settings.save_interval {
+            // If it is disabled - don't periodically save changes.
+            None => AppAction::Continue,
+            // Save changes every _ seconds
+            Some(interval) => {
+                // If there were changes made to the map and _ seconds have passed
+                if self.can_exit == false && self.timer.elapsed() > Duration::from_secs(interval as u64) { 
+                    self.timer = Instant::now(); // Restart the timer (reset/take another timestamp) 
+                    return AppAction::SaveMapFile(self.file_write_path.clone()) // Save changes to the map file
+                } else {
+                    AppAction::Continue // _ seconds haven't passed or there are no changes - do nothing.
+                }
+            }
         }
     }
 }

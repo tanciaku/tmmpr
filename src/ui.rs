@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::states::settings::{SettingsNotification, SettingsType};
+use crate::states::settings::{SettingsNotification, SelectedToggle, SettingsType};
 use crate::states::{MapState, SettingsState, StartState};
 use crate::states::map::{DiscardMenuType, Mode, Note, Notification, Side, SignedRect};
 use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
@@ -237,6 +237,7 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
 /// Render the settings menu
 pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
 
+    // -- Error case --
     // If there was an error with using settings functionality -
     // render this and stop there.
     if let SettingsType::Default(_, error_message) = &settings_state.settings {
@@ -273,6 +274,7 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         }
     }
 
+    // -- Can use the settings functionality --
     // Assign area for the settings menu (split vertically)
     let settings_menu_area = Layout::default()
         .direction(Direction::Vertical)
@@ -288,7 +290,8 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             Constraint::Fill(1),
         ])
         .split(frame.area());
-    
+
+
     // Render the controls text, before splitting the area again
     let settings_screen_controls_text1 = Line::from("q - exit to start screen      o - go back to the map screen      s - save the settings").alignment(Alignment::Center);
     let settings_screen_controls_text2 = Line::from("Enter - toggle option      k / Up - go up       j / Down - go down").alignment(Alignment::Center);
@@ -296,7 +299,8 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     frame.render_widget(settings_screen_controls_text1, settings_menu_area[5]);
     frame.render_widget(settings_screen_controls_text2, settings_menu_area[7]);
 
-    // Render the notification if need to
+
+    // -- Render the notification if need to --
     if let Some(notification) = &settings_state.notification {
         // Create the notification text
         let notification_text = match notification {
@@ -315,6 +319,8 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         settings_state.notification = None;
     }
 
+
+    // -- Render the settings menu borders (block) -- 
     // Split the previous area (split horizontally)
     let settings_menu_area = Layout::default()
         .direction(Direction::Horizontal)
@@ -328,7 +334,86 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     // Render the bordered block (borders for the settings menu)
     frame.render_widget(Block::bordered(), settings_menu_area[1]);
 
-    // ...
+
+    // -- Create the text for toggles and toggles themselves --
+    // (involves converting settings fields to different types 
+    //      and figuring styles for toggles)
+
+    // Toggle 1 - map changes save interval
+    // Get the save interval value from the settings
+    let toggle1_content = match &settings_state.settings {
+        SettingsType::Default(settings, _) => settings.save_interval,
+        SettingsType::Custom(settings) => settings.save_interval,
+    };
+    let toggle1_content_text = match toggle1_content {
+        None => String::from("Disabled"),
+        Some(interval) => format!("{} sec", interval),
+    };
+    // Determine it's style (whether it is selected or not)
+    let toggle1_style = SelectedToggle::Toggle1.get_style(&settings_state.selected_toggle);
+
+    // Settins screen lines
+    let settings_menu_content_lines = vec![
+        Line::from(vec![Span::raw("Map changes auto save interval:  "), Span::styled(format!("{}", toggle1_content_text), toggle1_style)]),
+    ];
+
+
+    // -- Rendering the toggles text and toggles themselves --
+    // Create a list widget to render
+    let settings_menu_content: Vec<ListItem> = settings_menu_content_lines
+        .into_iter()
+        .map(ListItem::new)
+        .collect();
+    let settings_menu_content = List::new(settings_menu_content);
+
+    // Render the page content
+    frame.render_widget(settings_menu_content, settings_menu_area[1].inner(Margin::new(3, 3)));
+
+
+    // If attempted to exit without saving changes - show discard changes menu.
+    if let Some(_) = &settings_state.confirm_discard_menu {
+        // Define the area for the menu
+        let confirm_discard_menu_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Length(1),
+                Constraint::Length(8),
+            ])
+            .split(frame.area());
+
+        // Clear the area and render an empty bordered block
+        frame.render_widget(Clear, confirm_discard_menu_area[1]);
+        frame.render_widget(Clear, confirm_discard_menu_area[2]);
+        frame.render_widget(Block::bordered(), confirm_discard_menu_area[2]);
+
+        // Define the text areas inside the menu area
+        let confirm_discard_menu_text_areas = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(2),
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Length(2),
+            ])
+            .split(confirm_discard_menu_area[2]);
+        
+        // Make the text itself
+        let line_1 = Line::from("Exit without saving changes to settings?").alignment(Alignment::Center);
+        let line_2 = Line::from(
+            vec![
+                Span::styled("[ ESC ] - Cancel", Style::new().fg(Color::Green)), 
+                Span::raw("      "),
+                Span::styled("[ q ] - Confirm discard and exit", Style::new().fg(Color::Red)), 
+
+            ]).alignment(Alignment::Center);
+        
+        // Render the text
+        frame.render_widget(line_1, confirm_discard_menu_text_areas[1]);
+        frame.render_widget(line_2, confirm_discard_menu_text_areas[4]);
+    }
 }
 
 pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {
@@ -812,6 +897,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         // Reset what notification to show
         map_state.show_notification = None;
     }
+
     // Render a confirmation menu to discard changes if need to
     if let Some(discard_menu_type) = &map_state.confirm_discard_menu {
         // Define the area for the menu
