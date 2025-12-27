@@ -274,6 +274,56 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         }
     }
 
+    // -- If context page toggled --
+    if settings_state.context_page {
+        // Assign area for the context page
+        let context_page_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Length(40),
+                Constraint::Length(1),
+                Constraint::Length(1), // keybinds text
+                Constraint::Length(3), // space to align with the settings menu
+                Constraint::Fill(1),
+            ])
+            .split(frame.area());
+
+        // Render the controls text, before splitting the area again
+        let context_page_controls_text = Line::from("? / F1 - toggle context page").alignment(Alignment::Center);
+        frame.render_widget(context_page_controls_text, context_page_area[3]);
+
+        // Split the previous area for context page block
+        let context_page_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Length(60),
+                Constraint::Fill(1),
+            ])
+            .split(context_page_area[1]);
+
+        // Render the bordered block (borders for the context page)
+        frame.render_widget(Block::bordered(), context_page_area[1]);
+
+        // Context page lines
+        let context_page_lines = vec![
+            Line::from(""),
+        ];
+
+        // Create a list widget to render
+        let context_page_content: Vec<ListItem> = context_page_lines
+            .into_iter()
+            .map(ListItem::new)
+            .collect();
+        let context_page_content = List::new(context_page_content);
+
+        // Render the page content
+        frame.render_widget(context_page_content, context_page_area[1].inner(Margin::new(3, 3)));
+
+        return; // Stop here
+    }
+
     // -- Can use the settings functionality --
     // Assign area for the settings menu (split vertically)
     let settings_menu_area = Layout::default()
@@ -294,7 +344,7 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
 
     // Render the controls text, before splitting the area again
     let settings_screen_controls_text1 = Line::from("q - exit to start screen      o - go back to the map screen      s - save the settings").alignment(Alignment::Center);
-    let settings_screen_controls_text2 = Line::from("Enter - toggle option      k / Up - go up       j / Down - go down").alignment(Alignment::Center);
+    let settings_screen_controls_text2 = Line::from("Enter - toggle option      k / Up - go up       j / Down - go down       ? / F1 - toggle context page").alignment(Alignment::Center);
 
     frame.render_widget(settings_screen_controls_text1, settings_menu_area[5]);
     frame.render_widget(settings_screen_controls_text2, settings_menu_area[7]);
@@ -352,7 +402,7 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     // Determine it's style (whether it is selected or not)
     let toggle1_style = SelectedToggle::Toggle1.get_style(&settings_state.selected_toggle);
 
-    // Settins screen lines
+    // Settings screen lines
     let settings_menu_content_lines = vec![
         Line::from(vec![Span::raw("Map changes auto save interval:  "), Span::styled(format!("{}", toggle1_content_text), toggle1_style)]),
     ];

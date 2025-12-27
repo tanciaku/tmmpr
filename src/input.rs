@@ -194,7 +194,6 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
             // Cancel
             KeyCode::Esc => {
                 settings_state.confirm_discard_menu = None;
-                settings_state.needs_clear_and_redraw = true;
             }
             // Confirm exiting and discarding unsaved changes
             KeyCode::Char('q') => {
@@ -205,7 +204,23 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
             }
             _ => {}
         }
+
+        settings_state.needs_clear_and_redraw = true;
+        return AppAction::Continue
     }
+
+    // If on the context page - take all input
+    if settings_state.context_page {
+        match key.code {
+            // Close context page
+            KeyCode::Char('?') | KeyCode::F(1) => settings_state.context_page = false,
+            _ => {}
+        }
+
+        settings_state.needs_clear_and_redraw = true;
+        return AppAction::Continue
+    }
+
 
     match key.code {
         // Go to the start screen
@@ -224,6 +239,9 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
                 settings_state.confirm_discard_menu = Some(DiscardExitTo::MapScreen);
             }            
         }
+
+        // Show context page
+        KeyCode::Char('?') | KeyCode::F(1) => settings_state.context_page = true,
 
         // Save settings
         KeyCode::Char('s') => save_settings(settings_state),

@@ -22,6 +22,8 @@ pub struct SettingsState {
     pub notification: Option<SettingsNotification>,
     /// Which toggle is selected in the settings menu
     pub selected_toggle: SelectedToggle,
+    /// Whether to display context page (context for toggles)
+    pub context_page: bool,
 }
 
 impl SettingsState {
@@ -35,6 +37,7 @@ impl SettingsState {
             confirm_discard_menu: None,
             notification: None,
             selected_toggle: SelectedToggle::Toggle1,
+            context_page: false,
         }
     }
 }
