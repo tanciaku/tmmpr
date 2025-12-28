@@ -2,9 +2,9 @@ use std::{fs, path::PathBuf};
 
 use ratatui::style::{Color, Style};
 use serde::{Deserialize, Serialize};
-
+use chrono::{DateTime, Local};
 use crate::{states::start::ErrMsg, utils::{read_json_data, write_json_data}};
-
+use tempfile::NamedTempFile;
 
 #[derive(PartialEq)]
 pub struct SettingsState {
@@ -24,6 +24,10 @@ pub struct SettingsState {
     pub selected_toggle: SelectedToggle,
     /// Whether to display context page (context for toggles)
     pub context_page: bool,
+    /// Whether to display an input prompt for entering a path for backups.
+    pub input_prompt: bool,
+    /// Whether to notify user that using the entered path for backups failed.
+    pub input_prompt_err: Option<BackupsErr>,
 }
 
 impl SettingsState {
@@ -38,13 +42,87 @@ impl SettingsState {
             notification: None,
             selected_toggle: SelectedToggle::Toggle1,
             context_page: false,
+            input_prompt: false,
+            input_prompt_err: None,
         }
+    }
+}
+
+impl SettingsState {
+    /// Go down a toggle in the settings menu.
+    pub fn toggle_go_down(&mut self) {
+        self.selected_toggle = match self.selected_toggle {
+            SelectedToggle::Toggle1 => SelectedToggle::Toggle2,
+            SelectedToggle::Toggle2 => SelectedToggle::Toggle1,
+        }
+    }
+
+    /// Go up a toggle in the settings menu.
+    pub fn toggle_go_up(&mut self) {
+        self.selected_toggle = match self.selected_toggle {
+            SelectedToggle::Toggle1 => SelectedToggle::Toggle2,
+            SelectedToggle::Toggle2 => SelectedToggle::Toggle1,
+        }
+    }
+
+    pub fn submit_path(&mut self) {
+        // User entered path for backups
+        // .unwrap() used here - because while in the input prompt - backups_path cannot be None 
+        let input_dir_path = self.settings.settings().backups_path.as_ref().unwrap();
+
+        // If the path start with '/' - keep the path as it is (it's an absolute path e.g. /mnt/map_backups/)
+        let backups_dir = if input_dir_path.starts_with('/') {
+            PathBuf::from(input_dir_path)
+        } else { // If it doesn't - append that path to the home user directory path (e.g. /home/user/map_backups/)
+            // Get the user's home directory path
+            let home_path = match home::home_dir() {
+                Some(path) => path,
+                None => {
+                    self.input_prompt_err = Some(BackupsErr::DirFind);
+                    return;
+                }
+            };
+            // Construct the full path
+            let backups_dir = home_path.join(input_dir_path);
+
+            // Set that path in the Settings field
+            // "Setting it" doesn't mean submitting succeded - it's for in case it does - use
+            // the full path from home directory instead of the user entered directory path.
+            self.settings.settings_mut().backups_path = Some(backups_dir.to_string_lossy().to_string());
+
+            // Return it into a variable for use in this function
+            backups_dir
+        };
+    
+        // Create the directory
+        if let Err(_) = fs::create_dir_all(&backups_dir) {
+            self.input_prompt_err = Some(BackupsErr::DirCreate);
+            return;
+        };
+
+        // Attempt to write data to that directory
+        if let Err(_) = NamedTempFile::new_in(&backups_dir) {
+            self.input_prompt_err = Some(BackupsErr::FileWrite);
+            return;
+        }
+
+        // Set the default backup interval
+        self.settings.settings_mut().backups_interval = Some(BackupsInterval::Daily);
+
+        // Reset error if already isn't empty
+        self.input_prompt_err = None;
+
+        // Exit the input prompt
+        self.input_prompt = false;
     }
 }
 
 #[derive(PartialEq, Serialize, Deserialize)]
 pub struct Settings {
-    pub save_interval: Option<usize>
+    pub save_interval: Option<usize>,
+    pub backups_interval: Option<BackupsInterval>,
+    pub last_backup_date: Option<DateTime<Local>>,
+    pub backups_path: Option<String>,
 }
 
 impl Settings {
@@ -52,19 +130,22 @@ impl Settings {
     pub fn new() -> Settings {
         Settings {
             save_interval: Some(20),
+            backups_interval: None,
+            last_backup_date: None,
+            backups_path: None,
         }
     }
 
     /// Cycles through the available saving intervals, for changes made to the map
-    pub fn cycle_save_intervals(&self) -> Option<usize> {
-        match self.save_interval {
+    pub fn cycle_save_intervals(&mut self) {
+        self.save_interval = match self.save_interval {
             None => Some(10),
             Some(10) => Some(20),
             Some(20) => Some(30),
             Some(30) => Some(60),
             Some(60) => None,
             _ => unreachable!(),
-        }
+        }; 
     }
 }
 
@@ -141,6 +222,24 @@ pub enum SettingsType {
     Custom(Settings),
 }
 
+impl SettingsType {
+    /// Get a reference to the Settings regardless of variant
+    pub fn settings(&self) -> &Settings {
+        match self {
+            SettingsType::Default(settings, _) => settings,
+            SettingsType::Custom(settings) => settings,
+        }
+    }
+
+    /// Get a mutable reference to the Settings regardless of variant
+    pub fn settings_mut(&mut self) -> &mut Settings {
+        match self {
+            SettingsType::Default(settings, _) => settings,
+            SettingsType::Custom(settings) => settings,
+        }
+    }
+}
+
 /// If exiting from the confirm discard menu - where to exit to.
 #[derive(PartialEq)]
 pub enum DiscardExitTo {
@@ -153,6 +252,7 @@ pub enum DiscardExitTo {
 pub enum SettingsNotification {
     SaveSuccess,
     SaveFail,
+    BackupsSuccess,
 }
 
 /// Which toggle is selected in the settings menu.
@@ -160,22 +260,10 @@ pub enum SettingsNotification {
 pub enum SelectedToggle {
     /// Save map interval
     Toggle1,
+    Toggle2,
 }
 
 impl SelectedToggle {
-    /// Go down a toggle in the settings menu.
-    pub fn toggle_go_down(&self) -> SelectedToggle {
-        match self {
-            SelectedToggle::Toggle1 => SelectedToggle::Toggle1
-        }
-    }
-
-    /// Go up a toggle in the settings menu.
-    pub fn toggle_go_up(&self) -> SelectedToggle {
-        match self {
-            SelectedToggle::Toggle1 => SelectedToggle::Toggle1
-        }
-    }
 
     /// Determines the style based on if the toggle is selected
     pub fn get_style(&self, selected_button: &SelectedToggle) -> Style {
@@ -189,3 +277,17 @@ impl SelectedToggle {
     }
 }
 
+#[derive(PartialEq, Serialize, Deserialize)]
+pub enum BackupsInterval {
+    Daily,
+    Every3Days,
+    Weekly,
+    Monthly,
+}
+
+#[derive(PartialEq)]
+pub enum BackupsErr {
+    DirFind,
+    DirCreate,
+    FileWrite,
+}

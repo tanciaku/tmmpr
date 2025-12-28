@@ -1,12 +1,13 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::states::settings::{SettingsNotification, SelectedToggle, SettingsType};
+use crate::states::settings::{BackupsErr, BackupsInterval, SelectedToggle, SettingsNotification, SettingsType};
 use crate::states::{MapState, SettingsState, StartState};
 use crate::states::map::{DiscardMenuType, Mode, Note, Notification, Side, SignedRect};
 use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::layout::Margin;
+use ratatui::style::Stylize;
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Position},
     prelude::Rect,
@@ -360,6 +361,9 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             SettingsNotification::SaveFail => {
                 Line::from(Span::styled("There was an error saving to settings file. (Write Error)", Style::new().fg(Color::Red))).alignment(Alignment::Center)
             }
+            SettingsNotification::BackupsSuccess => {
+                Line::from(Span::styled("", Style::new().fg(Color::Green))).alignment(Alignment::Center)
+            }
         };
 
         // Render it
@@ -402,11 +406,27 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     // Determine it's style (whether it is selected or not)
     let toggle1_style = SelectedToggle::Toggle1.get_style(&settings_state.selected_toggle);
 
+    // Toggle 2 - backups functionality
+    let toggle2_content = match &settings_state.settings {
+        SettingsType::Default(settings, _) => &settings.backups_interval,
+        SettingsType::Custom(settings) => &settings.backups_interval,
+    };
+    let toggle2_content_text = match toggle2_content {
+        None => String::from("Disabled"),
+        Some(BackupsInterval::Daily) => String::from("Daily"),
+        Some(BackupsInterval::Every3Days) => String::from("Every 3 Days"),
+        Some(BackupsInterval::Weekly) => String::from("Weekly"),
+        Some(BackupsInterval::Monthly) => String::from("Monthly"),
+    };
+    // Determine it's style (whether it is selected or not)
+    let toggle2_style = SelectedToggle::Toggle2.get_style(&settings_state.selected_toggle);
+
     // Settings screen lines
     let settings_menu_content_lines = vec![
         Line::from(vec![Span::raw("Map changes auto save interval:  "), Span::styled(format!("{}", toggle1_content_text), toggle1_style)]),
+        Line::from(""),
+        Line::from(vec![Span::raw("Backups interval:  "), Span::styled(format!("{}", toggle2_content_text), toggle2_style)]),
     ];
-
 
     // -- Rendering the toggles text and toggles themselves --
     // Create a list widget to render
@@ -419,6 +439,106 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     // Render the page content
     frame.render_widget(settings_menu_content, settings_menu_area[1].inner(Margin::new(3, 3)));
 
+    // If entering a path for backups functionality - render this prompt over the menu.
+    if settings_state.input_prompt {
+        // Make a rectangular area for the input prompt
+        let input_prompt_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Length(18),
+                Constraint::Fill(1),
+            ])
+            .split(frame.area());
+        let input_prompt_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Length(100),
+                Constraint::Fill(1),
+            ])
+            .split(input_prompt_area[1]);
+    
+        // Clear the screen and render a bordered block (borders)
+        frame.render_widget(Clear, frame.area());
+        frame.render_widget(Block::bordered(), input_prompt_area[1]);
+
+        // Input prompt lines
+        let input_prompt_lines_area = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Min(2),
+                Constraint::Length(5), // text1
+                Constraint::Length(2),
+                Constraint::Length(3), // input field
+                Constraint::Length(1),
+                Constraint::Length(1), // notification
+                Constraint::Length(1),
+                Constraint::Length(1), // keybinds
+                Constraint::Min(2),
+            ])
+            .split(input_prompt_area[1]);
+        let input_prompt_input_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Min(2),
+                Constraint::Length(50),
+                Constraint::Min(2),
+            ])
+            .split(input_prompt_lines_area[3]);
+
+        // Text lines for the input prompt
+        let input_prompt_text = vec![
+            Line::from("Enter backups directory path").alignment(Alignment::Center),
+            Line::from(""),
+            Line::from("Empty field or directory name only - uses home directory as base path").alignment(Alignment::Center),
+            Line::from("Path starting with / - uses absolute directory path").alignment(Alignment::Center),
+            Line::from("Esc key - cancels path entry (if new) or removes existing path and disables backups").alignment(Alignment::Center)];
+        // Creating a list widget
+        let input_prompt_text: Vec<ListItem> = input_prompt_text.into_iter().map(ListItem::new).collect();
+        let input_prompt_text = List::new(input_prompt_text);
+
+        // Keybinds text for the input prompt
+        let keybinds_text = Line::from("Esc - cancel          Enter - confirm path").alignment(Alignment::Center);
+
+        // Render the text lines and the input bordered block
+        frame.render_widget(input_prompt_text, input_prompt_lines_area[1]);
+        frame.render_widget(keybinds_text, input_prompt_lines_area[7]);
+
+        // Render the user entered string
+        // .unwrap used here - because while in the input prompt - backups_path cannot be None 
+        let user_input_path = Paragraph::new(Line::from(
+            settings_state.settings.settings().backups_path.as_ref().unwrap().as_str()))
+            .block(Block::bordered());
+        frame.render_widget(user_input_path, input_prompt_input_area[1]);
+
+        // Draw the cursor
+        // x coordinate on screen of the input_prompt_input_area, +the length of the inputted string (path), +1 to clear border
+        let cursor_x = input_prompt_input_area[1].x 
+                        + settings_state.settings.settings().backups_path.as_ref().unwrap().len() as u16
+                        + 1;
+        // y coordinate on screen of the input_prompt_input_area, +1 to clear border
+        let cursor_y = input_prompt_input_area[1].y + 1; 
+        frame.set_cursor_position(Position::new(cursor_x, cursor_y));
+
+        // Render error notification if need to
+        if let Some(err) = &settings_state.input_prompt_err {
+            match err {
+                BackupsErr::DirFind => {
+                    let err_text = Line::from("Error finding the home directory").fg(Color::Red).alignment(Alignment::Center);
+                    frame.render_widget(err_text, input_prompt_lines_area[5]);
+                }
+                BackupsErr::DirCreate => {
+                    let err_text = Line::from("Error creating backups directory").fg(Color::Red).alignment(Alignment::Center);
+                    frame.render_widget(err_text, input_prompt_lines_area[5]);
+                }
+                BackupsErr::FileWrite => {
+                    let err_text = Line::from("Error writing to the provided directory").fg(Color::Red).alignment(Alignment::Center);
+                    frame.render_widget(err_text, input_prompt_lines_area[5]);
+                }
+            }
+        }
+    }
 
     // If attempted to exit without saving changes - show discard changes menu.
     if let Some(_) = &settings_state.confirm_discard_menu {
