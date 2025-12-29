@@ -147,6 +147,16 @@ impl Settings {
             _ => unreachable!(),
         }; 
     }
+
+    pub fn cycle_backup_interval(&mut self) {
+        self.backups_interval = match self.backups_interval {
+            Some(BackupsInterval::Daily) => Some(BackupsInterval::Every3Days),
+            Some(BackupsInterval::Every3Days) => Some(BackupsInterval::Weekly),
+            Some(BackupsInterval::Weekly) => Some(BackupsInterval::Every2Weeks),
+            Some(BackupsInterval::Every2Weeks) => Some(BackupsInterval::Daily),
+            None => unreachable!(), // cannot cycle backup interval if backups are not enabled
+        };
+    }
 }
 
 pub fn get_settings() -> SettingsType {
@@ -282,7 +292,7 @@ pub enum BackupsInterval {
     Daily,
     Every3Days,
     Weekly,
-    Monthly,
+    Every2Weeks,
 }
 
 #[derive(PartialEq)]

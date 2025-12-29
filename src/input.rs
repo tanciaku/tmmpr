@@ -313,6 +313,14 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
                 }
             }
         }
+
+        // Cycle backup intervals
+        KeyCode::Tab => {
+            // If backups enabled and backups toggle is selected
+            if settings_state.settings.settings().backups_interval.is_some() && matches!(settings_state.selected_toggle, SelectedToggle::Toggle2) {
+                settings_state.settings.settings_mut().cycle_backup_interval();
+            }
+        }
         _ => {}
     }
 

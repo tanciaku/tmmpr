@@ -335,6 +335,8 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             Constraint::Length(1),
             Constraint::Length(1), // notification
             Constraint::Length(1),
+            Constraint::Length(1), // optinal keybind hint
+            Constraint::Length(1),
             Constraint::Length(1), // keybinds text 1
             Constraint::Length(1),
             Constraint::Length(1), // keybinds text 2
@@ -347,8 +349,8 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     let settings_screen_controls_text1 = Line::from("q - exit to start screen      o - go back to the map screen      s - save the settings").alignment(Alignment::Center);
     let settings_screen_controls_text2 = Line::from("Enter - toggle option      k / Up - go up       j / Down - go down       ? / F1 - toggle context page").alignment(Alignment::Center);
 
-    frame.render_widget(settings_screen_controls_text1, settings_menu_area[5]);
-    frame.render_widget(settings_screen_controls_text2, settings_menu_area[7]);
+    frame.render_widget(settings_screen_controls_text1, settings_menu_area[7]);
+    frame.render_widget(settings_screen_controls_text2, settings_menu_area[9]);
 
 
     // -- Render the notification if need to --
@@ -373,8 +375,14 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         settings_state.notification = None;
     }
 
+    // -- Render a hint if need to --
+    // Render a keybind hint if on backups toggle and backups are enabled
+    if settings_state.settings.settings().backups_interval.is_some() && matches!(settings_state.selected_toggle, SelectedToggle::Toggle2) {
+        let backups_toggle_hint = Line::from(String::from("Tab - to cycle backup intervals")).alignment(Alignment::Center);
+        frame.render_widget(backups_toggle_hint, settings_menu_area[5]);
+    }
 
-    // -- Render the settings menu borders (block) -- 
+
     // Split the previous area (split horizontally)
     let settings_menu_area = Layout::default()
         .direction(Direction::Horizontal)
@@ -395,10 +403,8 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
 
     // Toggle 1 - map changes save interval
     // Get the save interval value from the settings
-    let toggle1_content = match &settings_state.settings {
-        SettingsType::Default(settings, _) => settings.save_interval,
-        SettingsType::Custom(settings) => settings.save_interval,
-    };
+    let toggle1_content = settings_state.settings.settings().save_interval;
+
     let toggle1_content_text = match toggle1_content {
         None => String::from("Disabled"),
         Some(interval) => format!("{} sec", interval),
@@ -406,26 +412,26 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     // Determine it's style (whether it is selected or not)
     let toggle1_style = SelectedToggle::Toggle1.get_style(&settings_state.selected_toggle);
 
+
     // Toggle 2 - backups functionality
-    let toggle2_content = match &settings_state.settings {
-        SettingsType::Default(settings, _) => &settings.backups_interval,
-        SettingsType::Custom(settings) => &settings.backups_interval,
-    };
+    let toggle2_content = &settings_state.settings.settings().backups_interval;
+
     let toggle2_content_text = match toggle2_content {
         None => String::from("Disabled"),
         Some(BackupsInterval::Daily) => String::from("Daily"),
-        Some(BackupsInterval::Every3Days) => String::from("Every 3 Days"),
+        Some(BackupsInterval::Every3Days) => String::from("Every 3 days"),
         Some(BackupsInterval::Weekly) => String::from("Weekly"),
-        Some(BackupsInterval::Monthly) => String::from("Monthly"),
+        Some(BackupsInterval::Every2Weeks) => String::from("Every 2 weeks"),
     };
     // Determine it's style (whether it is selected or not)
     let toggle2_style = SelectedToggle::Toggle2.get_style(&settings_state.selected_toggle);
+
 
     // Settings screen lines
     let settings_menu_content_lines = vec![
         Line::from(vec![Span::raw("Map changes auto save interval:  "), Span::styled(format!("{}", toggle1_content_text), toggle1_style)]),
         Line::from(""),
-        Line::from(vec![Span::raw("Backups interval:  "), Span::styled(format!("{}", toggle2_content_text), toggle2_style)]),
+        Line::from(vec![Span::raw("Backups interval:  "), Span::styled(format!("{}", toggle2_content_text), toggle2_style)])
     ];
 
     // -- Rendering the toggles text and toggles themselves --
