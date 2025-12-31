@@ -61,6 +61,8 @@ pub struct MapState {
     /// Whether to notify the user that something went wrong with
     /// using the settings functionality
     pub settings_err_msg: Option<ErrMsg>,
+    /// The result of attempting to make a backup file
+    pub backup_res: Option<BackupResult>
 }
 
 impl MapState {
@@ -107,6 +109,7 @@ impl MapState {
             help_screen: None,
             settings: settings, // set the settings
             settings_err_msg: settings_err_msg,
+            backup_res: None,
         }
     }
 
@@ -401,6 +404,9 @@ pub struct MapData {
 pub enum Notification {
     SaveSuccess,
     SaveFail,
+    BackupSuccess,
+    BackupFail,
+    BackupRecordFail,
 }
 
 /// A type to determine where the user is trying to exit to
@@ -409,6 +415,14 @@ pub enum Notification {
 pub enum DiscardMenuType {
     Start,
     Settings
+}
+
+/// A type to represent the outcome of attempting to write
+/// a backup file
+#[derive(PartialEq)]
+pub enum BackupResult {
+    BackupSuccess,
+    BackupFail,
 }
 
 #[cfg(test)]

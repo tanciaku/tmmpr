@@ -68,7 +68,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         
         // Handle the save action outside the match (no borrow conflicts)
         if let Some(path) = save_action {
-            save_map_file(app, &path, false);
+            save_map_file(app, &path, false, false);
         }
 
         // Read terminal events

@@ -1,9 +1,9 @@
-use std::{fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 use ratatui::style::{Color, Style};
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Local};
-use crate::{states::start::ErrMsg, utils::{read_json_data, write_json_data}};
+use crate::{states::start::ErrMsg, utils::{read_json_data, write_json_data, save_settings_to_file}};
 use tempfile::NamedTempFile;
 
 #[derive(PartialEq)]
@@ -119,10 +119,14 @@ impl SettingsState {
 
 #[derive(PartialEq, Serialize, Deserialize)]
 pub struct Settings {
+    /// Interval at which to auto-save changes to a map file
     pub save_interval: Option<usize>,
+    /// Interval at which to backup each map file
     pub backups_interval: Option<BackupsInterval>,
-    pub last_backup_date: Option<DateTime<Local>>,
-    pub backups_path: Option<String>,
+    /// Path to a directory in which to save backups
+    pub backups_path: Option<String>, 
+    /// Last backup date for each map file opened
+    pub backup_dates: HashMap<String, DateTime<Local>>,
 }
 
 impl Settings {
@@ -131,8 +135,8 @@ impl Settings {
         Settings {
             save_interval: Some(20),
             backups_interval: None,
-            last_backup_date: None,
             backups_path: None,
+            backup_dates: HashMap::new(),
         }
     }
 
@@ -195,32 +199,17 @@ pub fn get_settings() -> SettingsType {
 /// This is (can) only be called if user can use the settings 
 /// functionality - directories (already) exist in that case.
 pub fn save_settings(settings_state: &mut SettingsState) {
-    // Get the user's home directory path
-    let home_path = match home::home_dir() {
-        Some(path) => path,
-        None => return,
-    };
+    // Reference to Settings in the SettingsType
+    let settings = &settings_state.settings.settings();
 
-    // Make the full path to the file (/home/user/.config/tmmpr/settings.json)
-    let settings_file_path = home_path.join(".config/tmmpr/settings").with_extension("json");
-
-    // Write the data
-    match &settings_state.settings {
-        SettingsType::Custom(settings) => {
-            match write_json_data(&settings_file_path, &settings) {
-                Ok(_) => {
-                    // Saved changes to a file - so can now exit the settings menu.
-                    settings_state.can_exit = true;
-
-                    settings_state.notification = Some(SettingsNotification::SaveSuccess);
-                }
-                Err(_) => settings_state.notification = Some(SettingsNotification::SaveFail),
-            }
+    // Save the settings data (use the shared utility function)
+    match save_settings_to_file(settings) {
+        Ok(_) => {
+            // Saved changes to a file - so can now exit the settings menu.
+            settings_state.can_exit = true;
+            settings_state.notification = Some(SettingsNotification::SaveSuccess);
         }
-        // Default settings are automatically written upon creation already.
-        // Default settings become "custom" when you modify them or the settings file already existed.
-        // Nothing happens if user tries rewrite the default settings to the file. (first boot)
-        _ => {}
+        Err(_) => settings_state.notification = Some(SettingsNotification::SaveFail),
     }
 }
 
@@ -262,7 +251,6 @@ pub enum DiscardExitTo {
 pub enum SettingsNotification {
     SaveSuccess,
     SaveFail,
-    BackupsSuccess,
 }
 
 /// Which toggle is selected in the settings menu.

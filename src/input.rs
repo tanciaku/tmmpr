@@ -31,7 +31,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                     AppAction::Quit => app.quit(),
                     AppAction::Switch(screen) => app.screen = screen,
                     AppAction::CreateMapFile(path) => create_map_file(app, &path),
-                    AppAction::SaveMapFile(path) => save_map_file(app, &path, true),
+                    AppAction::SaveMapFile(path) => save_map_file(app, &path, true, false),
                     AppAction::LoadMapFile(path) => load_map_file(app, &path),
                 }
             }

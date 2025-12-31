@@ -363,9 +363,6 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             SettingsNotification::SaveFail => {
                 Line::from(Span::styled("There was an error saving to settings file. (Write Error)", Style::new().fg(Color::Red))).alignment(Alignment::Center)
             }
-            SettingsNotification::BackupsSuccess => {
-                Line::from(Span::styled("", Style::new().fg(Color::Green))).alignment(Alignment::Center)
-            }
         };
 
         // Render it
@@ -970,9 +967,9 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     // Define the rectangular area for the entire bottom bar.
     let bottom_rect = Rect {
         x: size.x,
-        y: size.height - 2, // Position it in the last two rows of the terminal.
+        y: size.height - 3, // Position it in the last three rows of the terminal.
         width: size.width,
-        height: 2,
+        height: 3,
     };
 
     // --- Layout Management ---
@@ -989,8 +986,16 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     
     // Assign the created chunks to variables for clarity.
     let left_bar = chunks[0];
-    let middle_bar = chunks[1];
     let right_bar = chunks[2];
+
+    // Split middle_bar into two set of rows
+    let middle_bar = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(2), // 1 empty space, 1 cell row
+            Constraint::Length(1), // 1 cell row
+        ])
+        .split(bottom_rect);
 
     // --- Rendering ---
     // Finally, render the widgets to the frame.
@@ -1005,7 +1010,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
             Style::new().fg(Color::Red)
             ));
         
-        frame.render_widget(delete_note_prompt, middle_bar);
+        frame.render_widget(delete_note_prompt, middle_bar[0]);
     }
 
     // (In Visual Mode only) 
@@ -1035,7 +1040,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
             Span::styled(current_color_name, Style::new().fg(current_color))
         ]).alignment(Alignment::Center);
 
-        frame.render_widget(current_color_widget, middle_bar);
+        frame.render_widget(current_color_widget, middle_bar[0]);
     }
 
     // Whether to render a notification, that something went wrong with using
@@ -1050,7 +1055,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         };
         
         // Render the error message once
-        frame.render_widget(settings_err_msg, middle_bar);
+        frame.render_widget(settings_err_msg, middle_bar[0]);
 
         // Reset to show settings error message
         map_state.settings_err_msg = None;
@@ -1058,17 +1063,29 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
 
     // Render a notification message if need to
     if let Some(notification) = &map_state.show_notification {
-        let notification_message = match notification {
+        // Render the corresponding notification message once
+        match notification {
             Notification::SaveSuccess => {
-                Line::from(Span::styled("Map file saved successfully", Style::new().fg(Color::Green))).alignment(Alignment::Center)
+                let notification_message = Line::from("Map file saved successfully").fg(Color::Green).alignment(Alignment::Center);
+                frame.render_widget(notification_message, middle_bar[0]);
             }
             Notification::SaveFail => {
-                Line::from(Span::styled("Error saving the map file", Style::new().fg(Color::Red))).alignment(Alignment::Center)
+                let notification_message = Line::from("Error saving the map file").fg(Color::Red).alignment(Alignment::Center);
+                frame.render_widget(notification_message, middle_bar[0]);
+            }
+            Notification::BackupSuccess => {
+                let notification_message = Line::from("Backup file made successfully").fg(Color::Green).alignment(Alignment::Center);
+                frame.render_widget(notification_message, middle_bar[1]);
+            }
+            Notification::BackupFail => {
+                let notification_message = Line::from("Error saving backup file").fg(Color::Red).alignment(Alignment::Center);
+                frame.render_widget(notification_message, middle_bar[1]);
+            }
+            Notification::BackupRecordFail => {
+                let notification_message = Line::from("Backup created successfully, but failed to update backup records").fg(Color::Red).alignment(Alignment::Center);
+                frame.render_widget(notification_message, middle_bar[1]);
             }
         };
-        
-        // Render the message once
-        frame.render_widget(notification_message, middle_bar);
 
         // Reset what notification to show
         map_state.show_notification = None;

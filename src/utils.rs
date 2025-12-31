@@ -1,11 +1,12 @@
 use crate::{
     app::{App, Screen},
     states::{
-        MapState, map::{MapData, Note, Notification, Side}, start::ErrMsg
+        MapState, map::{BackupResult, MapData, Note, Notification, Side}, settings::{BackupsInterval, Settings}, start::ErrMsg
     },
 };
+use chrono::{Duration, Local};
 use ratatui::style::Color;
-use std::{fs, path::Path};
+use std::{fs, path::{Path, PathBuf}};
 
 pub fn calculate_path(
     start_note: &Note,
@@ -643,10 +644,8 @@ pub fn create_map_file(app: &mut App, path: &Path) {
 
 /// Saves map data to a file.
 /// 
-/// Handles file write error by displaying appropriate error message to the user.
-/// 
-/// 
-pub fn save_map_file(app: &mut App, path: &Path, show_save_notification: bool) {
+/// Handles file write error by displaying appropriate error message to the user. 
+pub fn save_map_file(app: &mut App, path: &Path, show_save_notification: bool, making_backup: bool) {
     if let Screen::Map(map_state) = &app.screen {
         // Get the relevant values from the current Map State
         let map_data = MapData {
@@ -665,8 +664,17 @@ pub fn save_map_file(app: &mut App, path: &Path, show_save_notification: bool) {
                     // Can exit the app - now that have successfully saved the map file.
                     map_state.can_exit = true;
 
+                    if making_backup {
+                        map_state.backup_res = Some(BackupResult::BackupSuccess);
+                    }
+
                     if show_save_notification {
-                        map_state.show_notification = Some(Notification::SaveSuccess);
+                        if making_backup {
+                            map_state.show_notification = Some(Notification::BackupSuccess);
+                        } else {
+                            map_state.show_notification = Some(Notification::SaveSuccess);
+                        }
+
                         map_state.needs_clear_and_redraw = true;
                     }
                 }
@@ -674,8 +682,18 @@ pub fn save_map_file(app: &mut App, path: &Path, show_save_notification: bool) {
             Err(_) => {
                 // Show failed saving the map file message and redraw
                 if let Screen::Map(map_state) = &mut app.screen {
+
+                    if making_backup {
+                        map_state.backup_res = Some(BackupResult::BackupFail);
+                    }
+
                     if show_save_notification {
-                        map_state.show_notification = Some(Notification::SaveFail);
+                        if making_backup {
+                            map_state.show_notification = Some(Notification::BackupFail);
+                        } else {
+                            map_state.show_notification = Some(Notification::SaveFail);
+                        }
+
                         map_state.needs_clear_and_redraw = true;
                     }
                 }
@@ -738,4 +756,122 @@ pub fn load_map_file(app: &mut App, path: &Path) {
     // File loaded successfully - transition to the Map screen with the 
     // populated MapState containing the loaded map data
     app.screen = Screen::Map(map_state);
+
+    // If backups enabled - determine whether to create a load backup file.
+    handle_backup_on_load(app);
+}
+
+/// Handles creating backups when loading a map file, if backups are enabled
+fn handle_backup_on_load(app: &mut App) {
+    // Extract backup configuration and file info
+    // This function is structure like so - to prevent multiple borrow conflicts.
+    // If backups are enabled - backups_path and backups_interval will be Some,
+    // and backup_config contents will be Some(date).
+    // If backups are disabled - backups_path and backups_interval will be None,
+    // and backup_config contents will be None.
+    let backup_config = if let Screen::Map(map_state) = &app.screen {
+        if let (Some(backups_path), Some(backups_interval)) = 
+            (&map_state.settings.backups_path, &map_state.settings.backups_interval) {
+            
+            // Get the name of the map file opened
+            let filename = map_state.file_write_path.file_stem()
+                .and_then(|name| name.to_str())
+                .unwrap_or("unknown");
+            // Get the current date
+            let date = Local::now();
+            
+            // Backups functionality enabled -
+            // return the data into a variable for use in this function.
+            Some((
+                PathBuf::from(backups_path.clone()), // Convert backups_path to an owned PathBuf for use here
+                backups_interval,
+                filename.to_string(),
+                date,
+                map_state.settings.backup_dates.get(filename).copied()
+            ))
+        } else {
+            // Backups functionality disabled.
+            None
+        }
+    } else {
+        // Backups functionality disabled.
+        None
+    };
+
+
+    // If backups enabled (configuration data exists)
+    if let Some((backups_path, backups_interval, filename, date, last_backup_date)) = backup_config {
+        // Whether to create a backup file
+        let should_backup = match last_backup_date {
+            // No previous backup (filename key) in the backup_dates HashMap.
+            //      (No backup was ever made of this map file)
+            None => true,
+            // Check if set interval (time) has passed since last backup
+            Some(last_date) => {
+                let time_passed = date - last_date;
+                time_passed >= get_duration(&backups_interval)
+            }
+        };
+
+
+        if should_backup {
+            let backups_file_path = backups_path
+                .join(format!("{}-load-backup-{}", filename, date.format("%y-%m-%d")))
+                .with_extension("json");
+
+            // Attempt to create the backup file
+            // (save_map_file changes map_state.backup_res depending 
+            //      on the result of the write operation)
+            save_map_file(app, &backups_file_path, true, true);
+
+ 
+            // Handle the backup result and update settings if successful
+            if let Screen::Map(map_state) = &mut app.screen {
+                match &map_state.backup_res {
+                    Some(BackupResult::BackupSuccess) => {
+                        // Update the backup date in settings
+                        map_state.settings.backup_dates.insert(filename, date);
+                        
+                        // Save updated settings (backup_dates field) to file
+                        if let Err(_) = save_settings_to_file(&map_state.settings) {
+                            // If there was an error updating backup records - notify user.
+                            map_state.show_notification = Some(Notification::BackupRecordFail);
+                        }
+
+                        // Reset the result of a backup operation
+                        map_state.backup_res = None;
+                    }
+                    Some(BackupResult::BackupFail) => {
+                        // Backup failed - notification already handled by save_map_file
+                        
+                        // Reset the result of a backup operation
+                        map_state.backup_res = None;
+                    }
+                    None => unreachable!(), // save_map_file with backup flag always sets backup_res
+                }
+            }
+        }
+    }
+}
+
+/// Get the Duration type from the BackupsInterval stored in Settings
+fn get_duration(interval: &BackupsInterval) -> Duration {
+    match interval {
+        BackupsInterval::Daily => Duration::days(1),
+        BackupsInterval::Every3Days => Duration::days(3),
+        BackupsInterval::Weekly => Duration::weeks(1),
+        BackupsInterval::Every2Weeks => Duration::weeks(2),
+    }
+}
+
+pub fn save_settings_to_file(settings: &Settings) -> Result<(), Box<dyn std::error::Error>> { 
+    // Get the user's home directory path
+    let home_path = home::home_dir()
+        .ok_or("Could not find home directory")?;
+
+    // Make the full path to the file (/home/user/.config/tmmpr/settings.json)
+    let settings_file_path = home_path.join(".config/tmmpr/settings").with_extension("json");
+
+    // Write the data
+    write_json_data(&settings_file_path, settings)
 }
