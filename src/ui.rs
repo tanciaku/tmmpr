@@ -309,6 +309,29 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
 
         // Context page lines
         let context_page_lines = vec![
+            Line::from("1. Map Changes Auto Save Interval"),
+            Line::from("Automatically saves your map edits to the file at"),
+            Line::from("regular intervals. This helps prevent data loss by "),
+            Line::from("ensuring your recent changes are written to the file"),
+            Line::from("periodically."),
+            Line::from(""),
+            Line::from(""),
+            Line::from("2. Backups Interval"),
+            Line::from("Creates a backup copy of your map file each time you"),
+            Line::from("open it, but only if enough time has passed since the"),
+            Line::from("last backup. This protects against file corruption"),
+            Line::from("and allows you to restore previous versions."),
+            Line::from(""),
+            Line::from(""),
+            Line::from("3. Runtime Backups Interval"),
+            Line::from("(toggle only visible if backups enabled)"),
+            Line::from("Creates periodic backups during long editing sessions"),
+            Line::from("while the map file remains open. For example, if set"),
+            Line::from("to 2 hours and you keep the application running for"),
+            Line::from("several days, a backup will be created every 2 hours."),
+            Line::from("This provides extra protection against data loss"),
+            Line::from("during extended work sessions."),
+            Line::from(""),
             Line::from(""),
         ];
 
