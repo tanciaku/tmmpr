@@ -33,6 +33,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                     AppAction::CreateMapFile(path) => create_map_file(app, &path),
                     AppAction::SaveMapFile(path) => save_map_file(app, &path, true, false),
                     AppAction::LoadMapFile(path) => load_map_file(app, &path),
+                    AppAction::MakeRTBackupFile => {} // Handled in main.rs, cannot be called from user input.
                 }
             }
 
@@ -238,6 +239,7 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
                 // Reset fields
                 settings.backups_path = None;
                 settings.backups_interval = None; // if already isn't
+                settings.runtime_backups_interval = None; // if already isn't
                 // Reset error
                 settings_state.input_prompt_err = None; // if already isn't
             }
@@ -311,14 +313,29 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
                         settings.backups_path = Some(String::new());
                     }
                 }
+                _ => {}
             }
         }
 
         // Cycle backup intervals
         KeyCode::Tab => {
-            // If backups enabled and backups toggle is selected
-            if settings_state.settings.settings().backups_interval.is_some() && matches!(settings_state.selected_toggle, SelectedToggle::Toggle2) {
-                settings_state.settings.settings_mut().cycle_backup_interval();
+            // Have to save or discard changes before exiting
+            settings_state.can_exit = false;
+
+            match settings_state.selected_toggle {
+                SelectedToggle::Toggle2 => {
+                    // If backups enabled and backups toggle is selected
+                    if settings_state.settings.settings().backups_interval.is_some() {
+                        settings_state.settings.settings_mut().cycle_backup_interval();
+                    }
+                }
+                SelectedToggle::Toggle3 => {
+                    // If backups enabled and runtime backups toggles is selected
+                    if settings_state.settings.settings().runtime_backups_interval.is_some() {
+                        settings_state.settings.settings_mut().cycle_runtime_backup_interval();
+                    }
+                }
+                _ => {}
             }
         }
         _ => {}
@@ -345,7 +362,7 @@ fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum AppAction {
     Continue,
     Quit,
@@ -353,6 +370,8 @@ pub enum AppAction {
     CreateMapFile(PathBuf),
     SaveMapFile(PathBuf),
     LoadMapFile(PathBuf),
+    /// Whether to make a runtime backup file
+    MakeRTBackupFile,
 }
 
 /// Key handling for Normal Mode in the Map Screen

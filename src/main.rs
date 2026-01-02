@@ -11,7 +11,7 @@ use crate::{
     app::{App, Screen},
     input::{AppAction, handle_events},
     ui::{render_map, render_settings, render_start}, 
-    utils::save_map_file,
+    utils::{save_map_file, handle_runtime_backup},
 };
 
 fn main() -> color_eyre::Result<()> {
@@ -27,7 +27,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     // Main application loop
     while app.running {
         // Extract any actions before the match to avoid borrow conflicts
-        let save_action = match &mut app.screen {
+        let action = match &mut app.screen {
             Screen::Start(start_state) => {
                 // Clear and redraw the screen if need to
                 if start_state.needs_clear_and_redraw {
@@ -44,13 +44,9 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                     settings_state.needs_clear_and_redraw = false;
                 }
 
-                // temp?
-                None
+                None // No save action for settings screen
             }
-            Screen::Map(map_state) => {
-                // Extract the save action
-                let action = map_state.on_tick_save_changes();
-                
+            Screen::Map(map_state) => { 
                 // Clear and redraw the screen if need to
                 if map_state.needs_clear_and_redraw {
                     terminal.draw(|frame| render_map(frame, map_state))?;
@@ -58,17 +54,18 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                 }
                 
                 // Return the action to handle outside the match
-                match action {
-                    AppAction::SaveMapFile(path) => Some(path),
-                    AppAction::Continue => None,
-                    _ => None, // on_tick_save_changes can only return the two above
-                }
+                Some(map_state.on_tick_save_changes())
             }
         };
-        
-        // Handle the save action outside the match (no borrow conflicts)
-        if let Some(path) = save_action {
-            save_map_file(app, &path, false, false);
+         
+        // Handle the action outside the match (no borrow conflicts)
+        if let Some(action) = action {
+            match action {
+                AppAction::SaveMapFile(path) => save_map_file(app, &path, false, false),
+                AppAction::MakeRTBackupFile => handle_runtime_backup(app),
+                AppAction::Continue => {}
+                _ => {} // .on_tick_save_changes() can only return the three above
+            }
         }
 
         // Read terminal events

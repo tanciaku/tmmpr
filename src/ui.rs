@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::states::settings::{BackupsErr, BackupsInterval, SelectedToggle, SettingsNotification, SettingsType};
+use crate::states::settings::{BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, SettingsNotification, SettingsType};
 use crate::states::{MapState, SettingsState, StartState};
 use crate::states::map::{DiscardMenuType, Mode, Note, Notification, Side, SignedRect};
 use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
@@ -378,6 +378,11 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         let backups_toggle_hint = Line::from(String::from("Tab - to cycle backup intervals")).alignment(Alignment::Center);
         frame.render_widget(backups_toggle_hint, settings_menu_area[5]);
     }
+    // Render a keybind hint if on runtime backups toogle and backups are enabled
+    if settings_state.settings.settings().runtime_backups_interval.is_some() && matches!(settings_state.selected_toggle, SelectedToggle::Toggle3) {
+        let runtime_backups_toggle_hint = Line::from(String::from("Tab - to cycle runtime backup intervals")).alignment(Alignment::Center);
+        frame.render_widget(runtime_backups_toggle_hint, settings_menu_area[5]);
+    }
 
 
     // Split the previous area (split horizontally)
@@ -410,7 +415,7 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     let toggle1_style = SelectedToggle::Toggle1.get_style(&settings_state.selected_toggle);
 
 
-    // Toggle 2 - backups functionality
+    // Toggle 2 - on load backups
     let toggle2_content = &settings_state.settings.settings().backups_interval;
 
     let toggle2_content_text = match toggle2_content {
@@ -424,11 +429,38 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     let toggle2_style = SelectedToggle::Toggle2.get_style(&settings_state.selected_toggle);
 
 
+    // Toggle 3 - runtime backups
+    // (Is only visible if backups are enabled)
+    let toggle3_content = &settings_state.settings.settings().runtime_backups_interval;
+
+    // If backups enabled (which also enables runtime backups)
+    let toggle3_line_text = if let Some(_) = &settings_state.settings.settings().runtime_backups_interval {
+        // Get the runtime backups set interval in String
+        let toggle3_content_text = match toggle3_content {
+            None => String::from(""),
+            Some(RuntimeBackupsInterval::Hourly) => String::from("Hourly"),
+            Some(RuntimeBackupsInterval::Every2Hours) => String::from("Every 2 hours"),
+            Some(RuntimeBackupsInterval::Every4Hours) => String::from("Every 4 hours"),
+            Some(RuntimeBackupsInterval::Every6Hours) => String::from("Every 6 hours"),
+            Some(RuntimeBackupsInterval::Every12Hours) => String::from("Every 12 hours"),
+        };
+        // Determine it's style (whether it is selected or not)
+        let toggle3_style = SelectedToggle::Toggle3.get_style(&settings_state.selected_toggle);
+        // Create the line with appropriate styling for the toggle.
+        vec![Span::raw("Runtime backups interval:  "), Span::styled(format!("{}", toggle3_content_text), toggle3_style)] 
+    // If backups disabled - don't show the toggle.
+    } else {
+        vec![]
+    };
+
+
     // Settings screen lines
     let settings_menu_content_lines = vec![
         Line::from(vec![Span::raw("Map changes auto save interval:  "), Span::styled(format!("{}", toggle1_content_text), toggle1_style)]),
         Line::from(""),
-        Line::from(vec![Span::raw("Backups interval:  "), Span::styled(format!("{}", toggle2_content_text), toggle2_style)])
+        Line::from(vec![Span::raw("Backups interval:  "), Span::styled(format!("{}", toggle2_content_text), toggle2_style)]),
+        Line::from(""),
+        Line::from(toggle3_line_text),
     ];
 
     // -- Rendering the toggles text and toggles themselves --

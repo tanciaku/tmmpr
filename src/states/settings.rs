@@ -6,7 +6,7 @@ use chrono::{DateTime, Local};
 use crate::{states::start::ErrMsg, utils::{read_json_data, write_json_data, save_settings_to_file}};
 use tempfile::NamedTempFile;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct SettingsState {
     pub needs_clear_and_redraw: bool,
     pub settings_context_page: bool,
@@ -53,15 +53,33 @@ impl SettingsState {
     pub fn toggle_go_down(&mut self) {
         self.selected_toggle = match self.selected_toggle {
             SelectedToggle::Toggle1 => SelectedToggle::Toggle2,
-            SelectedToggle::Toggle2 => SelectedToggle::Toggle1,
+            SelectedToggle::Toggle2 => {
+                // If backups enabled - toggle3 (runtime backups) is available - so can go to it.
+                if let Some(_) = self.settings.settings().runtime_backups_interval {
+                    SelectedToggle::Toggle3
+                // If not - that toggle isn't available.
+                } else {
+                    SelectedToggle::Toggle1
+                }
+            }
+            SelectedToggle::Toggle3 => SelectedToggle::Toggle1,
         }
     }
 
     /// Go up a toggle in the settings menu.
     pub fn toggle_go_up(&mut self) {
         self.selected_toggle = match self.selected_toggle {
-            SelectedToggle::Toggle1 => SelectedToggle::Toggle2,
+            SelectedToggle::Toggle1 => {
+                // If backups enabled - toggle3 (runtime backups) is available - so can go to it.
+                if let Some(_) = self.settings.settings().runtime_backups_interval {
+                    SelectedToggle::Toggle3
+                // If not - that toggle isn't available.
+                } else {
+                    SelectedToggle::Toggle2
+                }
+            }
             SelectedToggle::Toggle2 => SelectedToggle::Toggle1,
+            SelectedToggle::Toggle3 => SelectedToggle::Toggle2,
         }
     }
 
@@ -109,6 +127,9 @@ impl SettingsState {
         // Set the default backup interval
         self.settings.settings_mut().backups_interval = Some(BackupsInterval::Daily);
 
+        // Set the default runtime backup interval
+        self.settings.settings_mut().runtime_backups_interval = Some(RuntimeBackupsInterval::Every2Hours);
+
         // Reset error if already isn't empty
         self.input_prompt_err = None;
 
@@ -117,16 +138,19 @@ impl SettingsState {
     }
 }
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct Settings {
     /// Interval at which to auto-save changes to a map file
     pub save_interval: Option<usize>,
-    /// Interval at which to backup each map file
+    /// Interval at which to backup map file on loading it
     pub backups_interval: Option<BackupsInterval>,
     /// Path to a directory in which to save backups
     pub backups_path: Option<String>, 
     /// Last backup date for each map file opened
     pub backup_dates: HashMap<String, DateTime<Local>>,
+    /// Interval at which to backup map file while the application
+    /// is running.
+    pub runtime_backups_interval: Option<RuntimeBackupsInterval>
 }
 
 impl Settings {
@@ -137,6 +161,7 @@ impl Settings {
             backups_interval: None,
             backups_path: None,
             backup_dates: HashMap::new(),
+            runtime_backups_interval: None,
         }
     }
 
@@ -160,6 +185,17 @@ impl Settings {
             Some(BackupsInterval::Every2Weeks) => Some(BackupsInterval::Daily),
             None => unreachable!(), // cannot cycle backup interval if backups are not enabled
         };
+    }
+
+    pub fn cycle_runtime_backup_interval(&mut self) {
+        self.runtime_backups_interval = match self.runtime_backups_interval {
+            Some(RuntimeBackupsInterval::Hourly) => Some(RuntimeBackupsInterval::Every2Hours),
+            Some(RuntimeBackupsInterval::Every2Hours) => Some(RuntimeBackupsInterval::Every4Hours),
+            Some(RuntimeBackupsInterval::Every4Hours) => Some(RuntimeBackupsInterval::Every6Hours),
+            Some(RuntimeBackupsInterval::Every6Hours) => Some(RuntimeBackupsInterval::Every12Hours), 
+            Some(RuntimeBackupsInterval::Every12Hours) => Some(RuntimeBackupsInterval::Hourly), 
+            None => unreachable!(), // cannot cycle runtime backup interval if backups are not enabled
+        }
     }
 }
 
@@ -215,7 +251,7 @@ pub fn save_settings(settings_state: &mut SettingsState) {
 
 /// Type to distinguish between whether successfully loaded the
 /// settings file and to know to notify the user if didn't.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum SettingsType {
     Default(Settings, Option<ErrMsg>),
     Custom(Settings),
@@ -240,29 +276,29 @@ impl SettingsType {
 }
 
 /// If exiting from the confirm discard menu - where to exit to.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum DiscardExitTo {
     StartScreen,
     MapScreen,
 }
 
 /// Which notification to show in the settings menu.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum SettingsNotification {
     SaveSuccess,
     SaveFail,
 }
 
 /// Which toggle is selected in the settings menu.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum SelectedToggle {
     /// Save map interval
     Toggle1,
     Toggle2,
+    Toggle3,
 }
 
 impl SelectedToggle {
-
     /// Determines the style based on if the toggle is selected
     pub fn get_style(&self, selected_button: &SelectedToggle) -> Style {
         if self == selected_button {
@@ -275,7 +311,7 @@ impl SelectedToggle {
     }
 }
 
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub enum BackupsInterval {
     Daily,
     Every3Days,
@@ -283,9 +319,19 @@ pub enum BackupsInterval {
     Every2Weeks,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum BackupsErr {
     DirFind,
     DirCreate,
     FileWrite,
+}
+
+
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
+pub enum RuntimeBackupsInterval {
+    Hourly,
+    Every2Hours,
+    Every4Hours,
+    Every6Hours,
+    Every12Hours,
 }

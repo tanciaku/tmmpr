@@ -5,10 +5,10 @@ use serde::{Serialize, Deserialize};
 use std::time::{Duration, Instant};
 
 use crate::{
-    input::AppAction, states::{settings::{Settings, SettingsType, get_settings}, start::ErrMsg},
+    input::AppAction, utils::get_duration_rt, states::{settings::{Settings, SettingsType, get_settings}, start::ErrMsg},
 };
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct MapState {
     pub needs_clear_and_redraw: bool,
     /// A flag indicating that the screen needs to be cleared and redrawn on the next frame.
@@ -51,8 +51,8 @@ pub struct MapState {
     /// Whether to render a menu for confirming to discard 
     /// unsaved changes
     pub confirm_discard_menu: Option<DiscardMenuType>,
-    /// Timer for automatically saving changes
-    pub timer: Instant,
+    /// Timestamp for automatically saving changes to the map file
+    pub last_save: Instant,
     /// Whether to show the help screen, and take all input for it
     /// usize - represents the page of the help screen
     pub help_screen: Option<usize>,
@@ -62,7 +62,9 @@ pub struct MapState {
     /// using the settings functionality
     pub settings_err_msg: Option<ErrMsg>,
     /// The result of attempting to make a backup file
-    pub backup_res: Option<BackupResult>
+    pub backup_res: Option<BackupResult>,
+    /// Timestamp for automatically making a runtime backup file
+    pub rt_backup_ts: Instant,
 }
 
 impl MapState {
@@ -105,11 +107,12 @@ impl MapState {
             show_notification: None,
             can_exit: true,
             confirm_discard_menu: None,
-            timer: Instant::now(),
+            last_save: Instant::now(),
             help_screen: None,
             settings: settings, // set the settings
             settings_err_msg: settings_err_msg,
             backup_res: None,
+            rt_backup_ts: Instant::now(),
         }
     }
 
@@ -201,17 +204,37 @@ impl MapState {
         }
     }
 
-    /// Save changes to the map file every 20 seconds
+    /// Make a runtime map backup file every set interval (if enabled)
+    /// 
+    /// Save changes to the map file every set interval (if enabled)
     pub fn on_tick_save_changes(&mut self) -> AppAction {
-        // Which save interval is currently set?
+
+        // Making a runtime backup file (every 2h by default)
+        match &self.settings.runtime_backups_interval {
+            // If it is disabled - don't make periodic runtime backups.
+            None => {}
+            // Make a backup every set interval
+            Some(interval) => {
+                if self.rt_backup_ts.elapsed() > get_duration_rt(interval) {
+                    if let Some(_) = &self.settings.backups_path {
+                        self.rt_backup_ts = Instant::now(); // Restart the timer (take another timestamp)
+                        return AppAction::MakeRTBackupFile;
+                    }
+                } else {
+                    return AppAction::Continue // _ hours haven't passed since opened map file - do nothing.
+                }
+            }
+        }
+
+        // Saving changes to map file (every 20s by default)
         match self.settings.save_interval {
             // If it is disabled - don't periodically save changes.
             None => AppAction::Continue,
             // Save changes every _ seconds
             Some(interval) => {
                 // If there were changes made to the map and _ seconds have passed
-                if self.can_exit == false && self.timer.elapsed() > Duration::from_secs(interval as u64) { 
-                    self.timer = Instant::now(); // Restart the timer (reset/take another timestamp) 
+                if self.can_exit == false && self.last_save.elapsed() > Duration::from_secs(interval as u64) { 
+                    self.last_save = Instant::now(); // Restart the timer (take another timestamp) 
                     return AppAction::SaveMapFile(self.file_write_path.clone()) // Save changes to the map file
                 } else {
                     AppAction::Continue // _ seconds haven't passed or there are no changes - do nothing.
@@ -222,7 +245,7 @@ impl MapState {
 }
 
 /// Represents the application's current input mode, similar to Vim.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Mode {
     /// Default mode for navigation and commands.
     Normal,
@@ -234,7 +257,7 @@ pub enum Mode {
 }
 
 /// Represents a single note on the canvas.
-#[derive(PartialEq, Serialize, Deserialize, Clone)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug)]
 pub struct Note {
     /// The absolute x-coordinate of the note's top-left corner on the canvas.
     pub x: usize,
@@ -307,7 +330,7 @@ impl Note {
 }
 
 /// Represents the top-left corner of the viewport on the infinite canvas.
-#[derive(PartialEq, Serialize, Deserialize, Clone)]
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug)]
 pub struct ViewPos {
     pub x: usize,
     pub y: usize,
@@ -371,7 +394,7 @@ impl SignedRect {
     }
 }
 
-#[derive(Serialize, Deserialize, Copy, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Copy, Clone, PartialEq, Debug)]
 pub struct Connection {
     pub from_id: usize,
     pub from_side: Side,
@@ -381,7 +404,7 @@ pub struct Connection {
     pub color: Color,
 }
 
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
 pub enum Side {
     Top,
     Bottom,
@@ -400,7 +423,7 @@ pub struct MapData {
 }
 
 /// Which notification to display at the bottom of the screen
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Notification {
     SaveSuccess,
     SaveFail,
@@ -411,7 +434,7 @@ pub enum Notification {
 
 /// A type to determine where the user is trying to exit to
 /// without saving changes to the map file.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum DiscardMenuType {
     Start,
     Settings
@@ -419,7 +442,7 @@ pub enum DiscardMenuType {
 
 /// A type to represent the outcome of attempting to write
 /// a backup file
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum BackupResult {
     BackupSuccess,
     BackupFail,

@@ -10,7 +10,7 @@ use crate::{
 };
 use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct StartState {
     pub needs_clear_and_redraw: bool,
     pub selected_button: SelectedStartButton,
@@ -131,7 +131,7 @@ impl StartState {
     }
 }             
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum SelectedStartButton {
     CreateSelect,
     Recent1,
@@ -139,7 +139,7 @@ pub enum SelectedStartButton {
     Recent3,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum FocusedInputBox {
     InputBox1,
     InputBox2,
@@ -177,7 +177,7 @@ impl FocusedInputBox {
 }
 
 /// Which error message to display
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum ErrMsg {
     DirFind,
     DirCreate,
@@ -223,7 +223,7 @@ pub fn get_recent_paths() -> Result<RecentPaths, ErrMsg> {
 }
 
 // PathBuf because the state needs to own it's fields.
-#[derive(PartialEq, Serialize, Deserialize)]
+#[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct RecentPaths {
     pub recent_path_1: Option<PathBuf>,
     pub recent_path_2: Option<PathBuf>,
