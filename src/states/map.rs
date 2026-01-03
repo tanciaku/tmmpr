@@ -5,7 +5,7 @@ use serde::{Serialize, Deserialize};
 use std::time::{Duration, Instant};
 
 use crate::{
-    input::AppAction, utils::get_duration_rt, states::{settings::{Settings, SettingsType, get_settings}, start::ErrMsg},
+    utils::{save_map_file, handle_runtime_backup, get_duration_rt}, states::{settings::{Settings, SettingsType, get_settings}, start::ErrMsg},
 };
 
 #[derive(PartialEq, Debug)]
@@ -207,7 +207,24 @@ impl MapState {
     /// Make a runtime map backup file every set interval (if enabled)
     /// 
     /// Save changes to the map file every set interval (if enabled)
-    pub fn on_tick_save_changes(&mut self) -> AppAction {
+    pub fn on_tick_save_changes(&mut self) {
+        // Saving changes to map file (every 20s by default)
+        match self.settings.save_interval {
+            // If it is disabled - don't periodically save changes.
+            None => {}
+            // Save changes every _ seconds
+            Some(interval) => {
+                // If there were changes made to the map and _ seconds have passed
+                if self.can_exit == false && self.last_save.elapsed() > Duration::from_secs(interval as u64) { 
+                    // Copy the write path for use here
+                    let map_file_path = self.file_write_path.clone();
+                    // Attempt to save changes to the map file
+                    // Notifications handled by save_map_file itself
+                    save_map_file(self, &map_file_path, false, false);
+                    self.last_save = Instant::now(); // Restart the timer (take another timestamp) 
+                }
+            }
+        }
 
         // Making a runtime backup file (every 2h by default)
         match &self.settings.runtime_backups_interval {
@@ -215,29 +232,12 @@ impl MapState {
             None => {}
             // Make a backup every set interval
             Some(interval) => {
+                // If a set duration has passed since opening the map file or last runtime backup:
                 if self.rt_backup_ts.elapsed() > get_duration_rt(interval) {
-                    if let Some(_) = &self.settings.backups_path {
-                        self.rt_backup_ts = Instant::now(); // Restart the timer (take another timestamp)
-                        return AppAction::MakeRTBackupFile;
-                    }
-                } else {
-                    return AppAction::Continue // _ hours haven't passed since opened map file - do nothing.
-                }
-            }
-        }
-
-        // Saving changes to map file (every 20s by default)
-        match self.settings.save_interval {
-            // If it is disabled - don't periodically save changes.
-            None => AppAction::Continue,
-            // Save changes every _ seconds
-            Some(interval) => {
-                // If there were changes made to the map and _ seconds have passed
-                if self.can_exit == false && self.last_save.elapsed() > Duration::from_secs(interval as u64) { 
-                    self.last_save = Instant::now(); // Restart the timer (take another timestamp) 
-                    return AppAction::SaveMapFile(self.file_write_path.clone()) // Save changes to the map file
-                } else {
-                    AppAction::Continue // _ seconds haven't passed or there are no changes - do nothing.
+                    // NOTE: if there is a runtime backups interval - there is a backups path.
+                    // Notifications handled by save_map_file, which is within handle_runtime_backup.
+                    handle_runtime_backup(self);
+                    self.rt_backup_ts = Instant::now(); // Restart the timer (take another timestamp)
                 }
             }
         }

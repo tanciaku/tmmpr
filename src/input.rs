@@ -31,9 +31,13 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                     AppAction::Quit => app.quit(),
                     AppAction::Switch(screen) => app.screen = screen,
                     AppAction::CreateMapFile(path) => create_map_file(app, &path),
-                    AppAction::SaveMapFile(path) => save_map_file(app, &path, true, false),
+                    AppAction::SaveMapFile(path) => {
+                        // This match arm can only be reached from user input in map screen
+                        if let Screen::Map(map_state) = &mut app.screen { // get the map state - guaranteed.
+                            save_map_file(map_state, &path, true, false);
+                        }
+                    }
                     AppAction::LoadMapFile(path) => load_map_file(app, &path),
-                    AppAction::MakeRTBackupFile => {} // Handled in main.rs, cannot be called from user input.
                 }
             }
 
@@ -95,7 +99,7 @@ fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
                 if let Some(map_name) = &mut start_state.input_path_name {
                     match key.code {
                         KeyCode::Char(c) => {
-                            if map_name.len() < 26 {
+                            if map_name.len() < 46 {
                                 map_name.push(c);
                             }
                         }
@@ -370,8 +374,6 @@ pub enum AppAction {
     CreateMapFile(PathBuf),
     SaveMapFile(PathBuf),
     LoadMapFile(PathBuf),
-    /// Whether to make a runtime backup file
-    MakeRTBackupFile,
 }
 
 /// Key handling for Normal Mode in the Map Screen
