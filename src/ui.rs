@@ -1003,7 +1003,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     // --- Left-Aligned Widget: Mode Display ---
     // Create a Paragraph for the mode, styling it with the color determined above.
     // It's aligned to the left and given some padding.
-    let mode_display = Paragraph::new(format!("\n{}", mode_text))
+    let mode_display = Paragraph::new(format!("{}", mode_text))
         .style(mode_text_color)
         .alignment(Alignment::Left)
         .block(Block::default().padding(Padding::new(2, 0, 0, 0)));
@@ -1012,51 +1012,57 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     // Create a separate Paragraph to show the viewport's x/y coordinates.
     // This is aligned to the right, with padding on the right side.
     let view_position_display = Paragraph::new(format!(
-        "\nView: {},{}",
+        "View: {},{}",
         map_state.view_pos.x,
         map_state.view_pos.y,
     ))
     .alignment(Alignment::Right)
     .block(Block::default().padding(Padding::new(0, 2, 0, 0)));
     
+
+    // --- Layout Management ---
+
     // Define the rectangular area for the entire bottom bar.
-    let bottom_rect = Rect {
+    let bar_area = Rect {
         x: size.x,
         y: size.height - 3, // Position it in the last three rows of the terminal.
         width: size.width,
         height: 3,
     };
 
-    // --- Layout Management ---
-    // Split the `bottom_rect` into two equal horizontal chunks.
-    // This prevents the styling of one widget from affecting the other.
-    let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(33), // Left side gets 33% of the width.
-            Constraint::Min(70), // Middle area gets at least 70 cells
-            Constraint::Percentage(33), // Right side gets the other 33%.
-        ])
-        .split(bottom_rect);
-    
-    // Assign the created chunks to variables for clarity.
-    let left_bar = chunks[0];
-    let right_bar = chunks[2];
-
-    // Split middle_bar into two set of rows
-    let middle_bar = Layout::default()
+    // Split the bar area into two set of rows
+    let bar_rows = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(2), // 1 empty space, 1 cell row
+            Constraint::Length(1), // 1 empty space row
+            Constraint::Length(1), // 1 cell row
             Constraint::Length(1), // 1 cell row
         ])
-        .split(bottom_rect);
+        .split(bar_area);
 
-    // --- Rendering ---
-    // Finally, render the widgets to the frame.
-    frame.render_widget(Clear, bottom_rect); // First, clear the entire bar area.
-    frame.render_widget(mode_display, left_bar); // Render the mode display to the left chunk.
-    frame.render_widget(view_position_display, right_bar); // Render the position to the right chunk.
+    // Split the `bar_rows` into horizontal chunks.
+    let row_1_areas = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Fill(1), // Split the rest of the area in 2 sides
+            Constraint::Min(70), // Middle area gets at least 70 cells
+            Constraint::Fill(1), // Split the rest of the area in 2 sides
+        ])
+        .split(bar_rows[1]);
+    let row_2_areas = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Fill(1), // Split the rest of the area in 2 sides
+            Constraint::Min(70), // Middle area gets at least 70 cells
+            Constraint::Fill(1), // Split the rest of the area in 2 sides
+        ])
+        .split(bar_rows[2]);
+    
+
+    // Clear the area and render status widgets to the frame.
+    frame.render_widget(Clear, bar_area); // First, clear the entire bar area.
+    frame.render_widget(mode_display, row_2_areas[0]); // Render the mode display in the left chunk.
+    frame.render_widget(view_position_display, row_2_areas[2]); // Render the position in the right chunk.
 
     // Render the confirm delete note prompt if need to  (Delete "Mode")
     if let Mode::Delete = &map_state.current_mode {
@@ -1065,7 +1071,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
             Style::new().fg(Color::Red)
             ));
         
-        frame.render_widget(delete_note_prompt, middle_bar[0]);
+        frame.render_widget(delete_note_prompt, row_2_areas[1]);
     }
 
     // (In Visual Mode only) 
@@ -1095,7 +1101,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
             Span::styled(current_color_name, Style::new().fg(current_color))
         ]).alignment(Alignment::Center);
 
-        frame.render_widget(current_color_widget, middle_bar[0]);
+        frame.render_widget(current_color_widget, row_2_areas[1]);
     }
 
     // Whether to render a notification, that something went wrong with using
@@ -1110,7 +1116,7 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         };
         
         // Render the error message once
-        frame.render_widget(settings_err_msg, middle_bar[0]);
+        frame.render_widget(settings_err_msg, row_1_areas[1]);
 
         // Reset to show settings error message
         map_state.settings_err_msg = None;
@@ -1122,23 +1128,23 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         match notification {
             Notification::SaveSuccess => {
                 let notification_message = Line::from("Map file saved successfully").fg(Color::Green).alignment(Alignment::Center);
-                frame.render_widget(notification_message, middle_bar[0]);
+                frame.render_widget(notification_message, row_2_areas[1]);
             }
             Notification::SaveFail => {
                 let notification_message = Line::from("Error saving the map file").fg(Color::Red).alignment(Alignment::Center);
-                frame.render_widget(notification_message, middle_bar[0]);
+                frame.render_widget(notification_message, row_2_areas[1]);
             }
             Notification::BackupSuccess => {
                 let notification_message = Line::from("Backup file made successfully").fg(Color::Green).alignment(Alignment::Center);
-                frame.render_widget(notification_message, middle_bar[1]);
+                frame.render_widget(notification_message, row_2_areas[1]);
             }
             Notification::BackupFail => {
                 let notification_message = Line::from("Error saving backup file").fg(Color::Red).alignment(Alignment::Center);
-                frame.render_widget(notification_message, middle_bar[1]);
+                frame.render_widget(notification_message, row_2_areas[1]);
             }
             Notification::BackupRecordFail => {
                 let notification_message = Line::from("Backup created successfully, but failed to update backup records").fg(Color::Red).alignment(Alignment::Center);
-                frame.render_widget(notification_message, middle_bar[1]);
+                frame.render_widget(notification_message, row_2_areas[1]);
             }
         };
 
