@@ -871,7 +871,13 @@ fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Char('d') => {
                 map_state.can_exit = false;
                 
+                // Remove that note from the notes HashMap by it's id  (id, note)
                 map_state.notes.remove(selected_note);
+
+                // Remove that note's id from the render_order
+                if let Some(pos) = map_state.render_order.iter().position(|&x| x == *selected_note) {
+                    map_state.render_order.remove(pos);
+                }
 
                 // -- Updating the connections Vec --
                 // Remove any connections that were associated with that note
@@ -1132,6 +1138,14 @@ fn switch_notes_focus(map_state: &mut MapState, key: &str) {
 
             // Then, update the application's state to the new ID.
             map_state.selected_note = Some(id);
+
+            // Update the render order
+            // (put the just selected note's id to the back of the render_order vector -
+            //      so it renders it over every other note "below")
+            if let Some(pos) = map_state.render_order.iter().position(|&x| x == id) {
+                let item = map_state.render_order.remove(pos);  // Remove from current position
+                map_state.render_order.push(item);              // Add to back
+            }
 
             // Finally, select the new note. This is another, separate mutable borrow.
             if let Some(note) = map_state.notes.get_mut(&id) {

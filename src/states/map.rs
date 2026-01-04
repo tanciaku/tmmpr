@@ -27,6 +27,9 @@ pub struct MapState {
     pub next_note_id: usize,
     /// A collection of all notes in the mind map, keyed by their unique ID.
     pub notes: HashMap<usize, Note>,
+    /// Order in which to render the notes ("z index")
+    /// Ordered back to front.
+    pub render_order: Vec<usize>,
     /// The unique ID of the currently selected note.
     pub selected_note: Option<usize>,
     pub cursor_pos: usize,
@@ -94,6 +97,7 @@ impl MapState {
             screen_height: 0,
             next_note_id: 0,
             notes: HashMap::new(),
+            render_order: vec![],
             selected_note: None,
             cursor_pos: 0,
             visual_move: false,
@@ -132,6 +136,7 @@ impl MapState {
         let note_x = self.view_pos.x + self.screen_width/2;
         let note_y = self.view_pos.y + self.screen_height/2;
         self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from(""), true, Color::White));
+        self.render_order.push(self.next_note_id);
         self.selected_note = Some(self.next_note_id);
         self.current_mode = Mode::Insert;
 
@@ -161,6 +166,15 @@ impl MapState {
         self.selected_note = closest_note_id_opt;
 
         if let Some(id) = self.selected_note {
+            // Update the render order
+            // (put the just selected note's id to the back of the render_order vector -
+            //      so it renders it over every other note "below")
+            if let Some(pos) = self.render_order.iter().position(|&x| x == id) {
+                let item = self.render_order.remove(pos);  // Remove from current position
+                self.render_order.push(item);              // Add to back
+            }
+
+            // Render that note in "selected" style
             if let Some(note) = self.notes.get_mut(&id) {
                 note.selected = true;
             }
