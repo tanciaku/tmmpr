@@ -317,6 +317,10 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
                         settings.backups_path = Some(String::new());
                     }
                 }
+                // Cycle default start side
+                SelectedToggle::Toggle4 => settings_state.settings.settings_mut().cycle_default_sides(true),
+                // Cycle default end side
+                SelectedToggle::Toggle5 => settings_state.settings.settings_mut().cycle_default_sides(false),
                 _ => {}
             }
         }
@@ -737,7 +741,7 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 map_state.focused_connection = Some(
                     Connection {
                         from_id: selected_note,
-                        from_side: Side::Right, // default side
+                        from_side: map_state.settings.default_start_side, // default side
                         to_id: None,
                         to_side: None,
                         color: Color::White,
@@ -1153,7 +1157,7 @@ fn switch_notes_focus(map_state: &mut MapState, key: &str) {
                     } else {
                         // update the `to_id` of "in-progress" connection to point to the newly found note.
                         focused_connection.to_id = Some(id); // id of the note that just jumped to
-                        focused_connection.to_side = Some(Side::Right); // default side
+                        focused_connection.to_side = Some(map_state.settings.default_end_side); // default side
                     }
 
                     map_state.can_exit = false;

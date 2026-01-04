@@ -1,7 +1,7 @@
 //! This module is responsible for all rendering logic of the application.
 //! It takes the application state (`App`) and a `ratatui` frame, and draws the UI.
 
-use crate::states::settings::{BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, SettingsNotification, SettingsType};
+use crate::states::settings::{BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, SettingsNotification, SettingsType, side_to_string};
 use crate::states::{MapState, SettingsState, StartState};
 use crate::states::map::{DiscardMenuType, Mode, Note, Notification, Side, SignedRect};
 use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
@@ -315,13 +315,11 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             Line::from("ensuring your recent changes are written to the file"),
             Line::from("periodically."),
             Line::from(""),
-            Line::from(""),
             Line::from("2. Backups Interval"),
             Line::from("Creates a backup copy of your map file each time you"),
             Line::from("open it, but only if enough time has passed since the"),
             Line::from("last backup. This protects against file corruption"),
             Line::from("and allows you to restore previous versions."),
-            Line::from(""),
             Line::from(""),
             Line::from("3. Runtime Backups Interval"),
             Line::from("(toggle only visible if backups enabled)"),
@@ -332,7 +330,9 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             Line::from("This provides extra protection against data loss"),
             Line::from("during extended work sessions."),
             Line::from(""),
+            Line::from("4. Default start side for making connections"),
             Line::from(""),
+            Line::from("5. Default end side for making connections"),
         ];
 
         // Create a list widget to render
@@ -452,20 +452,16 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     let toggle2_style = SelectedToggle::Toggle2.get_style(&settings_state.selected_toggle);
 
 
-    // Toggle 3 - runtime backups
-    // (Is only visible if backups are enabled)
-    let toggle3_content = &settings_state.settings.settings().runtime_backups_interval;
-
-    // If backups enabled (which also enables runtime backups)
-    let toggle3_line_text = if let Some(_) = &settings_state.settings.settings().runtime_backups_interval {
+    // Toggle 3 - runtime backups (only visible if backups are enabled)
+    // If backups enabled (which also enables runtime backups):
+    let toggle3_line_text = if let Some(toggle3_content) = &settings_state.settings.settings().runtime_backups_interval {
         // Get the runtime backups set interval in String
         let toggle3_content_text = match toggle3_content {
-            None => String::from(""),
-            Some(RuntimeBackupsInterval::Hourly) => String::from("Hourly"),
-            Some(RuntimeBackupsInterval::Every2Hours) => String::from("Every 2 hours"),
-            Some(RuntimeBackupsInterval::Every4Hours) => String::from("Every 4 hours"),
-            Some(RuntimeBackupsInterval::Every6Hours) => String::from("Every 6 hours"),
-            Some(RuntimeBackupsInterval::Every12Hours) => String::from("Every 12 hours"),
+            RuntimeBackupsInterval::Hourly => String::from("Hourly"),
+            RuntimeBackupsInterval::Every2Hours => String::from("Every 2 hours"),
+            RuntimeBackupsInterval::Every4Hours => String::from("Every 4 hours"),
+            RuntimeBackupsInterval::Every6Hours => String::from("Every 6 hours"),
+            RuntimeBackupsInterval::Every12Hours => String::from("Every 12 hours"),
         };
         // Determine it's style (whether it is selected or not)
         let toggle3_style = SelectedToggle::Toggle3.get_style(&settings_state.selected_toggle);
@@ -477,6 +473,18 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     };
 
 
+    // Toggle 4 - default start side for making connections
+    let toggle4_content_text = side_to_string(settings_state.settings.settings().default_start_side);
+    // Determine it's style (whether it is selected or not)
+    let toggle4_style = SelectedToggle::Toggle4.get_style(&settings_state.selected_toggle);
+
+
+    // Toggle 5 - default end side for making connections
+    let toggle5_content_text = side_to_string(settings_state.settings.settings().default_end_side);
+    // Determine it's style (whether it is selected or not)
+    let toggle5_style = SelectedToggle::Toggle5.get_style(&settings_state.selected_toggle);
+
+
     // Settings screen lines
     let settings_menu_content_lines = vec![
         Line::from(vec![Span::raw("Map changes auto save interval:  "), Span::styled(format!("{}", toggle1_content_text), toggle1_style)]),
@@ -484,6 +492,10 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         Line::from(vec![Span::raw("Backups interval:  "), Span::styled(format!("{}", toggle2_content_text), toggle2_style)]),
         Line::from(""),
         Line::from(toggle3_line_text),
+        Line::from(""),
+        Line::from(vec![Span::raw("Default start side:  "), Span::styled(format!("{}", toggle4_content_text), toggle4_style)]),
+        Line::from(""),
+        Line::from(vec![Span::raw("Default end side:  "), Span::styled(format!("{}", toggle5_content_text), toggle5_style)]),
     ];
 
     // -- Rendering the toggles text and toggles themselves --

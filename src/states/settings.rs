@@ -3,7 +3,7 @@ use std::{collections::HashMap, fs, path::PathBuf};
 use ratatui::style::{Color, Style};
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Local};
-use crate::{states::start::ErrMsg, utils::{read_json_data, write_json_data, save_settings_to_file}};
+use crate::{states::{map::Side, start::ErrMsg}, utils::{read_json_data, write_json_data, save_settings_to_file}};
 use tempfile::NamedTempFile;
 
 #[derive(PartialEq, Debug)]
@@ -46,9 +46,7 @@ impl SettingsState {
             input_prompt_err: None,
         }
     }
-}
 
-impl SettingsState {
     /// Go down a toggle in the settings menu.
     pub fn toggle_go_down(&mut self) {
         self.selected_toggle = match self.selected_toggle {
@@ -59,17 +57,22 @@ impl SettingsState {
                     SelectedToggle::Toggle3
                 // If not - that toggle isn't available.
                 } else {
-                    SelectedToggle::Toggle1
+                    SelectedToggle::Toggle4
                 }
             }
-            SelectedToggle::Toggle3 => SelectedToggle::Toggle1,
+            SelectedToggle::Toggle3 => SelectedToggle::Toggle4,
+            SelectedToggle::Toggle4 => SelectedToggle::Toggle5,
+            SelectedToggle::Toggle5 => SelectedToggle::Toggle1,
         }
     }
 
     /// Go up a toggle in the settings menu.
     pub fn toggle_go_up(&mut self) {
         self.selected_toggle = match self.selected_toggle {
-            SelectedToggle::Toggle1 => {
+            SelectedToggle::Toggle1 => SelectedToggle::Toggle5,
+            SelectedToggle::Toggle2 => SelectedToggle::Toggle1,
+            SelectedToggle::Toggle3 => SelectedToggle::Toggle2,
+            SelectedToggle::Toggle4 => {
                 // If backups enabled - toggle3 (runtime backups) is available - so can go to it.
                 if let Some(_) = self.settings.settings().runtime_backups_interval {
                     SelectedToggle::Toggle3
@@ -78,8 +81,7 @@ impl SettingsState {
                     SelectedToggle::Toggle2
                 }
             }
-            SelectedToggle::Toggle2 => SelectedToggle::Toggle1,
-            SelectedToggle::Toggle3 => SelectedToggle::Toggle2,
+            SelectedToggle::Toggle5 => SelectedToggle::Toggle4,
         }
     }
 
@@ -150,7 +152,11 @@ pub struct Settings {
     pub backup_dates: HashMap<String, DateTime<Local>>,
     /// Interval at which to backup map file while the application
     /// is running.
-    pub runtime_backups_interval: Option<RuntimeBackupsInterval>
+    pub runtime_backups_interval: Option<RuntimeBackupsInterval>,
+    /// Default start side for creating connections
+    pub default_start_side: Side,
+    /// Default end side for creating connections
+    pub default_end_side: Side,
 }
 
 impl Settings {
@@ -162,6 +168,8 @@ impl Settings {
             backups_path: None,
             backup_dates: HashMap::new(),
             runtime_backups_interval: None,
+            default_start_side: Side::Right,
+            default_end_side: Side::Right,
         }
     }
 
@@ -195,6 +203,14 @@ impl Settings {
             Some(RuntimeBackupsInterval::Every6Hours) => Some(RuntimeBackupsInterval::Every12Hours), 
             Some(RuntimeBackupsInterval::Every12Hours) => Some(RuntimeBackupsInterval::Hourly), 
             None => unreachable!(), // cannot cycle runtime backup interval if backups are not enabled
+        }
+    }
+
+    pub fn cycle_default_sides(&mut self, start_side: bool) {
+        if start_side {
+            self.default_start_side = cycle_side(self.default_start_side);
+        } else {
+            self.default_end_side = cycle_side(self.default_end_side);
         }
     }
 }
@@ -294,8 +310,14 @@ pub enum SettingsNotification {
 pub enum SelectedToggle {
     /// Save map interval
     Toggle1,
+    /// Load backups
     Toggle2,
+    /// Runtime backups
     Toggle3,
+    /// Default start side for making connections
+    Toggle4,
+    /// Default end side for making connections
+    Toggle5,
 }
 
 impl SelectedToggle {
@@ -326,7 +348,6 @@ pub enum BackupsErr {
     FileWrite,
 }
 
-
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub enum RuntimeBackupsInterval {
     Hourly,
@@ -334,4 +355,22 @@ pub enum RuntimeBackupsInterval {
     Every4Hours,
     Every6Hours,
     Every12Hours,
+}
+
+fn cycle_side(side: Side) -> Side {
+    match side {
+        Side::Right => Side::Bottom,
+        Side::Bottom => Side::Left,
+        Side::Left => Side::Top,
+        Side::Top => Side::Right,
+    }
+}
+
+pub fn side_to_string(side: Side) -> String {
+    match side {
+        Side::Right => String::from("Right"),
+        Side::Bottom => String::from("Bottom"),
+        Side::Left => String::from("Left"),
+        Side::Top => String::from("Top"),
+    }
 }
