@@ -610,6 +610,7 @@ pub fn create_map_file(app: &mut App, path: &Path) {
         view_pos: map_state.view_pos,
         next_note_id: map_state.next_note_id,
         notes: map_state.notes,
+        render_order: map_state.render_order,
         connections: map_state.connections,
         connection_index: map_state.connection_index,
     };
@@ -651,6 +652,7 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
         view_pos: map_state.view_pos.clone(), // necessary
         next_note_id: map_state.next_note_id,
         notes: map_state.notes.clone(), // necessary
+        render_order: map_state.render_order.clone(),
         connections: map_state.connections.clone(), // necessary
         connection_index: map_state.connection_index.clone(), // necessary
     };
@@ -717,6 +719,7 @@ pub fn load_map_file(app: &mut App, path: &Path) {
             map_state.view_pos = map_data.view_pos;
             map_state.next_note_id = map_data.next_note_id;
             map_state.notes = map_data.notes;
+            map_state.render_order = map_data.render_order;
             map_state.connections = map_data.connections;
             map_state.connection_index = map_data.connection_index;
         }

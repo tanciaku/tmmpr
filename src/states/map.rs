@@ -455,6 +455,7 @@ pub struct MapData {
     pub view_pos: ViewPos,
     pub next_note_id: usize,
     pub notes: HashMap<usize, Note>,
+    pub render_order: Vec<usize>,
     pub connections: Vec<Connection>,
     pub connection_index: HashMap<usize, Vec<Connection>>,
 }
