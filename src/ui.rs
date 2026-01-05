@@ -3,7 +3,7 @@
 
 use crate::states::settings::{BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, SettingsNotification, SettingsType, side_to_string};
 use crate::states::{MapState, SettingsState, StartState};
-use crate::states::map::{DiscardMenuType, Mode, Note, Notification, Side, SignedRect};
+use crate::states::map::{DiscardMenuType, ModalEditMode, Mode, Note, Notification, Side, SignedRect};
 use crate::states::start::{FocusedInputBox, SelectedStartButton, ErrMsg};
 use crate::utils::{calculate_path, Point, get_color_name_in_string};
 use ratatui::layout::Margin;
@@ -485,6 +485,16 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     let toggle5_style = SelectedToggle::Toggle5.get_style(&settings_state.selected_toggle);
 
 
+    // Toggle 6 - Modal Editing for Edit Mode
+    let toggle6_content_text = if settings_state.settings.settings().edit_modal {
+        String::from("Enabled")
+    } else {
+        String::from("Disabled")
+    };
+    // Determine it's style (whether it is selected or not)
+    let toggle6_style = SelectedToggle::Toggle6.get_style(&settings_state.selected_toggle);
+
+
     // Settings screen lines
     let settings_menu_content_lines = vec![
         Line::from(vec![Span::raw("Map changes auto save interval:  "), Span::styled(format!("{}", toggle1_content_text), toggle1_style)]),
@@ -496,6 +506,8 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         Line::from(vec![Span::raw("Default start side:  "), Span::styled(format!("{}", toggle4_content_text), toggle4_style)]),
         Line::from(""),
         Line::from(vec![Span::raw("Default end side:  "), Span::styled(format!("{}", toggle5_content_text), toggle5_style)]),
+        Line::from(""),
+        Line::from(vec![Span::raw("Modal Editing for Edit Mode:  "), Span::styled(format!("{}", toggle6_content_text), toggle6_style)]),
     ];
 
     // -- Rendering the toggles text and toggles themselves --
@@ -711,7 +723,7 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("2 - Normal Mode"),
                     Line::from("3 - Visual Mode"),
                     Line::from("4 - Visual (Move), Visual (Connection)"),
-                    Line::from("5 - Insert Mode"),
+                    Line::from("5 - Edit Mode"),
                     Line::from(""),
                     Line::from(""),
                     Line::from(""),
@@ -824,7 +836,7 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("General Commands"),
                     Line::from(""),
                     Line::from("ESC: Switch back to Normal mode"),
-                    Line::from("i:   Switch to Insert mode"),
+                    Line::from("i:   Switch to Edit mode"),
                     Line::from("m:   Switch to Move state"),
                     Line::from("c:   Switch to Connection state (edit existing connection(s))"),
                     Line::from("C:   Add a new connection from the selected note"),
@@ -954,13 +966,13 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                 frame.render_widget(Block::bordered().border_style(Color::Blue), help_screen_layout[1]);
                 
                 // Render the page number
-                let page_ind_5_text = Line::from(vec![Span::raw("  Page 5/5: "), Span::styled("Insert Mode", Style::new().fg(Color::Blue))]);
+                let page_ind_5_text = Line::from(vec![Span::raw("  Page 5/5: "), Span::styled("Edit Mode", Style::new().fg(Color::Blue))]);
                 frame.render_widget(page_ind_5_text, help_screen_layout[0]);
 
                 // Page content lines
                 let page_5_content = vec![
                     Line::from(""),
-                    Line::from("Insert Mode (text editing)"),
+                    Line::from("Edit Mode (text editing)"),
                     Line::from(""),
                     Line::from(""),
                     Line::from("ESC:           Switch back to Normal mode"),
@@ -1008,7 +1020,13 @@ fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
                 (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow))
             }
         }
-        Mode::Insert => (String::from("[ INSERT ]"), Style::new().fg(Color::Blue)),
+        Mode::Edit(modal) => (
+            match modal {
+                None => String::from("[ EDIT ]"),
+                Some(ModalEditMode::Normal) => String::from("[ EDIT (NORMAL) ]"),
+                Some(ModalEditMode::Insert) => String::from("[ EDIT (INSERT) ]"),
+            },
+            Style::new().fg(Color::Blue)),
         Mode::Delete => (String::from("[ DELETE ]"), Style::new().fg(Color::Red)),
     };
 
@@ -1307,7 +1325,7 @@ fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                     match map_state.current_mode {
                         Mode::Normal => Color::White,
                         Mode::Visual => Color::Yellow,
-                        Mode::Insert => Color::Blue,
+                        Mode::Edit(_) => Color::Blue,
                         Mode::Delete => Color::Red,
                     }
                 } else {
@@ -1319,7 +1337,7 @@ fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                     match map_state.current_mode {
                         Mode::Normal => BorderType::Plain,
                         Mode::Visual => BorderType::Thick,
-                        Mode::Insert => BorderType::Double,
+                        Mode::Edit(_) => BorderType::Double,
                         Mode::Delete => BorderType::Rounded,
                     }
                 } else {
@@ -1343,11 +1361,11 @@ fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 frame.render_widget(Clear, note_area);
                 frame.render_widget(text_widget, note_area);
 
-                // -- 9. Render the cursor if in Insert Mode on the selected note ---
-                // This logic only runs if the app is in Insert mode AND the note currently being
+                // -- 9. Render the cursor if in Edit Mode on the selected note ---
+                // This logic only runs if the app is in Edit Mode AND the note currently being
                 // drawn is the one that's actively selected.
                 if let Some(selected_note) = &map_state.selected_note {
-                    if matches!(map_state.current_mode, Mode::Insert) && note_id == *selected_note {
+                    if matches!(map_state.current_mode, Mode::Edit(_)) && note_id == *selected_note {
 
                         // To calculate the cursor's position, we first need a slice of the text
                         // from the beginning of the note's content up to the cursor's byte index.
@@ -1631,7 +1649,7 @@ fn draw_connecting_character(note: &Note, side: Side, is_editing: bool, color: C
     let connection_charset = if note.selected || is_editing {
         match map_state.current_mode {
             Mode::Visual => &THICK_JUNCTIONS,
-            Mode::Insert => &DOUBLE_JUNCTIONS,
+            Mode::Edit(_) => &DOUBLE_JUNCTIONS,
             // For Normal and Delete, we use the plain set
             _ => &PLAIN_JUNCTIONS,
         }

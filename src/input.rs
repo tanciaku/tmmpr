@@ -3,7 +3,7 @@
 
 use crate::{
     app::{App, Screen}, states::{
-        MapState, SettingsState, StartState, map::{Connection, DiscardMenuType, Mode, Side}, settings::{DiscardExitTo, SelectedToggle, SettingsType, save_settings}, start::{FocusedInputBox, SelectedStartButton}
+        MapState, SettingsState, StartState, map::{Connection, DiscardMenuType, ModalEditMode, Mode, Side}, settings::{DiscardExitTo, SelectedToggle, SettingsType, save_settings}, start::{FocusedInputBox, SelectedStartButton}
     }, utils::{create_map_file, load_map_file, save_map_file}
 };
 use color_eyre::Result;
@@ -321,6 +321,8 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
                 SelectedToggle::Toggle4 => settings_state.settings.settings_mut().cycle_default_sides(true),
                 // Cycle default end side
                 SelectedToggle::Toggle5 => settings_state.settings.settings_mut().cycle_default_sides(false),
+                // Toggle Modal Editing for Edit Mode
+                SelectedToggle::Toggle6 => settings_state.settings.settings_mut().edit_modal = !settings_state.settings.settings().edit_modal,
                 _ => {}
             }
         }
@@ -355,15 +357,15 @@ fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
 
 /// Key handling for the Map Screen
 fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
-    match map_state.current_mode {
+    match &map_state.current_mode {
         // Normal mode is for navigation and high-level commands.
         Mode::Normal => map_normal_kh(map_state, key),
 
         // Visual mode for selections.
         Mode::Visual => map_visual_kh(map_state, key),
 
-        // Insert mode is for editing the content of a note.
-        Mode::Insert => map_insert_kh(map_state, key),
+        // Edit mode is for editing the content of a note.
+        Mode::Edit(modal) => map_insert_kh(map_state, key, *modal),
     
         // Delete mode is a confirmation to delete a note
         Mode::Delete => map_delete_kh(map_state, key),
@@ -711,8 +713,8 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 }
             }
         }
-        // Switch to Insert mode
-        KeyCode::Char('i') => map_state.current_mode = Mode::Insert,
+        // Switch to Edit mode
+        KeyCode::Char('i') => map_state.switch_to_edit_mode(),
 
         // Switch to Move State for the Visual Mode
         KeyCode::Char('m') => map_state.visual_move = true,
@@ -791,70 +793,120 @@ fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     AppAction::Continue
 }
 
-fn map_insert_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
-    if let Some(selected_note) = &map_state.selected_note {
-        match key.code {
-            // Switch back to Normal Mode
-            KeyCode::Esc => {
-                map_state.current_mode = Mode::Normal;
-                if let Some(note) = map_state.notes.get_mut(selected_note) {
-                    note.selected = false;
-                    // Reset cursor position for the next time entering Insert mode.
-                    map_state.cursor_pos = 0;
-                }
-            }
+/// modal arg: Some() - Modal Editing for Edit Mode enabled, None - disabled.
+fn map_insert_kh(map_state: &mut MapState, key: KeyEvent, modal: Option<ModalEditMode>) -> AppAction {
+    match modal {
+        // If Modal Editing is disabled for Edit Mode
+        //  or it is enabled and is in Insert Mode.
+        None | Some(ModalEditMode::Insert) => {
+            if let Some(selected_note) = &map_state.selected_note {
+                match key.code {
+                    KeyCode::Esc => {
+                        match modal {
+                            // If Modal Editing for Edit Mode is disabled - Esc switches back to Normal Mode.
+                            None => {
+                                map_state.current_mode = Mode::Normal;
+                                if let Some(note) = map_state.notes.get_mut(selected_note) {
+                                    note.selected = false;
+                                    // Reset cursor position for the next time entering Edit mode.
+                                    map_state.cursor_pos = 0;
+                                }
+                            }
+                            // If it's enabled - switches mode to Edit Mode, Modal Edit Mode - Normal.
+                            Some(ModalEditMode::Insert) => map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal)),
+                            _ => unreachable!(),
+                        }
+                    }
 
-            // --- Text Editing ---
-            KeyCode::Char(c) => {
-                map_state.can_exit = false;
-                if let Some(note) = map_state.notes.get_mut(selected_note) {
-                    // Insert the typed character at the cursor's current position.
-                    note.content.insert(map_state.cursor_pos, c);
-                    // Move the cursor forward one position.
-                    map_state.cursor_pos += 1;
-                }
-            }
-            KeyCode::Enter => {
-                map_state.can_exit = false;
-                if let Some(note) = map_state.notes.get_mut(selected_note) {
-                    // Insert a newline character at the cursor's position.
-                    note.content.insert(map_state.cursor_pos, '\n');
-                    // Move the cursor forward one position.
-                    map_state.cursor_pos += 1;
-                }
-            }
-            KeyCode::Backspace => {
-                map_state.can_exit = false;
-                if let Some(note) = map_state.notes.get_mut(selected_note) {
-                    // We can only backspace if the cursor is not at the very beginning of the text.
-                    if map_state.cursor_pos > 0 {
-                        // To delete the character *before* the cursor, we must remove the character
-                        // at the index `cursor_pos - 1`.
-                        note.content.remove(map_state.cursor_pos - 1);
-                        // After removing the character, we move the cursor's position back by one.
-                        map_state.cursor_pos -= 1;
+                    // --- Text Editing ---
+                    KeyCode::Char(c) => {
+                        map_state.can_exit = false;
+                        if let Some(note) = map_state.notes.get_mut(selected_note) {
+                            // Insert the typed character at the cursor's current position.
+                            note.content.insert(map_state.cursor_pos, c);
+                            // Move the cursor forward one position.
+                            map_state.cursor_pos += 1;
+                        }
                     }
-                }
-            }
-            KeyCode::Left => {
-                if map_state.cursor_pos > 0 { 
-                    map_state.cursor_pos -= 1 
-                }
-            }
-            KeyCode::Right => {
-                if let Some(note) = map_state.notes.get(selected_note) {
-                    if map_state.cursor_pos < note.content.len() {
-                        map_state.cursor_pos += 1;
+                    KeyCode::Enter => {
+                        map_state.can_exit = false;
+                        if let Some(note) = map_state.notes.get_mut(selected_note) {
+                            // Insert a newline character at the cursor's position.
+                            note.content.insert(map_state.cursor_pos, '\n');
+                            // Move the cursor forward one position.
+                            map_state.cursor_pos += 1;
+                        }
                     }
+                    KeyCode::Backspace => {
+                        map_state.can_exit = false;
+                        if let Some(note) = map_state.notes.get_mut(selected_note) {
+                            // We can only backspace if the cursor is not at the very beginning of the text.
+                            if map_state.cursor_pos > 0 {
+                                // To delete the character *before* the cursor, we must remove the character
+                                // at the index `cursor_pos - 1`.
+                                note.content.remove(map_state.cursor_pos - 1);
+                                // After removing the character, we move the cursor's position back by one.
+                                map_state.cursor_pos -= 1;
+                            }
+                        }
+                    }
+                    KeyCode::Left => {
+                        if map_state.cursor_pos > 0 { 
+                            map_state.cursor_pos -= 1 
+                        }
+                    }
+                    KeyCode::Right => {
+                        if let Some(note) = map_state.notes.get(selected_note) {
+                            if map_state.cursor_pos < note.content.len() {
+                                map_state.cursor_pos += 1;
+                            }
+                        }
+                    }
+                    KeyCode::Up => move_cursor_up(map_state), 
+                    KeyCode::Down => move_cursor_down(map_state),
+                    _ => {}
                 }
             }
-            KeyCode::Up => move_cursor_up(map_state), 
-            KeyCode::Down => move_cursor_down(map_state),
-            _ => {}
+        }
+        // If Modal Editing for Edit Mode is enabled and is in Normal Mode.
+        Some(ModalEditMode::Normal) => {
+            if let Some(selected_note) = &map_state.selected_note {
+                match key.code {
+                    // Switch back to Normal Mode.
+                    KeyCode::Esc => {
+                        map_state.current_mode = Mode::Normal;
+                        if let Some(note) = map_state.notes.get_mut(selected_note) {
+                            note.selected = false;
+                            // Reset cursor position for the next time entering Edit mode.
+                            map_state.cursor_pos = 0;
+                        }
+                    }
+                    KeyCode::Char('i') => map_state.current_mode = Mode::Edit(Some(ModalEditMode::Insert)),
+                    // Move cursor left
+                    KeyCode::Char('h') => {
+                        if map_state.cursor_pos > 0 { 
+                            map_state.cursor_pos -= 1 
+                        }
+                    }
+                    // Move cursor down
+                    KeyCode::Char('j') => move_cursor_down(map_state),
+                    // Move cursor up
+                    KeyCode::Char('k') => move_cursor_up(map_state),
+                    // Move cursor right
+                    KeyCode::Char('l') => {
+                        if let Some(note) = map_state.notes.get(selected_note) {
+                            if map_state.cursor_pos < note.content.len() {
+                                map_state.cursor_pos += 1;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 
-    // Any action in Insert mode triggers a redraw.
+    // Any action in Edit mode triggers a redraw.
     map_state.clear_and_redraw();
 
     AppAction::Continue

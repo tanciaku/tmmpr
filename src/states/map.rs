@@ -128,7 +128,7 @@ impl MapState {
     /// Adds a new, empty note to the canvas.
     ///
     /// The note is created at the center of the current viewport. It is immediately
-    /// selected, and the application switches to `Mode::Insert` to allow for
+    /// selected, and the application switches to `Mode::Edit` to allow for
     /// immediate text entry.
     pub fn add_note(&mut self) {
         self.can_exit = false;
@@ -138,9 +138,24 @@ impl MapState {
         self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from(""), true, Color::White));
         self.render_order.push(self.next_note_id);
         self.selected_note = Some(self.next_note_id);
-        self.current_mode = Mode::Insert;
+        
+        // Switch to edit mode
+        self.switch_to_edit_mode();
 
         self.next_note_id += 1;
+    }
+
+    /// Switches the map state to Edit Mode for editing note content.
+    ///
+    /// Use modal editing for Edit Mode if it is enabled.
+    pub fn switch_to_edit_mode(&mut self) {
+        self.current_mode = Mode::Edit(
+            if self.settings.edit_modal {
+                Some(ModalEditMode::Normal)
+            } else {
+                None
+            }
+        );
     }
 
     /// Finds and selects the note closest to the center of the viewport.
@@ -266,8 +281,16 @@ pub enum Mode {
     /// Mode for selecting or manipulating notes (not yet implemented).
     Visual,
     /// Mode for editing the text content of a note.
-    Insert,
+    /// Option<> - represents whether Modal Editing is enabled for Edit Mode.
+    Edit(Option<ModalEditMode>),
     Delete,
+}
+
+/// Represents the two possible Modal Editing modes for Edit Mode
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub enum ModalEditMode {
+    Normal,
+    Insert,
 }
 
 /// Represents a single note on the canvas.
@@ -469,6 +492,7 @@ mod tests {
     #[test]
     fn test_add_note() {
         let mut map_state = MapState::new(PathBuf::new());
+        map_state.settings = Settings::new(); // Set default settings
         map_state.screen_width = 80;
         map_state.screen_height = 24;
         map_state.view_pos.x = 10;
@@ -477,7 +501,7 @@ mod tests {
         map_state.add_note();
 
         assert_eq!(map_state.notes.len(), 1);
-        assert!(matches!(map_state.current_mode, Mode::Insert));
+        assert!(matches!(map_state.current_mode, Mode::Edit(Some(ModalEditMode::Normal))));
         assert_eq!(map_state.selected_note, Some(0));
         assert_eq!(map_state.next_note_id, 1);
 

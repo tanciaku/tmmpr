@@ -62,14 +62,15 @@ impl SettingsState {
             }
             SelectedToggle::Toggle3 => SelectedToggle::Toggle4,
             SelectedToggle::Toggle4 => SelectedToggle::Toggle5,
-            SelectedToggle::Toggle5 => SelectedToggle::Toggle1,
+            SelectedToggle::Toggle5 => SelectedToggle::Toggle6,
+            SelectedToggle::Toggle6 => SelectedToggle::Toggle1,
         }
     }
 
     /// Go up a toggle in the settings menu.
     pub fn toggle_go_up(&mut self) {
         self.selected_toggle = match self.selected_toggle {
-            SelectedToggle::Toggle1 => SelectedToggle::Toggle5,
+            SelectedToggle::Toggle1 => SelectedToggle::Toggle6,
             SelectedToggle::Toggle2 => SelectedToggle::Toggle1,
             SelectedToggle::Toggle3 => SelectedToggle::Toggle2,
             SelectedToggle::Toggle4 => {
@@ -82,6 +83,7 @@ impl SettingsState {
                 }
             }
             SelectedToggle::Toggle5 => SelectedToggle::Toggle4,
+            SelectedToggle::Toggle6 => SelectedToggle::Toggle5,
         }
     }
 
@@ -157,6 +159,8 @@ pub struct Settings {
     pub default_start_side: Side,
     /// Default end side for creating connections
     pub default_end_side: Side,
+    /// Whether modal editing for Edit Mode is enabled
+    pub edit_modal: bool,
 }
 
 impl Settings {
@@ -170,6 +174,7 @@ impl Settings {
             runtime_backups_interval: None,
             default_start_side: Side::Right,
             default_end_side: Side::Right,
+            edit_modal: true,
         }
     }
 
@@ -318,6 +323,8 @@ pub enum SelectedToggle {
     Toggle4,
     /// Default end side for making connections
     Toggle5,
+    /// Modal Editing for Edit Mode
+    Toggle6,
 }
 
 impl SelectedToggle {
