@@ -3,8 +3,8 @@ use ratatui::DefaultTerminal;
 
 mod app;
 mod input;
-mod states;
 mod ui;
+mod states;
 mod utils;
 mod serialization;
 use crate::{

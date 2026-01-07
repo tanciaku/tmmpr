@@ -1,12 +1,14 @@
+use chrono::{Duration as ChronoDuration, Local};
+use ratatui::style::Color;
+use std::{fs, path::{Path, PathBuf}, collections::HashMap, time::Duration as StdDuration};
+use serde::{Serialize, Deserialize};
+
 use crate::{
     app::{App, Screen},
     states::{
-        MapState, map::{BackupResult, MapData, Note, Notification, Side}, settings::{BackupsInterval, RuntimeBackupsInterval, Settings}, start::ErrMsg
+        MapState, map::{BackupResult, Note, Notification, Side, ViewPos, Connection}, settings::{BackupsInterval, RuntimeBackupsInterval, Settings}, start::ErrMsg
     },
 };
-use chrono::{Duration as ChronoDuration, Local};
-use ratatui::style::Color;
-use std::{fs, path::{Path, PathBuf}, time::Duration as StdDuration};
 
 pub fn calculate_path(
     start_note: &Note,
@@ -597,6 +599,17 @@ where
     let json_string = fs::read_to_string(path)?;
     let data: T = serde_json::from_str(&json_string)?;
     Ok(data)
+}
+
+/// A type for reading and writing relevant data from MapState
+#[derive(Serialize, Deserialize)]
+pub struct MapData {
+    pub view_pos: ViewPos,
+    pub next_note_id: usize,
+    pub notes: HashMap<usize, Note>,
+    pub render_order: Vec<usize>,
+    pub connections: Vec<Connection>,
+    pub connection_index: HashMap<usize, Vec<Connection>>,
 }
 
 /// Creates a new map file.
