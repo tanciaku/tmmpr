@@ -174,7 +174,7 @@ impl Settings {
             runtime_backups_interval: None,
             default_start_side: Side::Right,
             default_end_side: Side::Right,
-            edit_modal: true,
+            edit_modal: false,
         }
     }
 

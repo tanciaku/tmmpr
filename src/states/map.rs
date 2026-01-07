@@ -1,5 +1,9 @@
 
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, io::stdout, path::PathBuf};
+use crossterm::{
+    cursor::SetCursorStyle,
+    execute,
+};
 use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
 use std::time::{Duration, Instant};
@@ -151,6 +155,9 @@ impl MapState {
     pub fn switch_to_edit_mode(&mut self) {
         self.current_mode = Mode::Edit(
             if self.settings.edit_modal {
+                // Set a block cursor
+                let _ = execute!(stdout(), SetCursorStyle::SteadyBlock);
+
                 Some(ModalEditMode::Normal)
             } else {
                 None
