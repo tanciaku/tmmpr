@@ -12,7 +12,7 @@ use ratatui::DefaultTerminal;
 use crate::{
     app::{App, Screen},
     input::handle_events,
-    ui::{render_map, render_settings, render_start}, 
+    ui::{render_map, render_settings, render_start} 
 };
 
 fn main() -> color_eyre::Result<()> {
