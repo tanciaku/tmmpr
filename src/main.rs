@@ -1,12 +1,14 @@
-use color_eyre::Result;
-use ratatui::DefaultTerminal;
-
 mod app;
 mod input;
 mod ui;
 mod states;
 mod utils;
 mod serialization;
+#[cfg(test)]
+mod tests;
+
+use color_eyre::Result;
+use ratatui::DefaultTerminal;
 use crate::{
     app::{App, Screen},
     input::handle_events,

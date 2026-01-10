@@ -311,7 +311,7 @@ pub enum SettingsNotification {
 }
 
 /// Which toggle is selected in the settings menu.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum SelectedToggle {
     /// Save map interval
     Toggle1,
@@ -364,7 +364,7 @@ pub enum RuntimeBackupsInterval {
     Every12Hours,
 }
 
-fn cycle_side(side: Side) -> Side {
+pub fn cycle_side(side: Side) -> Side {
     match side {
         Side::Right => Side::Bottom,
         Side::Bottom => Side::Left,
