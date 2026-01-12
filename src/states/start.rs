@@ -119,7 +119,7 @@ impl StartState {
                 }
             }
         }
-    }         
+    }
     
     /// Helper function for clearing input fields and displaying error messages
     /// for the input menu

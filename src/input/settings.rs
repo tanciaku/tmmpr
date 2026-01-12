@@ -155,20 +155,21 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppActi
 
         // Cycle backup intervals
         KeyCode::Tab => {
-            // Have to save or discard changes before exiting
-            settings_state.can_exit = false;
-
             match settings_state.selected_toggle {
                 SelectedToggle::Toggle2 => {
                     // If backups enabled and backups toggle is selected
                     if settings_state.settings.settings().backups_interval.is_some() {
                         settings_state.settings.settings_mut().cycle_backup_interval();
+                        // Have to save or discard changes before exiting
+                        settings_state.can_exit = false;
                     }
                 }
                 SelectedToggle::Toggle3 => {
                     // If backups enabled and runtime backups toggles is selected
                     if settings_state.settings.settings().runtime_backups_interval.is_some() {
                         settings_state.settings.settings_mut().cycle_runtime_backup_interval();
+                        // Have to save or discard changes before exiting
+                        settings_state.can_exit = false;
                     }
                 }
                 _ => {}

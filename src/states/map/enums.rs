@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 /// Represents the application's current input mode, similar to Vim.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Mode {
     /// Default mode for navigation and commands.
     Normal,

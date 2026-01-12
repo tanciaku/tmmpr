@@ -5,6 +5,8 @@ mod handler;
 mod start;
 mod settings; 
 mod map;
+#[cfg(test)]
+mod tests;
 
 pub use start::start_kh;
 pub use settings::settings_kh;

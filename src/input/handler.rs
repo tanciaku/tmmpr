@@ -67,7 +67,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
 }
 
 /// Key handling depending on Map Screen Mode
-fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
+pub fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
     match &map_state.current_mode {
         // Normal mode is for navigation and high-level commands.
         Mode::Normal => map_normal_kh(map_state, key),

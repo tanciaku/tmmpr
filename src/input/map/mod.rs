@@ -5,6 +5,8 @@ mod helpers;
 mod normal;
 mod vim;
 mod visual;
+#[cfg(test)]
+mod tests;
 
 pub use delete::*;
 pub use text_editing::*;
