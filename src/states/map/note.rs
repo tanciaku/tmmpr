@@ -13,7 +13,7 @@ pub struct Note {
     pub content: String,
     /// A flag indicating whether this note is currently selected.
     pub selected: bool,
-    #[serde(with = "crate::serialization")]
+    #[serde(with = "crate::utils")]
     pub color: Color,
 }
 

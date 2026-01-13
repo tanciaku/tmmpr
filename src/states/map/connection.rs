@@ -8,6 +8,6 @@ pub struct Connection {
     pub from_side: Side,
     pub to_id: Option<usize>,
     pub to_side: Option<Side>,
-    #[serde(with = "crate::serialization")]
+    #[serde(with = "crate::utils")]
     pub color: Color,
 }

@@ -3,7 +3,6 @@ mod input;
 mod ui;
 mod states;
 mod utils;
-mod serialization;
 #[cfg(test)]
 mod tests;
 

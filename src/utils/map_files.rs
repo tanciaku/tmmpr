@@ -1,12 +1,13 @@
 use std::{path::Path, collections::HashMap};
-use serde::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize, Serializer, Deserializer};
+use ratatui::style::Color;
 
 use crate::{
     app::{App, Screen},
     states::{
         MapState, map::{BackupResult, Connection, Note, Notification, ViewPos}, start::ErrMsg
     },
-    utils::{handle_on_load_backup, read_json_data, write_json_data},
+    utils::{handle_on_load_backup, read_json_data, write_json_data, get_color_name_in_string, get_color_from_string},
 };
 
 /// A type for reading and writing relevant data from MapState
@@ -19,6 +20,24 @@ pub struct MapData {
     pub connections: Vec<Connection>,
     pub connection_index: HashMap<usize, Vec<Connection>>,
 }
+
+pub fn serialize<S>(color: &Color, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let color_string = get_color_name_in_string(*color);
+    serializer.serialize_str(&color_string)
+}
+
+pub fn deserialize<'de, D>(deserializer: D) -> Result<Color, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    
+    Ok(get_color_from_string(&s))
+}
+
 
 /// Creates a new map file.
 /// 
