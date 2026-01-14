@@ -5,6 +5,8 @@ pub mod file_io;
 pub mod geometry;
 pub mod map_files;
 pub mod settings;
+#[cfg(test)]
+mod tests;
 
 pub use backups::*;
 pub use colors::*;

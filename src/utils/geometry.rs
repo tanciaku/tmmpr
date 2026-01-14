@@ -512,7 +512,6 @@ fn corner_shapes_1(start: Point, start_off: Point, end: Point, end_off: Point) -
     ]
 }
 
-// ┐ ┘
 /// midpoint:  start_off.x, end_off.y
 fn corner_shapes_2(start: Point, start_off: Point, end: Point, end_off: Point) -> Vec<Point> {
     vec![

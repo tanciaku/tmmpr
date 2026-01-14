@@ -162,7 +162,7 @@ pub fn handle_runtime_backup(map_state: &mut MapState) {
 }
 
 /// Get the Duration type from the BackupsInterval stored in Settings
-fn get_duration(interval: &BackupsInterval) -> ChronoDuration {
+pub fn get_duration(interval: &BackupsInterval) -> ChronoDuration {
     match interval {
         BackupsInterval::Daily => ChronoDuration::days(1),
         BackupsInterval::Every3Days => ChronoDuration::days(3),

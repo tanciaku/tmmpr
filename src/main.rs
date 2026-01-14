@@ -3,8 +3,6 @@ mod input;
 mod ui;
 mod states;
 mod utils;
-#[cfg(test)]
-mod tests;
 
 use color_eyre::Result;
 use ratatui::DefaultTerminal;
