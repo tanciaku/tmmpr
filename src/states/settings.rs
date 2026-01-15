@@ -259,7 +259,7 @@ pub fn save_settings(settings_state: &mut SettingsState) {
     // Reference to Settings in the SettingsType
     let settings = &settings_state.settings.settings();
 
-    // Save the settings data (use the shared utility function)
+    // Save the settings data
     match save_settings_to_file(settings) {
         Ok(_) => {
             // Saved changes to a file - so can now exit the settings menu.

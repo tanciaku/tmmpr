@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::{
     states::settings::Settings,
     utils::write_json_data,
@@ -21,5 +23,10 @@ pub fn save_settings_to_file(settings: &Settings) -> Result<(), Box<dyn std::err
     let settings_file_path = home_path.join(".config/tmmpr/settings").with_extension("json");
 
     // Write the data
-    write_json_data(&settings_file_path, settings)
+    save_settings_to_path(settings, &settings_file_path)
+}
+
+// Add a more testable version that accepts a path
+pub fn save_settings_to_path(settings: &Settings, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    write_json_data(path, settings)
 }

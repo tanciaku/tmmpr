@@ -1,4 +1,7 @@
 /target
+/td.txt
+/prompts_cmds.txt
 /notes.txt
 /old_refs.txt
 /temp_context.txt
+/coverage

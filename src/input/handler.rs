@@ -22,6 +22,12 @@ pub enum AppAction {
 }
 
 /// Reads the terminal events.
+///
+/// This function is intentionally not unit tested because:
+/// 1. It's a thin orchestrator over fully-tested components
+/// 2. All called functions are tested individually (start_kh, settings_kh, map_kh, etc.)
+/// 3. The integration points for crossterm are better tested via manual testing
+/// 4. Adding mocks would add complexity without significant value
 pub fn handle_events(app: &mut App) -> Result<()> {
     // Poll for an event with a timeout of 50ms. This is the main "tick" rate.
     if event::poll(std::time::Duration::from_millis(50))? {

@@ -208,11 +208,6 @@ fn test_map_kh_with_modifiers() {
     }
 }
 
-// Integration test helpers and more comprehensive tests would require 
-// mocking the crossterm event system, which is complex and beyond 
-// the scope of unit tests. The handle_events function is better tested 
-// through integration tests that can simulate actual terminal events.
-
 #[test]
 fn test_mode_switching_behavior() {
     // Test that we can create different mode combinations for testing
@@ -266,15 +261,3 @@ fn test_map_kh_maintains_state_integrity() {
         }
     }
 }
-
-// Note: Testing handle_events() directly is challenging because it involves:
-// 1. Terminal event polling with timeouts
-// 2. Complex state mutations across different screen types  
-// 3. File system operations for map file actions
-// 4. External dependencies like crossterm events
-//
-// Such tests are better implemented as integration tests that can:
-// - Mock the terminal event system
-// - Create temporary files for file operations
-// - Test the full event handling pipeline
-// - Verify UI state changes across screen transitions
