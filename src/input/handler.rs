@@ -23,7 +23,7 @@ pub enum AppAction {
 
 /// Reads the terminal events.
 ///
-/// This function is intentionally not unit tested because:
+/// This function is intentionally not tested because:
 /// 1. It's a thin orchestrator over fully-tested components
 /// 2. All called functions are tested individually (start_kh, settings_kh, map_kh, etc.)
 /// 3. The integration points for crossterm are better tested via manual testing
