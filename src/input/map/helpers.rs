@@ -57,11 +57,10 @@ pub fn move_viewport(map_state: &mut MapState, axis: &str, amount: isize) {
 }
 
 pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {    
-    if let Some(selected_note) = map_state.selected_note {
+    if let Some(selected_note) = map_state.notes_state.selected_note {
         // Get note dimensions for:
         // When a note moves beyond the screen edge, automatically adjust the viewport to keep it visible.
-        let (mut note_width,
-            mut note_height) = if let Some(note) = map_state.notes.get_mut(&selected_note) { 
+        let (mut note_width, mut note_height) = if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) { 
                 note.get_dimensions()
         } else {
             unreachable!()
@@ -72,7 +71,7 @@ pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {
         // Add space for cursor
         note_width+=1;
 
-        if let Some(note) = map_state.notes.get_mut(&selected_note) {
+        if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
             match axis {
                 "x" => {
                     if amount > 0 {
@@ -122,12 +121,12 @@ pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {
 }
 
 pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
-    if let Some(selected_note) = map_state.selected_note {
+    if let Some(selected_note) = map_state.notes_state.selected_note {
         // --- 1. Get the starting position ---
         // Safely get the coordinates of the currently selected note.
         // We copy the `x` and `y` values into local variables so we are
         // no longer borrowing `app.notes`, which allows us to borrow it again later.
-        let (selected_note_x, selected_note_y) = if let Some(note) = map_state.notes.get(&selected_note) {
+        let (selected_note_x, selected_note_y) = if let Some(note) = map_state.notes_state.notes.get(&selected_note) {
             (note.x, note.y)
         } else {
             // If there's no selected note for some reason, we can't proceed.
@@ -136,7 +135,7 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
 
         // --- 2. Find all candidate notes ---
         // Use an iterator chain to declaratively find all valid notes to jump to.
-        let candidate_ids: Vec<usize> = map_state.notes.iter()
+        let candidate_ids: Vec<usize> = map_state.notes_state.notes.iter()
             .filter(|(id, note)| {
                 let dx = (note.x as isize - selected_note_x as isize).abs();
                 let dy = (note.y as isize - selected_note_y as isize).abs();
@@ -172,7 +171,7 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
             "j" | "Down" => {
                 // Find the closest note below
                 candidate_ids.iter().min_by_key(|&&id| {
-                    let note = &map_state.notes[&id];
+                    let note = &map_state.notes_state.notes[&id];
                     // Calculate horizontal distance.
                     let x_dist = (note.x as isize - selected_note_x as isize).abs() as usize;
                 
@@ -185,7 +184,7 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
             "k" | "Up" => {
                 // Find the closest note above
                 candidate_ids.iter().max_by_key(|&&id| {
-                    let note = &map_state.notes[&id];
+                    let note = &map_state.notes_state.notes[&id];
                     let x_dist = (note.x as isize - selected_note_x as isize).abs() as usize;
                 
                     (note.y, Reverse(x_dist))
@@ -194,7 +193,7 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
             "l" | "Right" => {
                 // Find the closest note to the right
                 candidate_ids.iter().min_by_key(|&&id| {
-                    let note = &map_state.notes[&id];
+                    let note = &map_state.notes_state.notes[&id];
                     let y_dist = (note.y as isize - selected_note_y as isize).abs() as usize;
 
                     (note.x, y_dist)
@@ -202,7 +201,7 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
             }
             "h" | "Left" => {
                 candidate_ids.iter().max_by_key(|&&id| {
-                    let note = &map_state.notes[&id];
+                    let note = &map_state.notes_state.notes[&id];
                     let y_dist = (note.y as isize - selected_note_y as isize).abs() as usize;
 
                     (note.x, Reverse(y_dist))
@@ -216,28 +215,28 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
         // This block only runs if `closest_note_id_option` is `Some`, meaning a note was found.
         if let Some(&id) = closest_note_id_option { 
             // First, deselect the old note. This mutable borrow is short-lived.
-            if let Some(note) = map_state.notes.get_mut(&selected_note) {
+            if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
                 note.selected = false;
             }
 
             // Then, update the application's state to the new ID.
-            map_state.selected_note = Some(id);
+            map_state.notes_state.selected_note = Some(id);
 
             // Update the render order
             // (put the just selected note's id to the back of the render_order vector -
             //      so it renders it over every other note "below")
-            if let Some(pos) = map_state.render_order.iter().position(|&x| x == id) {
-                let item = map_state.render_order.remove(pos);  // Remove from current position
-                map_state.render_order.push(item);              // Add to back
+            if let Some(pos) = map_state.notes_state.render_order.iter().position(|&x| x == id) {
+                let item = map_state.notes_state.render_order.remove(pos);  // Remove from current position
+                map_state.notes_state.render_order.push(item);              // Add to back
             }
 
             // Finally, select the new note. This is another, separate mutable borrow.
-            if let Some(note) = map_state.notes.get_mut(&id) {
+            if let Some(note) = map_state.notes_state.notes.get_mut(&id) {
                 note.selected = true;
             }
 
             // As a final step, center the viewport on the newly selected note.
-            if let Some(note) = map_state.notes.get(&id) {
+            if let Some(note) = map_state.notes_state.notes.get(&id) {
                 map_state.viewport.view_pos.x = note.x.saturating_sub(map_state.viewport.screen_width/2);
                 map_state.viewport.view_pos.y = note.y.saturating_sub(map_state.viewport.screen_height/2);
             }

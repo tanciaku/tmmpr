@@ -626,11 +626,11 @@ fn test_add_note() {
     assert_eq!(result, AppAction::Continue);
     
     // Check that a note was added
-    assert_eq!(map_state.notes.len(), 1);
-    assert!(map_state.notes.contains_key(&0));
+    assert_eq!(map_state.notes_state.notes.len(), 1);
+    assert!(map_state.notes_state.notes.contains_key(&0));
     
     // Check note is at center of screen
-    let note = &map_state.notes[&0];
+    let note = &map_state.notes_state.notes[&0];
     assert_eq!(note.x, 100 + 80/2); // view_pos.x + screen_width/2 = 140
     assert_eq!(note.y, 50 + 40/2);  // view_pos.y + screen_height/2 = 70
     assert_eq!(note.content, "");
@@ -638,10 +638,10 @@ fn test_add_note() {
     assert_eq!(note.color, Color::White);
     
     // Check render order
-    assert_eq!(map_state.render_order, vec![0]);
+    assert_eq!(map_state.notes_state.render_order, vec![0]);
     
     // Check selected note
-    assert_eq!(map_state.selected_note, Some(0));
+    assert_eq!(map_state.notes_state.selected_note, Some(0));
     
     // Check mode switched to Edit
     assert!(matches!(map_state.current_mode, Mode::Edit(_)));
@@ -650,7 +650,7 @@ fn test_add_note() {
     assert_eq!(map_state.can_exit, false);
     
     // Check next_note_id incremented
-    assert_eq!(map_state.next_note_id, 1);
+    assert_eq!(map_state.notes_state.next_note_id, 1);
 }
 
 #[test]
@@ -669,13 +669,13 @@ fn test_add_multiple_notes() {
     // Add third note
     let _result3 = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('a')));
 
-    assert_eq!(map_state.notes.len(), 3);
-    assert!(map_state.notes.contains_key(&0));
-    assert!(map_state.notes.contains_key(&1));
-    assert!(map_state.notes.contains_key(&2));
-    assert_eq!(map_state.render_order, vec![0, 1, 2]);
-    assert_eq!(map_state.selected_note, Some(2)); // Last added note is selected
-    assert_eq!(map_state.next_note_id, 3);
+    assert_eq!(map_state.notes_state.notes.len(), 3);
+    assert!(map_state.notes_state.notes.contains_key(&0));
+    assert!(map_state.notes_state.notes.contains_key(&1));
+    assert!(map_state.notes_state.notes.contains_key(&2));
+    assert_eq!(map_state.notes_state.render_order, vec![0, 1, 2]);
+    assert_eq!(map_state.notes_state.selected_note, Some(2)); // Last added note is selected
+    assert_eq!(map_state.notes_state.next_note_id, 3);
 }
 
 #[test]
@@ -686,7 +686,7 @@ fn test_select_note_with_no_notes() {
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.selected_note, None);
+    assert_eq!(map_state.notes_state.selected_note, None);
     assert_eq!(map_state.current_mode, Mode::Visual);
 }
 
@@ -696,17 +696,17 @@ fn test_select_note_with_single_note() {
     map_state.current_mode = Mode::Normal;
     
     // Add a note
-    map_state.notes.insert(0, Note::new(50, 25, String::from("Test"), false, Color::White));
-    map_state.render_order.push(0);
+    map_state.notes_state.notes.insert(0, Note::new(50, 25, String::from("Test"), false, Color::White));
+    map_state.notes_state.render_order.push(0);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.selected_note, Some(0));
+    assert_eq!(map_state.notes_state.selected_note, Some(0));
     assert_eq!(map_state.current_mode, Mode::Visual);
-    assert_eq!(map_state.render_order, vec![0]); // Should be moved to back
+    assert_eq!(map_state.notes_state.render_order, vec![0]); // Should be moved to back
 }
 
 #[test]
@@ -720,17 +720,17 @@ fn test_select_closest_note_to_center() {
     
     // Screen center is at (50, 25)
     // Add three notes at different distances from center
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Far"), false, Color::White));     // Distance: 40 + 15 = 55
-    map_state.notes.insert(1, Note::new(45, 20, String::from("Close"), false, Color::White));   // Distance: 5 + 5 = 10
-    map_state.notes.insert(2, Note::new(80, 40, String::from("Medium"), false, Color::White));  // Distance: 30 + 15 = 45
-    map_state.render_order = vec![0, 1, 2];
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Far"), false, Color::White));     // Distance: 40 + 15 = 55
+    map_state.notes_state.notes.insert(1, Note::new(45, 20, String::from("Close"), false, Color::White));   // Distance: 5 + 5 = 10
+    map_state.notes_state.notes.insert(2, Note::new(80, 40, String::from("Medium"), false, Color::White));  // Distance: 30 + 15 = 45
+    map_state.notes_state.render_order = vec![0, 1, 2];
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.selected_note, Some(1)); // Note 1 is closest
+    assert_eq!(map_state.notes_state.selected_note, Some(1)); // Note 1 is closest
     assert_eq!(map_state.current_mode, Mode::Visual);
-    assert_eq!(map_state.render_order, vec![0, 2, 1]); // Note 1 moved to back
+    assert_eq!(map_state.notes_state.render_order, vec![0, 2, 1]); // Note 1 moved to back
 }
 
 #[test]
@@ -739,10 +739,10 @@ fn test_select_note_updates_render_order() {
     map_state.current_mode = Mode::Normal;
     
     // Add multiple notes
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), false, Color::White));
-    map_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
-    map_state.notes.insert(2, Note::new(80, 40, String::from("Note 2"), false, Color::White));
-    map_state.render_order = vec![0, 1, 2];
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), false, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.notes.insert(2, Note::new(80, 40, String::from("Note 2"), false, Color::White));
+    map_state.notes_state.render_order = vec![0, 1, 2];
     
     // Set viewport so note 0 is closest to center
     map_state.viewport.view_pos.x = 0;
@@ -753,9 +753,9 @@ fn test_select_note_updates_render_order() {
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.selected_note, Some(0));
+    assert_eq!(map_state.notes_state.selected_note, Some(0));
     // Note 0 should be moved to the back of render order
-    assert_eq!(map_state.render_order, vec![1, 2, 0]);
+    assert_eq!(map_state.notes_state.render_order, vec![1, 2, 0]);
 }
 
 // ==================== MISC TESTS ====================

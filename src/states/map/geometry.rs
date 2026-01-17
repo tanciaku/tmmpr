@@ -1,22 +1,3 @@
-use serde::{Serialize, Deserialize};
-
-/// Represents the top-left corner of the viewport on the infinite canvas.
-#[derive(PartialEq, Serialize, Deserialize, Clone, Debug)]
-pub struct ViewPos {
-    pub x: usize,
-    pub y: usize,
-}
-
-impl ViewPos {
-    /// Default viewport position.
-    pub fn new() -> ViewPos {
-        ViewPos {
-            x: 0,
-            y: 0,
-        }
-    }
-}
-
 /// A rectangle representation that uses signed integers (`isize`) for its coordinates.
 ///
 /// This is crucial for performing screen-space calculations where coordinates can

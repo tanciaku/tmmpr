@@ -17,8 +17,8 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 map_state.current_mode = Mode::Normal;
                 map_state.visual_move = false;
 
-                if let Some(selected_note) = map_state.selected_note {
-                    if let Some(note) = map_state.notes.get_mut(&selected_note) {
+                if let Some(selected_note) = map_state.notes_state.selected_note {
+                    if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
                         note.selected = false;
                     }
                 }
@@ -78,7 +78,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
             // Rotating the start/end side of the connection 
             KeyCode::Char('r') => {
-                if let Some(selected_note) = map_state.selected_note {
+                if let Some(selected_note) = map_state.notes_state.selected_note {
                     map_state.can_exit = false;
                     if let Some(focused_connection) = map_state.focused_connection.as_mut() {
                         if focused_connection.from_id == selected_note {
@@ -99,7 +99,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             // user wants) associated with this note - so this note can be the 
             // start point or end point of a connection the user can edit.
             KeyCode::Char('n') => {
-                if let Some(selected_note) = map_state.selected_note {
+                if let Some(selected_note) = map_state.notes_state.selected_note {
                     // Can only cycle through the available connections on this note if
                     // entered the visual_connection mode to edit existing connections
                     // and not currently making a new one
@@ -195,8 +195,8 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         KeyCode::Esc => {
             map_state.current_mode = Mode::Normal;
 
-            if let Some(selected_note) = map_state.selected_note {
-                if let Some(note) = map_state.notes.get_mut(&selected_note) {
+            if let Some(selected_note) = map_state.notes_state.selected_note {
+                if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
                     note.selected = false;
                 }
             }
@@ -211,7 +211,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         // This block selects the "first" connection that this note
         // is associated with, if it has any.
         KeyCode::Char('c') => {
-            if let Some(selected_note) = map_state.selected_note {
+            if let Some(selected_note) = map_state.notes_state.selected_note {
                 if let Some(index) = map_state.connections.iter().position(|c| {
                     selected_note == c.from_id || selected_note == c.to_id.unwrap()
                     // unwrap() is safe here since all the connections have an endpoint if
@@ -227,7 +227,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
         // Add a new Connection for the selected note
         KeyCode::Char('C') => {
-            if let Some(selected_note) = map_state.selected_note {
+            if let Some(selected_note) = map_state.notes_state.selected_note {
                 map_state.focused_connection = Some(
                     Connection {
                         from_id: selected_note,
@@ -264,8 +264,8 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
         // Cycle through colors for the selected note
         KeyCode::Char('e') => {
-            if let Some(selected_note) = map_state.selected_note {
-                if let Some(note) = map_state.notes.get_mut(&selected_note) {
+            if let Some(selected_note) = map_state.notes_state.selected_note {
+                if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
                     note.color = cycle_color(note.color);
                     
                     map_state.can_exit = false;

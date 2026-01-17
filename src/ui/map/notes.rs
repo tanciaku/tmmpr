@@ -20,8 +20,8 @@ use crate::{
 /// to determine if, where, and how each note should be rendered.
 pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
     // -- Render the notes in render order --
-    for &note_id in &map_state.render_order {
-        if let Some(note) = map_state.notes.get(&note_id) {
+    for &note_id in &map_state.notes_state.render_order {
+        if let Some(note) = map_state.notes_state.notes.get(&note_id) {
             // --- 1. Get Note Dimensions ---
             let (mut note_width, mut note_height) = note.get_dimensions();
             // Enforce a minimum size for readability.
@@ -130,12 +130,12 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 // -- 9. Render the cursor if in Edit Mode on the selected note ---
                 // This logic only runs if the app is in Edit Mode AND the note currently being
                 // drawn is the one that's actively selected.
-                if let Some(selected_note) = &map_state.selected_note {
+                if let Some(selected_note) = &map_state.notes_state.selected_note {
                     if matches!(map_state.current_mode, Mode::Edit(_)) && note_id == *selected_note {
 
                         // To calculate the cursor's position, we first need a slice of the text
                         // from the beginning of the note's content up to the cursor's byte index.
-                        let text_before_cursor = &note.content[..map_state.cursor_pos];
+                        let text_before_cursor = &note.content[..map_state.notes_state.cursor_pos];
 
                         // --- Calculate cursor's position RELATIVE to the text inside the note ---
 
@@ -147,12 +147,12 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                             // If a newline is found, the X position is the number of characters
                             // between that newline and the cursor. `c+1` to skip the newline itself.
                             Some(c) => {
-                                text_before_cursor[c+1..map_state.cursor_pos].chars().count()
+                                text_before_cursor[c+1..map_state.notes_state.cursor_pos].chars().count()
                             }
                             // If no newline is found, we're on the first line. The X position is
                             // simply the total number of characters before the cursor.
                             None => { 
-                                text_before_cursor[0..map_state.cursor_pos].chars().count()
+                                text_before_cursor[0..map_state.notes_state.cursor_pos].chars().count()
                             }
                         };
 
@@ -210,11 +210,11 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
     // Render the start/end point for the "in progress" connection, if any
     if let Some(connection) = &map_state.focused_connection {
     
-        if let Some(start_note) = map_state.notes.get(&connection.from_id){
+        if let Some(start_note) = map_state.notes_state.notes.get(&connection.from_id){
             draw_connecting_character(start_note, connection.from_side, true, Color::Yellow, frame, map_state);
 
             if let Some(end_note_id) = connection.to_id {
-                if let Some(end_note) = map_state.notes.get(&end_note_id) {
+                if let Some(end_note) = map_state.notes_state.notes.get(&end_note_id) {
                     draw_connecting_character(end_note, connection.to_side.unwrap(), true, Color::Yellow, frame, map_state);
                 }
             }

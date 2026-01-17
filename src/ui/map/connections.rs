@@ -17,9 +17,9 @@ use crate::{
 pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
 
     for connection in &map_state.connections {
-        if let Some(start_note) = map_state.notes.get(&connection.from_id){
+        if let Some(start_note) = map_state.notes_state.notes.get(&connection.from_id){
             if let Some(end_note_id) = connection.to_id {
-                if let Some(end_note) = map_state.notes.get(&end_note_id) {
+                if let Some(end_note) = map_state.notes_state.notes.get(&end_note_id) {
                     let path = calculate_path(
                         start_note, 
                         connection.from_side, 
@@ -53,10 +53,10 @@ pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
     // Render the "in progress" connection, if any
     if let Some(focused_connection) = &map_state.focused_connection {
 
-        if let Some(start_note) = map_state.notes.get(&focused_connection.from_id){
+        if let Some(start_note) = map_state.notes_state.notes.get(&focused_connection.from_id){
 
             if let Some(end_note_id) = focused_connection.to_id {
-                if let Some(end_note) = map_state.notes.get(&end_note_id) {
+                if let Some(end_note) = map_state.notes_state.notes.get(&end_note_id) {
                     let path = calculate_path(
                         start_note, 
                         focused_connection.from_side, 

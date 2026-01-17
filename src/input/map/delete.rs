@@ -11,15 +11,15 @@ pub fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         }
         // Confirm deleting the selected note
         KeyCode::Char('d') => {
-            if let Some(selected_note) = &map_state.selected_note {
+            if let Some(selected_note) = &map_state.notes_state.selected_note {
                 map_state.can_exit = false;
             
                 // Remove that note from the notes HashMap by it's id  (id, note)
-                map_state.notes.remove(selected_note);
+                map_state.notes_state.notes.remove(selected_note);
 
                 // Remove that note's id from the render_order
-                if let Some(pos) = map_state.render_order.iter().position(|&x| x == *selected_note) {
-                    map_state.render_order.remove(pos);
+                if let Some(pos) = map_state.notes_state.render_order.iter().position(|&x| x == *selected_note) {
+                    map_state.notes_state.render_order.remove(pos);
                 }
 
                 // -- Updating the connections Vec --
@@ -50,7 +50,7 @@ pub fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     }
                 }
 
-                map_state.selected_note = None;
+                map_state.notes_state.selected_note = None;
 
                 map_state.current_mode = Mode::Normal;
             }

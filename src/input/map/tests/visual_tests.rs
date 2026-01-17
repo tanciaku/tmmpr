@@ -34,8 +34,8 @@ fn test_visual_escape_to_normal_mode() {
     
     // Add and select a note
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Esc));
@@ -43,7 +43,7 @@ fn test_visual_escape_to_normal_mode() {
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.current_mode, Mode::Normal);
     // Note should be deselected
-    assert_eq!(map_state.notes.get(&0).unwrap().selected, false);
+    assert_eq!(map_state.notes_state.notes.get(&0).unwrap().selected, false);
 }
 
 #[test]
@@ -51,8 +51,8 @@ fn test_visual_enter_edit_mode() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('i')));
@@ -70,8 +70,8 @@ fn test_visual_enter_move_mode() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('m')));
@@ -86,8 +86,8 @@ fn test_visual_enter_delete_mode() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
@@ -101,18 +101,18 @@ fn test_visual_cycle_note_color() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
-    let original_color = map_state.notes.get(&0).unwrap().color;
+    let original_color = map_state.notes_state.notes.get(&0).unwrap().color;
     
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.can_exit, false); // Should mark as dirty
     
-    let new_color = map_state.notes.get(&0).unwrap().color;
+    let new_color = map_state.notes_state.notes.get(&0).unwrap().color;
     assert_ne!(original_color, new_color); // Color should have changed
 }
 
@@ -122,7 +122,7 @@ fn test_visual_cycle_note_color_no_selected_note() {
 
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Visual;
-    map_state.selected_note = None;
+    map_state.notes_state.selected_note = None;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
@@ -135,8 +135,8 @@ fn test_visual_create_new_connection() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('C')));
@@ -159,9 +159,9 @@ fn test_visual_enter_connection_mode_with_existing_connection() {
     let mut map_state = create_test_map_state();
     
     // Add two notes
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     
     // Add a connection from note 0 to note 1
@@ -190,8 +190,8 @@ fn test_visual_enter_connection_mode_no_connections() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('c')));
@@ -207,9 +207,9 @@ fn test_visual_switch_focus_down() {
     let mut map_state = create_test_map_state();
     
     // Add notes vertically aligned
-    map_state.notes.insert(0, Note::new(50, 10, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(50, 30, String::from("Note 1"), false, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(50, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 30, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('j')));
@@ -223,9 +223,9 @@ fn test_visual_switch_focus_down() {
 fn test_visual_switch_focus_with_arrow_keys() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(50, 25, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(70, 25, String::from("Note 1"), false, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(50, 25, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(70, 25, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     // Test all arrow keys
@@ -243,8 +243,8 @@ fn test_visual_clear_and_redraw_called() {
     map_state.needs_clear_and_redraw = false;
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     let _result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
@@ -262,8 +262,8 @@ fn test_move_mode_exit_with_m() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -279,8 +279,8 @@ fn test_move_mode_escape_to_normal() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -290,7 +290,7 @@ fn test_move_mode_escape_to_normal() {
     assert_eq!(map_state.visual_move, false);
     assert_eq!(map_state.current_mode, Mode::Normal);
     // Note should be deselected
-    assert_eq!(map_state.notes.get(&0).unwrap().selected, false);
+    assert_eq!(map_state.notes_state.notes.get(&0).unwrap().selected, false);
 }
 
 #[test]
@@ -298,8 +298,8 @@ fn test_move_mode_move_left_h() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -315,8 +315,8 @@ fn test_move_mode_move_left_arrow() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -330,8 +330,8 @@ fn test_move_mode_move_left_5_capital_h() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -346,8 +346,8 @@ fn test_move_mode_move_left_5_shift_arrow() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -361,8 +361,8 @@ fn test_move_mode_move_down_j() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -376,8 +376,8 @@ fn test_move_mode_move_down_arrow() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -391,8 +391,8 @@ fn test_move_mode_move_down_5_capital_j() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -406,8 +406,8 @@ fn test_move_mode_move_up_k() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -421,8 +421,8 @@ fn test_move_mode_move_up_5_capital_k() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -436,8 +436,8 @@ fn test_move_mode_move_right_l() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -451,8 +451,8 @@ fn test_move_mode_move_right_5_capital_l() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -467,8 +467,8 @@ fn test_move_mode_clear_and_redraw() {
     map_state.needs_clear_and_redraw = false;
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -482,8 +482,8 @@ fn test_move_mode_unhandled_keys() {
     let mut map_state = create_test_map_state();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_move = true;
 
@@ -510,9 +510,9 @@ fn test_move_mode_unhandled_keys() {
 fn test_connection_mode_exit_with_c() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     
@@ -538,8 +538,8 @@ fn test_connection_mode_exit_with_c() {
 fn test_connection_mode_rotate_from_side() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     
@@ -566,9 +566,9 @@ fn test_connection_mode_rotate_from_side() {
 fn test_connection_mode_rotate_to_side() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), false, Color::White));
-    map_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), true, Color::White));
-    map_state.selected_note = Some(1); // Select the target note
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), false, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), true, Color::White));
+    map_state.notes_state.selected_note = Some(1); // Select the target note
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     
@@ -599,7 +599,7 @@ fn test_connection_mode_rotate_no_selected_note() {
     
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
-    map_state.selected_note = None;
+    map_state.notes_state.selected_note = None;
     
     map_state.focused_connection = Some(Connection {
         from_id: 0,
@@ -621,10 +621,10 @@ fn test_connection_mode_rotate_no_selected_note() {
 fn test_connection_mode_cycle_connections() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
-    map_state.notes.insert(2, Note::new(90, 40, String::from("Note 2"), false, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.notes.insert(2, Note::new(90, 40, String::from("Note 2"), false, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     map_state.visual_editing_a_connection = true;
@@ -694,9 +694,9 @@ fn test_connection_mode_cycle_connections() {
 fn test_connection_mode_cycle_connections_not_editing() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     map_state.visual_editing_a_connection = false; // Creating a new connection, not editing existing
@@ -741,9 +741,9 @@ fn test_connection_mode_cycle_connections_not_editing() {
 fn test_connection_mode_delete_connection() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     map_state.visual_editing_a_connection = true;
@@ -773,8 +773,8 @@ fn test_connection_mode_delete_connection() {
 fn test_connection_mode_delete_not_editing() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     map_state.visual_editing_a_connection = false; // Not editing
@@ -801,9 +801,9 @@ fn test_connection_mode_delete_not_editing() {
 fn test_connection_mode_switch_focus_for_target() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     
@@ -834,8 +834,8 @@ fn test_connection_mode_switch_focus_for_target() {
 fn test_connection_mode_cycle_color() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     
@@ -880,8 +880,8 @@ fn test_connection_mode_clear_and_redraw() {
     let mut map_state = create_test_map_state();
     map_state.needs_clear_and_redraw = false;
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     
@@ -902,8 +902,8 @@ fn test_connection_mode_clear_and_redraw() {
 fn test_connection_mode_unhandled_keys() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     
@@ -938,7 +938,7 @@ fn test_connection_mode_unhandled_keys() {
 fn test_visual_mode_no_selected_note() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Visual;
-    map_state.selected_note = None;
+    map_state.notes_state.selected_note = None;
 
     // Most operations should handle None selected_note gracefully
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('m')));
@@ -952,10 +952,10 @@ fn test_multiple_notes_with_connections() {
     let mut map_state = create_test_map_state();
     
     // Create a more complex scenario with multiple notes and connections
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::Green));
-    map_state.notes.insert(2, Note::new(90, 10, String::from("Note 2"), false, Color::Blue));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::Green));
+    map_state.notes_state.notes.insert(2, Note::new(90, 10, String::from("Note 2"), false, Color::Blue));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     
     // Add multiple connections
@@ -995,8 +995,8 @@ fn test_multiple_notes_with_connections() {
 fn test_exit_visual_mode_from_nested_states() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     
     // Enter move mode then escape
@@ -1014,8 +1014,8 @@ fn test_create_connection_no_selected_note() {
 
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), false, Color::White));
-    map_state.selected_note = None;
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), false, Color::White));
+    map_state.notes_state.selected_note = None;
     map_state.current_mode = Mode::Visual;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('C')));
@@ -1030,8 +1030,8 @@ fn test_create_connection_no_selected_note() {
 fn test_all_direction_keys_consistency() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(50, 25, String::from("Test Note"), true, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(50, 25, String::from("Test Note"), true, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
 
     // Test that char and arrow keys produce same behavior for each direction
@@ -1055,8 +1055,8 @@ fn test_all_direction_keys_consistency() {
 fn test_connection_mode_with_partial_connection() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     
     // Create new connection (no target yet)
@@ -1075,9 +1075,9 @@ fn test_connection_mode_with_partial_connection() {
 fn test_stash_and_cycle_connections_wraparound() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
-    map_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
+    map_state.notes_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
     map_state.visual_connection = true;
     map_state.visual_editing_a_connection = true;

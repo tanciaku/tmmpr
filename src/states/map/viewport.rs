@@ -1,5 +1,21 @@
-use super::geometry::ViewPos;
+use serde::{Deserialize, Serialize};
 
+/// Represents the top-left corner of the viewport on the infinite canvas.
+#[derive(PartialEq, Serialize, Deserialize, Clone, Debug)]
+pub struct ViewPos {
+    pub x: usize,
+    pub y: usize,
+}
+
+impl ViewPos {
+    /// Default viewport position.
+    pub fn new() -> ViewPos {
+        ViewPos {
+            x: 0,
+            y: 0,
+        }
+    }
+}
 
 #[derive(PartialEq, Debug)]
 pub struct ViewportState {

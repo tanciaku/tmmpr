@@ -32,18 +32,18 @@ pub fn switch_to_modal_insert_mode(map_state: &mut MapState) {
 /// - "hello   world" → cursor jumps from 'h' to 'w' (skips multiple spaces)
 /// - "hello\nworld" → cursor jumps from 'h' to 'w' (crosses line boundaries)
 pub fn jump_forward_a_word(map_state: &mut MapState) {
-    if let Some(selected_note) = &map_state.selected_note {
-        if let Some(note) = map_state.notes.get(selected_note) {
+    if let Some(selected_note) = &map_state.notes_state.selected_note {
+        if let Some(note) = map_state.notes_state.notes.get(selected_note) {
             // Only proceed if note's text content isn't empty to avoid index errors
             if !note.content.is_empty() {
                 
                 // Find the first space character after the current cursor position
-                let mut space_pos = note.content[map_state.cursor_pos..].find(' ');
+                let mut space_pos = note.content[map_state.notes_state.cursor_pos..].find(' ');
 
                 // Handle multiple consecutive spaces by finding the first non-space character
                 if let Some(pos) = space_pos {
                     // Search from the found space position for the first non-space character
-                    if let Some(new_pos) = note.content[map_state.cursor_pos + pos..].find(|c| {c != ' '}) {
+                    if let Some(new_pos) = note.content[map_state.notes_state.cursor_pos + pos..].find(|c| {c != ' '}) {
                         // Update space_pos to point one position before the target character
                         // (the -1 allows us to use +1 in the match arms consistently for both single and multiple spaces)
                         space_pos = Some(pos + new_pos - 1);
@@ -51,21 +51,21 @@ pub fn jump_forward_a_word(map_state: &mut MapState) {
                 }
 
                 // Find the first newline character after the current cursor position
-                let newline_pos = note.content[map_state.cursor_pos..].find('\n');
+                let newline_pos = note.content[map_state.notes_state.cursor_pos..].find('\n');
 
                 // Determine target position based on which delimiter comes first
                 let target_pos = match (space_pos, newline_pos) {
-                    (Some(s), Some(n)) => map_state.cursor_pos + s.min(n) + 1, // Choose the closest delimiter
-                    (Some(s), None) => map_state.cursor_pos + s + 1, // Only space found
-                    (None, Some(n)) => map_state.cursor_pos + n + 1, // Only newline found
+                    (Some(s), Some(n)) => map_state.notes_state.cursor_pos + s.min(n) + 1, // Choose the closest delimiter
+                    (Some(s), None) => map_state.notes_state.cursor_pos + s + 1, // Only space found
+                    (None, Some(n)) => map_state.notes_state.cursor_pos + n + 1, // Only newline found
                     (None, None) => note.content.len() - 1, // No delimiters found, jump to end
                 };
 
                 // Apply bounds checking to ensure cursor stays within valid text range
                 if target_pos > note.content.len() - 1 {
-                    map_state.cursor_pos = note.content.len() - 1; // Go to last character
+                    map_state.notes_state.cursor_pos = note.content.len() - 1; // Go to last character
                 } else {
-                    map_state.cursor_pos = target_pos;
+                    map_state.notes_state.cursor_pos = target_pos;
                 }
             }
         }
@@ -87,17 +87,17 @@ pub fn jump_forward_a_word(map_state: &mut MapState) {
 /// - "hello   world" → skips multiple spaces correctly
 /// - "hello\nworld" → works across line boundaries
 pub fn jump_back_a_word(map_state: &mut MapState) {
-    if let Some(selected_note) = &map_state.selected_note {
-        if let Some(note) = map_state.notes.get(selected_note) {
+    if let Some(selected_note) = &map_state.notes_state.selected_note {
+        if let Some(note) = map_state.notes_state.notes.get(selected_note) {
             // Early return if text is empty or cursor is already at the beginning
-            if note.content.is_empty() || map_state.cursor_pos == 0 {
+            if note.content.is_empty() || map_state.notes_state.cursor_pos == 0 {
                 return;
             }
 
             // Determine if we're at the beginning of a word by checking the previous character
-            let at_word_beginning = if map_state.cursor_pos > 0 {
+            let at_word_beginning = if map_state.notes_state.cursor_pos > 0 {
                 note.content.chars()
-                    .nth(map_state.cursor_pos.saturating_sub(1))
+                    .nth(map_state.notes_state.cursor_pos.saturating_sub(1))
                     .map(|c| c == ' ' || c == '\n')
                     .unwrap_or(false)
             } else {
@@ -106,13 +106,13 @@ pub fn jump_back_a_word(map_state: &mut MapState) {
 
             let target_pos = if at_word_beginning {
                 // Skip whitespace, then find the beginning of the previous word
-                find_previous_word_start(note, map_state.cursor_pos)
+                find_previous_word_start(note, map_state.notes_state.cursor_pos)
             } else {
                 // Find the beginning of the current word
-                find_current_word_start(note, map_state.cursor_pos)
+                find_current_word_start(note, map_state.notes_state.cursor_pos)
             };
 
-            map_state.cursor_pos = target_pos;
+            map_state.notes_state.cursor_pos = target_pos;
         }
     }
 }

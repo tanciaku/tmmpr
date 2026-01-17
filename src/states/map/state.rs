@@ -3,12 +3,11 @@ use crossterm::{cursor::SetCursorStyle, execute};
 use ratatui::style::Color;
 
 use crate::{
-    states::{map::ViewportState, settings::{Settings, SettingsType, get_settings}, start::ErrMsg}, utils::{get_duration_rt, handle_runtime_backup, save_map_file}
+    states::{map::{NotesState, ViewportState}, settings::{Settings, SettingsType, get_settings}, start::ErrMsg}, utils::{get_duration_rt, handle_runtime_backup, save_map_file}
 };
 
 use super::{
     enums::*,
-    note::Note,
     connection::Connection,
 };
 
@@ -19,16 +18,7 @@ pub struct MapState {
     /// The current input mode of the application, similar to Vim modes.
     pub current_mode: Mode,
     pub viewport: ViewportState,
-    /// A counter to ensure each new note gets a unique ID.
-    pub next_note_id: usize,
-    /// A collection of all notes in the mind map, keyed by their unique ID.
-    pub notes: HashMap<usize, Note>,
-    /// Order in which to render the notes ("z index")
-    /// Ordered back to front.
-    pub render_order: Vec<usize>,
-    /// The unique ID of the currently selected note.
-    pub selected_note: Option<usize>,
-    pub cursor_pos: usize,
+    pub notes_state: NotesState,
     pub visual_move: bool,
     pub visual_connection: bool,
     pub connections: Vec<Connection>,
@@ -89,11 +79,7 @@ impl MapState {
             needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
             viewport: ViewportState::new(),
-            next_note_id: 0,
-            notes: HashMap::new(),
-            render_order: vec![],
-            selected_note: None,
-            cursor_pos: 0,
+            notes_state: NotesState::new(),
             visual_move: false,
             visual_connection: false,
             connections: vec![],
@@ -128,14 +114,12 @@ impl MapState {
         self.can_exit = false;
 
         let (note_x, note_y) = self.viewport.center();
-        self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from(""), true, Color::White));
-        self.render_order.push(self.next_note_id);
-        self.selected_note = Some(self.next_note_id);
+
+        let note_id = self.notes_state.create_note(note_x, note_y, String::from(""), true, Color::White);
+        self.notes_state.selected_note = Some(note_id);
         
         // Switch to edit mode
         self.switch_to_edit_mode();
-
-        self.next_note_id += 1;
     }
 
     /// Switches the map state to Edit Mode for editing note content.
@@ -162,32 +146,9 @@ impl MapState {
     pub fn select_note(&mut self) {
         let (screen_center_x, screen_center_y) = self.viewport.center();
         
-        // Use an iterator to find the closest note ID.
-        let closest_note_id_opt = self.notes.iter()
-            .min_by_key(|(_, note)| {
-                // Calculate Manhattan distance: |x1 - x2| + |y1 - y2|.
-                let distance = (note.x as isize - screen_center_x as isize).abs()
-                           + (note.y as isize - screen_center_y as isize).abs();
-                distance as usize
-            })
-            .map(|(id, _)| *id); // We only care about the ID.
-
-        // The result is an Option<usize>
-        self.selected_note = closest_note_id_opt;
-
-        if let Some(id) = self.selected_note {
-            // Update the render order
-            // (put the just selected note's id to the back of the render_order vector -
-            //      so it renders it over every other note "below")
-            if let Some(pos) = self.render_order.iter().position(|&x| x == id) {
-                let item = self.render_order.remove(pos);  // Remove from current position
-                self.render_order.push(item);              // Add to back
-            }
-
-            // Render that note in "selected" style
-            if let Some(note) = self.notes.get_mut(&id) {
-                note.selected = true;
-            }
+        // Use the new helper methods
+        if let Some(id) = self.notes_state.find_closest_note(screen_center_x, screen_center_y) {
+            self.notes_state.select_note_by_id(id);
         }
     }
 

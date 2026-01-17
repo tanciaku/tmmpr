@@ -24,14 +24,14 @@ fn create_key_event(code: KeyCode) -> KeyEvent {
 fn test_edit_kh_no_selected_note() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Edit(None);
-    map_state.selected_note = None;
+    map_state.notes_state.selected_note = None;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('a')), None);
 
     // Should not change anything when no note is selected
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.current_mode, Mode::Edit(None));
-    assert_eq!(map_state.selected_note, None);
+    assert_eq!(map_state.notes_state.selected_note, None);
     assert_eq!(map_state.can_exit, true); // Should remain unchanged for non-modifying operations
 }
 
@@ -41,19 +41,19 @@ fn test_non_modal_escape_to_normal() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 5;
+    map_state.notes_state.cursor_pos = 5;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Esc), None);
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.current_mode, Mode::Normal);
-    assert_eq!(map_state.cursor_pos, 0); // Should reset cursor position
+    assert_eq!(map_state.notes_state.cursor_pos, 0); // Should reset cursor position
     
     // Note should be deselected
-    if let Some(note) = map_state.notes.get(&0) {
+    if let Some(note) = map_state.notes_state.notes.get(&0) {
         assert!(!note.selected);
     }
 }
@@ -64,16 +64,16 @@ fn test_modal_insert_escape_to_modal_normal() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Insert));
-    map_state.cursor_pos = 5;
+    map_state.notes_state.cursor_pos = 5;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Esc), Some(ModalEditMode::Insert));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.current_mode, Mode::Edit(Some(ModalEditMode::Normal)));
-    assert_eq!(map_state.cursor_pos, 4); // Should move cursor back by 1
+    assert_eq!(map_state.notes_state.cursor_pos, 4); // Should move cursor back by 1
 }
 
 #[test]
@@ -82,19 +82,19 @@ fn test_modal_normal_escape_to_normal() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 5;
+    map_state.notes_state.cursor_pos = 5;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Esc), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.current_mode, Mode::Normal);
-    assert_eq!(map_state.cursor_pos, 0); // Should reset cursor position
+    assert_eq!(map_state.notes_state.cursor_pos, 0); // Should reset cursor position
     
     // Note should be deselected
-    if let Some(note) = map_state.notes.get(&0) {
+    if let Some(note) = map_state.notes_state.notes.get(&0) {
         assert!(!note.selected);
     }
 }
@@ -105,18 +105,18 @@ fn test_insert_char_non_modal() {
     
     // Add a note with existing content
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 2; // Position between 'e' and 'l'
+    map_state.notes_state.cursor_pos = 2; // Position between 'e' and 'l'
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('X')), None);
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.can_exit, false); // Should be set to false for modifications
-    assert_eq!(map_state.cursor_pos, 3); // Should advance cursor
+    assert_eq!(map_state.notes_state.cursor_pos, 3); // Should advance cursor
     
-    if let Some(note) = map_state.notes.get(&0) {
+    if let Some(note) = map_state.notes_state.notes.get(&0) {
         assert_eq!(note.content, "HeXllo");
     }
 }
@@ -127,18 +127,18 @@ fn test_insert_enter_character() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 2;
+    map_state.notes_state.cursor_pos = 2;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Enter), None);
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.can_exit, false); // Should be set to false
-    assert_eq!(map_state.cursor_pos, 3); // Should advance cursor
+    assert_eq!(map_state.notes_state.cursor_pos, 3); // Should advance cursor
     
-    if let Some(note) = map_state.notes.get(&0) {
+    if let Some(note) = map_state.notes_state.notes.get(&0) {
         assert_eq!(note.content, "He\nllo");
     }
 }
@@ -149,18 +149,18 @@ fn test_backspace_char() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 3; // Position after 'l'
+    map_state.notes_state.cursor_pos = 3; // Position after 'l'
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Backspace), None);
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.can_exit, false); // Should be set to false
-    assert_eq!(map_state.cursor_pos, 2); // Should move cursor back
+    assert_eq!(map_state.notes_state.cursor_pos, 2); // Should move cursor back
     
-    if let Some(note) = map_state.notes.get(&0) {
+    if let Some(note) = map_state.notes_state.notes.get(&0) {
         assert_eq!(note.content, "Helo");
     }
 }
@@ -171,18 +171,18 @@ fn test_backspace_at_beginning() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 0; // At the beginning
+    map_state.notes_state.cursor_pos = 0; // At the beginning
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Backspace), None);
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.can_exit, false); // Should still be set to false
-    assert_eq!(map_state.cursor_pos, 0); // Should stay at beginning
+    assert_eq!(map_state.notes_state.cursor_pos, 0); // Should stay at beginning
     
-    if let Some(note) = map_state.notes.get(&0) {
+    if let Some(note) = map_state.notes_state.notes.get(&0) {
         assert_eq!(note.content, "Hello"); // Should be unchanged
     }
 }
@@ -193,15 +193,15 @@ fn test_cursor_left_movement() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 3;
+    map_state.notes_state.cursor_pos = 3;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Left), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 2);
+    assert_eq!(map_state.notes_state.cursor_pos, 2);
 }
 
 #[test]
@@ -210,15 +210,15 @@ fn test_cursor_left_at_beginning() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 0;
+    map_state.notes_state.cursor_pos = 0;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Left), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 0); // Should stay at 0
+    assert_eq!(map_state.notes_state.cursor_pos, 0); // Should stay at 0
 }
 
 #[test]
@@ -227,15 +227,15 @@ fn test_cursor_right_movement() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 2;
+    map_state.notes_state.cursor_pos = 2;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Right), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 3);
+    assert_eq!(map_state.notes_state.cursor_pos, 3);
 }
 
 #[test]
@@ -244,15 +244,15 @@ fn test_cursor_right_at_end() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 5; // At the end
+    map_state.notes_state.cursor_pos = 5; // At the end
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Right), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 5); // Should stay at end
+    assert_eq!(map_state.notes_state.cursor_pos, 5); // Should stay at end
 }
 
 #[test]
@@ -261,8 +261,8 @@ fn test_modal_normal_insert_mode_switch() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('i')), Some(ModalEditMode::Normal));
@@ -277,34 +277,34 @@ fn test_modal_normal_hjkl_movement() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello\nWorld"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 7; // Position at 'o' in "World"
+    map_state.notes_state.cursor_pos = 7; // Position at 'o' in "World"
 
     // Test 'h' (left)
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('h')), Some(ModalEditMode::Normal));
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 6);
+    assert_eq!(map_state.notes_state.cursor_pos, 6);
 
     // Test 'l' (right)
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('l')), Some(ModalEditMode::Normal));
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 7);
+    assert_eq!(map_state.notes_state.cursor_pos, 7);
 
     // Test 'k' (up) - this will call move_cursor_up function
-    map_state.cursor_pos = 7; // Reset to 'o' in "World"
+    map_state.notes_state.cursor_pos = 7; // Reset to 'o' in "World"
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('k')), Some(ModalEditMode::Normal));
     assert_eq!(result, AppAction::Continue);
     // Cursor should move to equivalent position in "Hello"
-    assert_eq!(map_state.cursor_pos, 1);
+    assert_eq!(map_state.notes_state.cursor_pos, 1);
 
     // Test 'j' (down) - this will call move_cursor_down function
-    map_state.cursor_pos = 2; // Position in "Hello"
+    map_state.notes_state.cursor_pos = 2; // Position in "Hello"
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('j')), Some(ModalEditMode::Normal));
     assert_eq!(result, AppAction::Continue);
     // Cursor should move to equivalent position in "World"
-    assert_eq!(map_state.cursor_pos, 8)
+    assert_eq!(map_state.notes_state.cursor_pos, 8)
 }
 
 #[test]
@@ -313,15 +313,15 @@ fn test_modal_normal_h_at_beginning() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 0;
+    map_state.notes_state.cursor_pos = 0;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('h')), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 0); // Should stay at 0
+    assert_eq!(map_state.notes_state.cursor_pos, 0); // Should stay at 0
 }
 
 #[test]
@@ -330,15 +330,15 @@ fn test_modal_normal_l_at_end() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 4; // At the last character (note content.len() - 1)
+    map_state.notes_state.cursor_pos = 4; // At the last character (note content.len() - 1)
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('l')), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 4); // Should stay at last character
+    assert_eq!(map_state.notes_state.cursor_pos, 4); // Should stay at last character
 }
 
 #[test]
@@ -347,15 +347,15 @@ fn test_modal_normal_g_beginning() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello World"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 5;
+    map_state.notes_state.cursor_pos = 5;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('g')), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 0);
+    assert_eq!(map_state.notes_state.cursor_pos, 0);
 }
 
 #[test]
@@ -364,15 +364,15 @@ fn test_modal_normal_g_end() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello World"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 3;
+    map_state.notes_state.cursor_pos = 3;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('G')), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 10); // Last character position (content.len() - 1)
+    assert_eq!(map_state.notes_state.cursor_pos, 10); // Last character position (content.len() - 1)
 }
 
 #[test]
@@ -381,15 +381,15 @@ fn test_modal_normal_append_mode() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 2;
+    map_state.notes_state.cursor_pos = 2;
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('a')), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 3); // Should advance cursor by 1
+    assert_eq!(map_state.notes_state.cursor_pos, 3); // Should advance cursor by 1
     assert_eq!(map_state.current_mode, Mode::Edit(Some(ModalEditMode::Insert)));
 }
 
@@ -399,15 +399,15 @@ fn test_modal_normal_append_at_end() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 4; // At the last character
+    map_state.notes_state.cursor_pos = 4; // At the last character
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('a')), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 5); // Should move to after the last character
+    assert_eq!(map_state.notes_state.cursor_pos, 5); // Should move to after the last character
     assert_eq!(map_state.current_mode, Mode::Edit(Some(ModalEditMode::Insert)));
 }
 
@@ -417,16 +417,16 @@ fn test_modal_normal_remove_char() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 2; // Position at 'l'
+    map_state.notes_state.cursor_pos = 2; // Position at 'l'
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('x')), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
     
-    if let Some(note) = map_state.notes.get(&0) {
+    if let Some(note) = map_state.notes_state.notes.get(&0) {
         assert_eq!(note.content, "Helo"); // Should remove the 'l' at position 2
     }
 }
@@ -437,16 +437,16 @@ fn test_modal_normal_word_jump_forward() {
     
     // Add a note with multiple words
     let note = Note::new(50, 25, String::from("Hello World Test"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 0; // At the beginning
+    map_state.notes_state.cursor_pos = 0; // At the beginning
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('w')), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
     // Cursor should jump to the beginning of "World" (position 6)
-    assert_eq!(map_state.cursor_pos, 6);
+    assert_eq!(map_state.notes_state.cursor_pos, 6);
 }
 
 #[test]
@@ -455,16 +455,16 @@ fn test_modal_normal_word_jump_backward() {
     
     // Add a note with multiple words
     let note = Note::new(50, 25, String::from("Hello World Test"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 12; // Position at 'T' in "Test"
+    map_state.notes_state.cursor_pos = 12; // Position at 'T' in "Test"
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('b')), Some(ModalEditMode::Normal));
 
     assert_eq!(result, AppAction::Continue);
     // Cursor should jump to the beginning of "World" (position 6)
-    assert_eq!(map_state.cursor_pos, 6);
+    assert_eq!(map_state.notes_state.cursor_pos, 6);
 }
 
 #[test]
@@ -473,8 +473,8 @@ fn test_always_triggers_clear_and_redraw() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
     map_state.needs_clear_and_redraw = false; // Set to false initially
 
@@ -490,8 +490,8 @@ fn test_always_returns_continue() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
 
     // Test various keys - all should return Continue
@@ -518,10 +518,10 @@ fn test_unhandled_keys_ignored() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 2;
+    map_state.notes_state.cursor_pos = 2;
 
     // Test unhandled keys
     let test_keys = vec![
@@ -534,15 +534,15 @@ fn test_unhandled_keys_ignored() {
     ];
 
     for key in test_keys {
-        let original_cursor = map_state.cursor_pos;
-        let original_content = map_state.notes.get(&0).unwrap().content.clone();
+        let original_cursor = map_state.notes_state.cursor_pos;
+        let original_content = map_state.notes_state.notes.get(&0).unwrap().content.clone();
         
         let result = map_edit_kh(&mut map_state, create_key_event(key), None);
         
         assert_eq!(result, AppAction::Continue);
-        assert_eq!(map_state.cursor_pos, original_cursor); // Should not change cursor
+        assert_eq!(map_state.notes_state.cursor_pos, original_cursor); // Should not change cursor
         
-        if let Some(note) = map_state.notes.get(&0) {
+        if let Some(note) = map_state.notes_state.notes.get(&0) {
             assert_eq!(note.content, original_content); // Should not change content
         }
     }
@@ -554,10 +554,10 @@ fn test_modal_normal_unhandled_keys_ignored() {
     
     // Add a note
     let note = Note::new(50, 25, String::from("Hello"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 2;
+    map_state.notes_state.cursor_pos = 2;
 
     // Test unhandled keys in modal normal mode
     let test_keys = vec![
@@ -570,17 +570,17 @@ fn test_modal_normal_unhandled_keys_ignored() {
     ];
 
     for key in test_keys {
-        let original_cursor = map_state.cursor_pos;
-        let original_content = map_state.notes.get(&0).unwrap().content.clone();
+        let original_cursor = map_state.notes_state.cursor_pos;
+        let original_content = map_state.notes_state.notes.get(&0).unwrap().content.clone();
         let original_mode = map_state.current_mode;
         
         let result = map_edit_kh(&mut map_state, create_key_event(key), Some(ModalEditMode::Normal));
         
         assert_eq!(result, AppAction::Continue);
-        assert_eq!(map_state.cursor_pos, original_cursor); // Should not change cursor
+        assert_eq!(map_state.notes_state.cursor_pos, original_cursor); // Should not change cursor
         assert_eq!(map_state.current_mode, original_mode); // Should not change mode
         
-        if let Some(note) = map_state.notes.get(&0) {
+        if let Some(note) = map_state.notes_state.notes.get(&0) {
             assert_eq!(note.content, original_content); // Should not change content
         }
     }
@@ -592,18 +592,18 @@ fn test_empty_note_content_handling() {
     
     // Add a note with empty content
     let note = Note::new(50, 25, String::new(), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.cursor_pos = 0;
+    map_state.notes_state.cursor_pos = 0;
 
     // Test inserting character into empty note
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('H')), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 1);
+    assert_eq!(map_state.notes_state.cursor_pos, 1);
     
-    if let Some(note) = map_state.notes.get(&0) {
+    if let Some(note) = map_state.notes_state.notes.get(&0) {
         assert_eq!(note.content, "H");
     }
 }
@@ -614,18 +614,18 @@ fn test_cursor_bounds_edge_cases() {
     
     // Add a note with single character
     let note = Note::new(50, 25, String::from("A"), true, Color::White);
-    map_state.notes.insert(0, note);
-    map_state.selected_note = Some(0);
+    map_state.notes_state.notes.insert(0, note);
+    map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
-    map_state.cursor_pos = 0; // At the only character
+    map_state.notes_state.cursor_pos = 0; // At the only character
 
     // Test 'G' (go to end) on single character
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('G')), Some(ModalEditMode::Normal));
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 0); // Should stay at 0 for single character (content.len() - 1 = 0)
+    assert_eq!(map_state.notes_state.cursor_pos, 0); // Should stay at 0 for single character (content.len() - 1 = 0)
 
     // Test 'l' (right) at the only character position
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('l')), Some(ModalEditMode::Normal));
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.cursor_pos, 0); // Should stay at 0
+    assert_eq!(map_state.notes_state.cursor_pos, 0); // Should stay at 0
 }

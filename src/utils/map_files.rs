@@ -48,9 +48,9 @@ pub fn create_map_file(app: &mut App, path: &Path) {
     // Take the default values from that to write to the file
     let map_data = MapData {
         view_pos: map_state.viewport.view_pos,
-        next_note_id: map_state.next_note_id,
-        notes: map_state.notes,
-        render_order: map_state.render_order,
+        next_note_id: map_state.notes_state.next_note_id,
+        notes: map_state.notes_state.notes,
+        render_order: map_state.notes_state.render_order,
         connections: map_state.connections,
         connection_index: map_state.connection_index,
     };
@@ -90,9 +90,9 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
     // Get the relevant values from the current Map State
     let map_data = MapData {
         view_pos: map_state.viewport.view_pos.clone(),
-        next_note_id: map_state.next_note_id,
-        notes: map_state.notes.clone(),
-        render_order: map_state.render_order.clone(),
+        next_note_id: map_state.notes_state.next_note_id,
+        notes: map_state.notes_state.notes.clone(),
+        render_order: map_state.notes_state.render_order.clone(),
         connections: map_state.connections.clone(),
         connection_index: map_state.connection_index.clone(),
     };
@@ -157,9 +157,9 @@ pub fn load_map_file(app: &mut App, path: &Path) {
             // Successfully loaded data from file - now populate the MapState
             // with the saved values, overriding the defaults
             map_state.viewport.view_pos = map_data.view_pos;
-            map_state.next_note_id = map_data.next_note_id;
-            map_state.notes = map_data.notes;
-            map_state.render_order = map_data.render_order;
+            map_state.notes_state.next_note_id = map_data.next_note_id;
+            map_state.notes_state.notes = map_data.notes;
+            map_state.notes_state.render_order = map_data.render_order;
             map_state.connections = map_data.connections;
             map_state.connection_index = map_data.connection_index;
         }
