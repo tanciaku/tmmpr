@@ -47,7 +47,7 @@ pub fn create_map_file(app: &mut App, path: &Path) {
     let map_state = MapState::new(path.to_path_buf()); // Only clone when storing
     // Take the default values from that to write to the file
     let map_data = MapData {
-        view_pos: map_state.view_pos,
+        view_pos: map_state.viewport.view_pos,
         next_note_id: map_state.next_note_id,
         notes: map_state.notes,
         render_order: map_state.render_order,
@@ -89,12 +89,12 @@ pub fn create_map_file(app: &mut App, path: &Path) {
 pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notification: bool, making_backup: bool) {
     // Get the relevant values from the current Map State
     let map_data = MapData {
-        view_pos: map_state.view_pos.clone(), // necessary
+        view_pos: map_state.viewport.view_pos.clone(),
         next_note_id: map_state.next_note_id,
-        notes: map_state.notes.clone(), // necessary
+        notes: map_state.notes.clone(),
         render_order: map_state.render_order.clone(),
-        connections: map_state.connections.clone(), // necessary
-        connection_index: map_state.connection_index.clone(), // necessary
+        connections: map_state.connections.clone(),
+        connection_index: map_state.connection_index.clone(),
     };
 
     // Attempt to write map data to the file
@@ -156,7 +156,7 @@ pub fn load_map_file(app: &mut App, path: &Path) {
         Ok(map_data) => {
             // Successfully loaded data from file - now populate the MapState
             // with the saved values, overriding the defaults
-            map_state.view_pos = map_data.view_pos;
+            map_state.viewport.view_pos = map_data.view_pos;
             map_state.next_note_id = map_data.next_note_id;
             map_state.notes = map_data.notes;
             map_state.render_order = map_data.render_order;

@@ -10,8 +10,8 @@ use crate::{
 fn create_test_map_state() -> MapState {
     let mut map_state = MapState::new(PathBuf::from("/test/path"));
     map_state.settings.edit_modal = false;
-    map_state.screen_width = 100;
-    map_state.screen_height = 50;
+    map_state.viewport.screen_width = 100;
+    map_state.viewport.screen_height = 50;
     map_state.can_exit = true; // Start with can_exit as true to test it gets set to false
     map_state
 }

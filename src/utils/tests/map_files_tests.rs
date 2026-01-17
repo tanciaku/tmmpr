@@ -532,8 +532,8 @@ fn test_load_map_file_loads_view_position() {
     
     // Create a map with modified view position
     let mut map_state = MapState::new(file_path.clone());
-    map_state.view_pos.x = 500;
-    map_state.view_pos.y = 750;
+    map_state.viewport.view_pos.x = 500;
+    map_state.viewport.view_pos.y = 750;
     
     save_map_file(&mut map_state, &file_path, false, false);
     
@@ -543,8 +543,8 @@ fn test_load_map_file_loads_view_position() {
     
     // Verify: View position loaded
     if let Screen::Map(loaded_state) = &app.screen {
-        assert_eq!(loaded_state.view_pos.x, 500);
-        assert_eq!(loaded_state.view_pos.y, 750);
+        assert_eq!(loaded_state.viewport.view_pos.x, 500);
+        assert_eq!(loaded_state.viewport.view_pos.y, 750);
     }
 }
 
@@ -709,8 +709,8 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     original_state.connection_index.entry(5).or_default().push(conn2);
     
     // Set view position
-    original_state.view_pos.x = 100;
-    original_state.view_pos.y = 200;
+    original_state.viewport.view_pos.x = 100;
+    original_state.viewport.view_pos.y = 200;
     
     // Save the file
     save_map_file(&mut original_state, &file_path, false, false);
@@ -723,8 +723,8 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     if let Screen::Map(loaded_state) = &app.screen {
         // Check basic state
         assert_eq!(loaded_state.next_note_id, 6);
-        assert_eq!(loaded_state.view_pos.x, 100);
-        assert_eq!(loaded_state.view_pos.y, 200);
+        assert_eq!(loaded_state.viewport.view_pos.x, 100);
+        assert_eq!(loaded_state.viewport.view_pos.y, 200);
         
         // Check notes
         assert_eq!(loaded_state.notes.len(), 3);
@@ -763,7 +763,7 @@ fn test_roundtrip_create_save_load() {
         map_state.notes.insert(0, note);
         map_state.render_order.push(0);
         map_state.next_note_id = 1;
-        map_state.view_pos.x = 50;
+        map_state.viewport.view_pos.x = 50;
         
         // Save the changes
         save_map_file(map_state, &file_path, false, false);
@@ -778,7 +778,7 @@ fn test_roundtrip_create_save_load() {
         assert_eq!(loaded_state.next_note_id, 1);
         assert_eq!(loaded_state.notes.len(), 1);
         assert_eq!(loaded_state.notes.get(&0).unwrap().content, "Created Note");
-        assert_eq!(loaded_state.view_pos.x, 50);
+        assert_eq!(loaded_state.viewport.view_pos.x, 50);
     }
 }
 

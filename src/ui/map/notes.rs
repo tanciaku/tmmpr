@@ -33,9 +33,10 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
             // --- 2. Translate to Screen Coordinates ---
             // Convert the note's absolute canvas coordinates into screen-relative coordinates.
             // This can result in negative values if the note is partially off-screen.
+            let (p_x, p_y) = map_state.viewport.to_screen_coords(note.x as isize, note.y as isize);
             let note_rect = SignedRect {
-                x: note.x as isize - map_state.view_pos.x as isize,
-                y: note.y as isize - map_state.view_pos.y as isize,
+                x: p_x,
+                y: p_y,
                 width: note_width as isize,
                 height: note_height as isize,
             };

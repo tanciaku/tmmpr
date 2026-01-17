@@ -3,13 +3,11 @@ use crossterm::{cursor::SetCursorStyle, execute};
 use ratatui::style::Color;
 
 use crate::{
-    utils::{save_map_file, handle_runtime_backup, get_duration_rt}, 
-    states::{settings::{Settings, SettingsType, get_settings}, start::ErrMsg},
+    states::{map::ViewportState, settings::{Settings, SettingsType, get_settings}, start::ErrMsg}, utils::{get_duration_rt, handle_runtime_backup, save_map_file}
 };
 
 use super::{
     enums::*,
-    geometry::ViewPos,
     note::Note,
     connection::Connection,
 };
@@ -20,15 +18,7 @@ pub struct MapState {
     /// A flag indicating that the screen needs to be cleared and redrawn on the next frame.
     /// The current input mode of the application, similar to Vim modes.
     pub current_mode: Mode,
-    /// The position of the viewport (camera) on the infinite canvas.
-    /// Position can only be positive.
-    pub view_pos: ViewPos,
-    /// Store screen dimensions in the MapState to be able to access them in modules besides ui.rs
-    /// The current width of the terminal screen in cells. Updated on every frame.
-    pub screen_width: usize,
-    /// Store screen dimensions in the MapState to be able to access them in modules besides ui.rs
-    /// The current height of the terminal screen in cells. Updated on every frame.
-    pub screen_height: usize,
+    pub viewport: ViewportState,
     /// A counter to ensure each new note gets a unique ID.
     pub next_note_id: usize,
     /// A collection of all notes in the mind map, keyed by their unique ID.
@@ -98,9 +88,7 @@ impl MapState {
         MapState {
             needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
-            view_pos: ViewPos::new(),
-            screen_width: 0,
-            screen_height: 0,
+            viewport: ViewportState::new(),
             next_note_id: 0,
             notes: HashMap::new(),
             render_order: vec![],
@@ -139,8 +127,7 @@ impl MapState {
     pub fn add_note(&mut self) {
         self.can_exit = false;
 
-        let note_x = self.view_pos.x + self.screen_width/2;
-        let note_y = self.view_pos.y + self.screen_height/2;
+        let (note_x, note_y) = self.viewport.center();
         self.notes.insert(self.next_note_id, Note::new(note_x, note_y, String::from(""), true, Color::White));
         self.render_order.push(self.next_note_id);
         self.selected_note = Some(self.next_note_id);
@@ -173,8 +160,7 @@ impl MapState {
     /// to the top-left corner of each note and sets the `selected_note` field to the
     /// ID of the note with the smallest distance.
     pub fn select_note(&mut self) {
-        let screen_center_x = self.view_pos.x + self.screen_width / 2;
-        let screen_center_y = self.view_pos.y + self.screen_height / 2;
+        let (screen_center_x, screen_center_y) = self.viewport.center();
         
         // Use an iterator to find the closest note ID.
         let closest_note_id_opt = self.notes.iter()

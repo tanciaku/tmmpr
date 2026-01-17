@@ -34,8 +34,7 @@ pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
                     // The `.any()` iterator is efficient, stopping as soon as the first visible
                     // point is found.
                     let is_visible = path.iter().any(|point| {
-                        let p_x = point.x - map_state.view_pos.x as isize;
-                        let p_y = point.y - map_state.view_pos.y as isize;
+                        let (p_x, p_y) = map_state.viewport.to_screen_coords(point.x, point.y);
                         p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize
                     });
 
@@ -86,8 +85,7 @@ pub fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame:
     // up a connection (.windows(2) - 2 points that make up a line)
     for points in path.windows(2) {
         // Translate first point absolute coordinates to screen coordinates
-        let p1_x = points[0].x - map_state.view_pos.x as isize;
-        let p1_y = points[0].y - map_state.view_pos.y as isize;
+        let (p1_x, p1_y) = map_state.viewport.to_screen_coords(points[0].x, points[0].y);
 
         // -- Determine line characters and draw them --
         
@@ -160,8 +158,7 @@ pub fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame:
     for (i, points) in path.windows(3).enumerate() {
         // Translate points absolute coordinates to screen coordinates
         // points[1] - to draw every 2nd point, so all besides the first and last [1, 0, 0, 0, 1]
-        let p_x = points[1].x - map_state.view_pos.x as isize;
-        let p_y = points[1].y - map_state.view_pos.y as isize;
+        let (p_x, p_y) = map_state.viewport.to_screen_coords(points[1].x, points[1].y);
 
         let incoming = segment_directions[i];
         let outgoing = segment_directions[i + 1];
@@ -223,8 +220,7 @@ pub fn draw_connecting_character(note: &Note, side: Side, is_editing: bool, colo
     };
 
     let p = note.get_connection_point(side);
-    let p_x = p.0 as isize - map_state.view_pos.x as isize; // connection start point relative x
-    let p_y = p.1 as isize - map_state.view_pos.y as isize; // connection start point relative y
+    let (p_x, p_y) = map_state.viewport.to_screen_coords(p.0 as isize, p.1 as isize);
 
     if p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize {
         if let Some(cell) = frame.buffer_mut().cell_mut((p_x as u16, p_y as u16)) {

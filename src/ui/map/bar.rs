@@ -61,8 +61,8 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     // This is aligned to the right, with padding on the right side.
     let view_position_display = Paragraph::new(format!(
         "View: {},{}",
-        map_state.view_pos.x,
-        map_state.view_pos.y,
+        map_state.viewport.view_pos.x,
+        map_state.viewport.view_pos.y,
     ))
     .alignment(Alignment::Right)
     .block(Block::default().padding(Padding::new(0, 2, 0, 0)));

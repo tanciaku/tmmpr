@@ -38,16 +38,16 @@ pub fn move_viewport(map_state: &mut MapState, axis: &str, amount: isize) {
     match axis {
         "x" => {
             if amount > 0 {
-                map_state.view_pos.x += amount as usize;
+                map_state.viewport.view_pos.x += amount as usize;
             } else {
-                map_state.view_pos.x = map_state.view_pos.x.saturating_sub(amount.abs() as usize);
+                map_state.viewport.view_pos.x = map_state.viewport.view_pos.x.saturating_sub(amount.abs() as usize);
             }
         }
         "y" => {
             if amount > 0 {
-                map_state.view_pos.y += amount as usize;
+                map_state.viewport.view_pos.y += amount as usize;
             } else {
-                map_state.view_pos.y = map_state.view_pos.y.saturating_sub(amount.abs() as usize);
+                map_state.viewport.view_pos.y = map_state.viewport.view_pos.y.saturating_sub(amount.abs() as usize);
             }
         }
         _ => {}
@@ -79,17 +79,17 @@ pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {
                         // First, update the note's x-coordinate.
                         note.x += amount as usize;
                         // Check if the right edge of the note is past the right edge of the screen.
-                        if note.x + note_width as usize > map_state.view_pos.x + map_state.screen_width {
+                        if note.x + note_width as usize > map_state.viewport.view_pos.x + map_state.viewport.screen_width {
                             // If it is, move the viewport right to keep the note in view.
-                            map_state.view_pos.x += amount as usize;
+                            map_state.viewport.view_pos.x += amount as usize;
                         }
                     } else {
                         // First, update the note's x-coordinate.
                         note.x = note.x.saturating_sub(amount.abs() as usize);
                         // Then, check if the left edge of the note is now to the left of the viewport's edge.
-                        if note.x < map_state.view_pos.x {
+                        if note.x < map_state.viewport.view_pos.x {
                             // If it is, move the viewport left to keep the note in view.
-                            map_state.view_pos.x = map_state.view_pos.x.saturating_sub(amount.abs() as usize);
+                            map_state.viewport.view_pos.x = map_state.viewport.view_pos.x.saturating_sub(amount.abs() as usize);
                         }
                     }
                 }
@@ -99,17 +99,17 @@ pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {
                         note.y += amount as usize; 
                         // Check if the bottom edge of the note is below the visible screen area.
                         // We subtract 3 from the screen height to account for the bottom info bar.
-                        if note.y as isize + note_height as isize > map_state.view_pos.y as isize + map_state.screen_height as isize - 3 {
+                        if note.y as isize + note_height as isize > map_state.viewport.view_pos.y as isize + map_state.viewport.screen_height as isize - 3 {
                             // If it is, move the viewport down to keep the note in view.
-                            map_state.view_pos.y += amount as usize;
+                            map_state.viewport.view_pos.y += amount as usize;
                         }
                     } else {
                         // Update the note's y-coordinate.
                         note.y = note.y.saturating_sub(amount.abs() as usize);
                         // Then, check if the top edge of the note is now above the top edge of the viewport.
-                        if note.y < map_state.view_pos.y {
+                        if note.y < map_state.viewport.view_pos.y {
                             // If it is, move the viewport down to up the note in view.
-                            map_state.view_pos.y = map_state.view_pos.y.saturating_sub(amount.abs() as usize);
+                            map_state.viewport.view_pos.y = map_state.viewport.view_pos.y.saturating_sub(amount.abs() as usize);
                         }
                     }
                 }
@@ -238,8 +238,8 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
 
             // As a final step, center the viewport on the newly selected note.
             if let Some(note) = map_state.notes.get(&id) {
-                map_state.view_pos.x = note.x.saturating_sub(map_state.screen_width/2);
-                map_state.view_pos.y = note.y.saturating_sub(map_state.screen_height/2);
+                map_state.viewport.view_pos.x = note.x.saturating_sub(map_state.viewport.screen_width/2);
+                map_state.viewport.view_pos.y = note.y.saturating_sub(map_state.viewport.screen_height/2);
             }
 
             // If in the middle of creating a connection:

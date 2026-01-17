@@ -22,8 +22,8 @@ pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {
 
     // Update the  map_state with the current terminal size. This is crucial for
     // calculations that depend on screen dimensions, like centering new notes.
-    map_state.screen_width = frame.area().width as usize;
-    map_state.screen_height = frame.area().height as usize;
+    map_state.viewport.screen_width = frame.area().width as usize;
+    map_state.viewport.screen_height = frame.area().height as usize;
 
     // Render the main UI components.
     render_connections(frame, map_state);

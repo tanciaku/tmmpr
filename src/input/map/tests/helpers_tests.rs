@@ -9,8 +9,8 @@ use crate::{
 fn create_test_map_state() -> MapState {
     let mut map_state = MapState::new(PathBuf::from("/test/path"));
     map_state.settings.edit_modal = false;
-    map_state.screen_width = 100;
-    map_state.screen_height = 50;
+    map_state.viewport.screen_width = 100;
+    map_state.viewport.screen_height = 50;
     map_state.can_exit = true;
     map_state
 }
@@ -85,92 +85,92 @@ fn test_help_previous_page_no_help_screen() {
 #[test]
 fn test_move_viewport_x_positive() {
     let mut map_state = create_test_map_state();
-    map_state.view_pos.x = 10;
-    map_state.view_pos.y = 20;
+    map_state.viewport.view_pos.x = 10;
+    map_state.viewport.view_pos.y = 20;
     
     move_viewport(&mut map_state, "x", 5);
     
-    assert_eq!(map_state.view_pos.x, 15);
-    assert_eq!(map_state.view_pos.y, 20); // Should remain unchanged
+    assert_eq!(map_state.viewport.view_pos.x, 15);
+    assert_eq!(map_state.viewport.view_pos.y, 20); // Should remain unchanged
     assert_eq!(map_state.can_exit, false); // Should be set to false
 }
 
 #[test]
 fn test_move_viewport_x_negative() {
     let mut map_state = create_test_map_state();
-    map_state.view_pos.x = 10;
-    map_state.view_pos.y = 20;
+    map_state.viewport.view_pos.x = 10;
+    map_state.viewport.view_pos.y = 20;
     
     move_viewport(&mut map_state, "x", -5);
     
-    assert_eq!(map_state.view_pos.x, 5);
-    assert_eq!(map_state.view_pos.y, 20); // Should remain unchanged
+    assert_eq!(map_state.viewport.view_pos.x, 5);
+    assert_eq!(map_state.viewport.view_pos.y, 20); // Should remain unchanged
     assert_eq!(map_state.can_exit, false);
 }
 
 #[test]
 fn test_move_viewport_x_negative_saturating() {
     let mut map_state = create_test_map_state();
-    map_state.view_pos.x = 3;
-    map_state.view_pos.y = 20;
+    map_state.viewport.view_pos.x = 3;
+    map_state.viewport.view_pos.y = 20;
     
     move_viewport(&mut map_state, "x", -10);
     
-    assert_eq!(map_state.view_pos.x, 0); // Should saturate at 0
-    assert_eq!(map_state.view_pos.y, 20);
+    assert_eq!(map_state.viewport.view_pos.x, 0); // Should saturate at 0
+    assert_eq!(map_state.viewport.view_pos.y, 20);
     assert_eq!(map_state.can_exit, false);
 }
 
 #[test]
 fn test_move_viewport_y_positive() {
     let mut map_state = create_test_map_state();
-    map_state.view_pos.x = 10;
-    map_state.view_pos.y = 20;
+    map_state.viewport.view_pos.x = 10;
+    map_state.viewport.view_pos.y = 20;
     
     move_viewport(&mut map_state, "y", 7);
     
-    assert_eq!(map_state.view_pos.x, 10); // Should remain unchanged
-    assert_eq!(map_state.view_pos.y, 27);
+    assert_eq!(map_state.viewport.view_pos.x, 10); // Should remain unchanged
+    assert_eq!(map_state.viewport.view_pos.y, 27);
     assert_eq!(map_state.can_exit, false);
 }
 
 #[test]
 fn test_move_viewport_y_negative() {
     let mut map_state = create_test_map_state();
-    map_state.view_pos.x = 10;
-    map_state.view_pos.y = 20;
+    map_state.viewport.view_pos.x = 10;
+    map_state.viewport.view_pos.y = 20;
     
     move_viewport(&mut map_state, "y", -8);
     
-    assert_eq!(map_state.view_pos.x, 10); // Should remain unchanged
-    assert_eq!(map_state.view_pos.y, 12);
+    assert_eq!(map_state.viewport.view_pos.x, 10); // Should remain unchanged
+    assert_eq!(map_state.viewport.view_pos.y, 12);
     assert_eq!(map_state.can_exit, false);
 }
 
 #[test]
 fn test_move_viewport_y_negative_saturating() {
     let mut map_state = create_test_map_state();
-    map_state.view_pos.x = 10;
-    map_state.view_pos.y = 5;
+    map_state.viewport.view_pos.x = 10;
+    map_state.viewport.view_pos.y = 5;
     
     move_viewport(&mut map_state, "y", -10);
     
-    assert_eq!(map_state.view_pos.x, 10);
-    assert_eq!(map_state.view_pos.y, 0); // Should saturate at 0
+    assert_eq!(map_state.viewport.view_pos.x, 10);
+    assert_eq!(map_state.viewport.view_pos.y, 0); // Should saturate at 0
     assert_eq!(map_state.can_exit, false);
 }
 
 #[test]
 fn test_move_viewport_invalid_axis() {
     let mut map_state = create_test_map_state();
-    map_state.view_pos.x = 10;
-    map_state.view_pos.y = 20;
+    map_state.viewport.view_pos.x = 10;
+    map_state.viewport.view_pos.y = 20;
     
     move_viewport(&mut map_state, "z", 5);
     
     // Should not change anything for invalid axis
-    assert_eq!(map_state.view_pos.x, 10);
-    assert_eq!(map_state.view_pos.y, 20);
+    assert_eq!(map_state.viewport.view_pos.x, 10);
+    assert_eq!(map_state.viewport.view_pos.y, 20);
     assert_eq!(map_state.can_exit, false); // Still should set can_exit to false
 }
 
@@ -178,14 +178,14 @@ fn test_move_viewport_invalid_axis() {
 fn test_move_note_no_selected_note() {
     let mut map_state = create_test_map_state();
     map_state.selected_note = None;
-    map_state.view_pos.x = 10;
-    map_state.view_pos.y = 10;
+    map_state.viewport.view_pos.x = 10;
+    map_state.viewport.view_pos.y = 10;
     
     move_note(&mut map_state, "x", 5);
     
     // Should not change anything when no note is selected
-    assert_eq!(map_state.view_pos.x, 10);
-    assert_eq!(map_state.view_pos.y, 10);
+    assert_eq!(map_state.viewport.view_pos.x, 10);
+    assert_eq!(map_state.viewport.view_pos.y, 10);
     assert_eq!(map_state.can_exit, true); // Should remain unchanged
 }
 
@@ -197,8 +197,8 @@ fn test_move_note_x_positive_simple() {
     let note = Note::new(40, 20, String::from("Test"), true, Color::White);
     map_state.notes.insert(0, note);
     map_state.selected_note = Some(0);
-    map_state.view_pos.x = 0;
-    map_state.view_pos.y = 0;
+    map_state.viewport.view_pos.x = 0;
+    map_state.viewport.view_pos.y = 0;
     
     move_note(&mut map_state, "x", 5);
     
@@ -206,8 +206,8 @@ fn test_move_note_x_positive_simple() {
     assert_eq!(map_state.notes[&0].x, 45);
     assert_eq!(map_state.notes[&0].y, 20); // Should remain unchanged
     // Viewport shouldn't move since note is still in view
-    assert_eq!(map_state.view_pos.x, 0);
-    assert_eq!(map_state.view_pos.y, 0);
+    assert_eq!(map_state.viewport.view_pos.x, 0);
+    assert_eq!(map_state.viewport.view_pos.y, 0);
     assert_eq!(map_state.can_exit, false);
 }
 
@@ -219,8 +219,8 @@ fn test_move_note_x_positive_viewport_adjustment() {
     let note = Note::new(95, 20, String::from("Test"), true, Color::White);
     map_state.notes.insert(0, note);
     map_state.selected_note = Some(0);
-    map_state.view_pos.x = 0;
-    map_state.view_pos.y = 0;
+    map_state.viewport.view_pos.x = 0;
+    map_state.viewport.view_pos.y = 0;
     
     move_note(&mut map_state, "x", 5);
     
@@ -229,7 +229,7 @@ fn test_move_note_x_positive_viewport_adjustment() {
     // Viewport should also move to keep note in view
     // Note width + cursor space = minimum 21, so note right edge is at 121
     // Screen width is 100, so viewport needs to move
-    assert_eq!(map_state.view_pos.x, 5);
+    assert_eq!(map_state.viewport.view_pos.x, 5);
     assert_eq!(map_state.can_exit, false);
 }
 
@@ -241,8 +241,8 @@ fn test_move_note_x_negative_simple() {
     let note = Note::new(40, 20, String::from("Test"), true, Color::White);
     map_state.notes.insert(0, note);
     map_state.selected_note = Some(0);
-    map_state.view_pos.x = 0;
-    map_state.view_pos.y = 0;
+    map_state.viewport.view_pos.x = 0;
+    map_state.viewport.view_pos.y = 0;
     
     move_note(&mut map_state, "x", -5);
     
@@ -250,8 +250,8 @@ fn test_move_note_x_negative_simple() {
     assert_eq!(map_state.notes[&0].x, 35);
     assert_eq!(map_state.notes[&0].y, 20);
     // Viewport shouldn't move since note is still in view
-    assert_eq!(map_state.view_pos.x, 0);
-    assert_eq!(map_state.view_pos.y, 0);
+    assert_eq!(map_state.viewport.view_pos.x, 0);
+    assert_eq!(map_state.viewport.view_pos.y, 0);
     assert_eq!(map_state.can_exit, false);
 }
 
@@ -263,15 +263,15 @@ fn test_move_note_x_negative_viewport_adjustment() {
     let note = Note::new(5, 20, String::from("Test"), true, Color::White);
     map_state.notes.insert(0, note);
     map_state.selected_note = Some(0);
-    map_state.view_pos.x = 5;
-    map_state.view_pos.y = 0;
+    map_state.viewport.view_pos.x = 5;
+    map_state.viewport.view_pos.y = 0;
     
     move_note(&mut map_state, "x", -3);
     
     // Note should move
     assert_eq!(map_state.notes[&0].x, 2);
     // Viewport should move to keep note in view
-    assert_eq!(map_state.view_pos.x, 2);
+    assert_eq!(map_state.viewport.view_pos.x, 2);
     assert_eq!(map_state.can_exit, false);
 }
 
@@ -283,8 +283,8 @@ fn test_move_note_y_positive_simple() {
     let note = Note::new(40, 20, String::from("Test"), true, Color::White);
     map_state.notes.insert(0, note);
     map_state.selected_note = Some(0);
-    map_state.view_pos.x = 0;
-    map_state.view_pos.y = 0;
+    map_state.viewport.view_pos.x = 0;
+    map_state.viewport.view_pos.y = 0;
     
     move_note(&mut map_state, "y", 5);
     
@@ -292,8 +292,8 @@ fn test_move_note_y_positive_simple() {
     assert_eq!(map_state.notes[&0].x, 40);
     assert_eq!(map_state.notes[&0].y, 25);
     // Viewport shouldn't move since note is still in view
-    assert_eq!(map_state.view_pos.x, 0);
-    assert_eq!(map_state.view_pos.y, 0);
+    assert_eq!(map_state.viewport.view_pos.x, 0);
+    assert_eq!(map_state.viewport.view_pos.y, 0);
     assert_eq!(map_state.can_exit, false);
 }
 
@@ -306,8 +306,8 @@ fn test_move_note_y_positive_viewport_adjustment() {
     let note = Note::new(40, 45, String::from("Test"), true, Color::White);
     map_state.notes.insert(0, note);
     map_state.selected_note = Some(0);
-    map_state.view_pos.x = 0;
-    map_state.view_pos.y = 0;
+    map_state.viewport.view_pos.x = 0;
+    map_state.viewport.view_pos.y = 0;
     
     move_note(&mut map_state, "y", 5);
     
@@ -315,7 +315,7 @@ fn test_move_note_y_positive_viewport_adjustment() {
     assert_eq!(map_state.notes[&0].y, 50);
     // Viewport should move to keep note in view
     // Note height is minimum 4, so bottom at y=54, viewport limit is 47, so viewport moves
-    assert_eq!(map_state.view_pos.y, 5);
+    assert_eq!(map_state.viewport.view_pos.y, 5);
     assert_eq!(map_state.can_exit, false);
 }
 
@@ -327,8 +327,8 @@ fn test_move_note_y_negative_simple() {
     let note = Note::new(40, 20, String::from("Test"), true, Color::White);
     map_state.notes.insert(0, note);
     map_state.selected_note = Some(0);
-    map_state.view_pos.x = 0;
-    map_state.view_pos.y = 0;
+    map_state.viewport.view_pos.x = 0;
+    map_state.viewport.view_pos.y = 0;
     
     move_note(&mut map_state, "y", -5);
     
@@ -336,8 +336,8 @@ fn test_move_note_y_negative_simple() {
     assert_eq!(map_state.notes[&0].x, 40);
     assert_eq!(map_state.notes[&0].y, 15);
     // Viewport shouldn't move since note is still in view
-    assert_eq!(map_state.view_pos.x, 0);
-    assert_eq!(map_state.view_pos.y, 0);
+    assert_eq!(map_state.viewport.view_pos.x, 0);
+    assert_eq!(map_state.viewport.view_pos.y, 0);
     assert_eq!(map_state.can_exit, false);
 }
 
@@ -349,15 +349,15 @@ fn test_move_note_y_negative_viewport_adjustment() {
     let note = Note::new(40, 5, String::from("Test"), true, Color::White);
     map_state.notes.insert(0, note);
     map_state.selected_note = Some(0);
-    map_state.view_pos.x = 0;
-    map_state.view_pos.y = 5;
+    map_state.viewport.view_pos.x = 0;
+    map_state.viewport.view_pos.y = 5;
     
     move_note(&mut map_state, "y", -3);
     
     // Note should move
     assert_eq!(map_state.notes[&0].y, 2);
     // Viewport should move to keep note in view
-    assert_eq!(map_state.view_pos.y, 2);
+    assert_eq!(map_state.viewport.view_pos.y, 2);
     assert_eq!(map_state.can_exit, false);
 }
 

@@ -10,10 +10,10 @@ fn create_test_map_state(view_pos_x: usize, view_pos_y: usize, width: usize, hei
     map_state.settings.edit_modal = false;
 
     // Set fields for testing
-    map_state.view_pos.x = view_pos_x;
-    map_state.view_pos.y = view_pos_y;
-    map_state.screen_width = width;
-    map_state.screen_height = height;
+    map_state.viewport.view_pos.x = view_pos_x;
+    map_state.viewport.view_pos.y = view_pos_y;
+    map_state.viewport.screen_width = width;
+    map_state.viewport.screen_height = height;
 
     map_state
 }
@@ -74,10 +74,10 @@ fn test_new() {
     // Test initial values
     assert_eq!(map_state.needs_clear_and_redraw, true);
     assert_eq!(map_state.current_mode, Mode::Normal);
-    assert_eq!(map_state.view_pos.x, 0);
-    assert_eq!(map_state.view_pos.y, 0);
-    assert_eq!(map_state.screen_width, 0);
-    assert_eq!(map_state.screen_height, 0);
+    assert_eq!(map_state.viewport.view_pos.x, 0);
+    assert_eq!(map_state.viewport.view_pos.y, 0);
+    assert_eq!(map_state.viewport.screen_width, 0);
+    assert_eq!(map_state.viewport.screen_height, 0);
     assert_eq!(map_state.next_note_id, 0);
     assert!(map_state.notes.is_empty());
     assert!(map_state.render_order.is_empty());
