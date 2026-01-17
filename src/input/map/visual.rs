@@ -7,15 +7,15 @@ use crate::{input::{AppAction, map::{cycle_color, cycle_side, move_note, switch_
 pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
 
     // -- If Move State for Visual Mode is enabled --
-    if map_state.visual_move {
+    if map_state.visual_mode.visual_move {
         match key.code {
             // Switch back to Visual Mode Normal State
-            KeyCode::Char('m') => map_state.visual_move = false,
+            KeyCode::Char('m') => map_state.visual_mode.visual_move = false,
 
             // Switch back to Normal Mode
             KeyCode::Esc => {
                 map_state.current_mode = Mode::Normal;
-                map_state.visual_move = false;
+                map_state.visual_mode.visual_move = false;
 
                 if let Some(selected_note) = map_state.notes_state.selected_note {
                     if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
@@ -64,14 +64,14 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     }
 
     // -- If Connection State for Visual Mode is enabled -- 
-    if map_state.visual_connection {
+    if map_state.visual_mode.visual_connection {
         match key.code {
             // Switch back to Visual Mode Normal State
             KeyCode::Char('c') => {
 
                 map_state.connections_state.stash_connection();
 
-                map_state.visual_connection = false;
+                map_state.visual_mode.visual_connection = false;
                 map_state.connections_state.visual_editing_a_connection = false; // (if already isn't)
                 map_state.connections_state.editing_connection_index = None; // (if already isn't)
             }
@@ -152,7 +152,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     map_state.connections_state.focused_connection = None;
 
                     // Exit
-                    map_state.visual_connection = false;
+                    map_state.visual_mode.visual_connection = false;
                     map_state.connections_state.visual_editing_a_connection = false;
                     map_state.connections_state.editing_connection_index = None;
                 }
@@ -205,7 +205,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         KeyCode::Char('i') => map_state.switch_to_edit_mode(),
 
         // Switch to Move State for the Visual Mode
-        KeyCode::Char('m') => map_state.visual_move = true,
+        KeyCode::Char('m') => map_state.visual_mode.visual_move = true,
 
         // Switch to Connection Sate for Visual Mode
         // This block selects the "first" connection that this note
@@ -219,7 +219,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 }) {
                     map_state.connections_state.take_out_connection(index);
                     map_state.connections_state.editing_connection_index = Some(index);
-                    map_state.visual_connection = true;
+                    map_state.visual_mode.visual_connection = true;
                     map_state.connections_state.visual_editing_a_connection = true;
                 }
             }
@@ -238,7 +238,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     }
                 );
 
-                map_state.visual_connection = true;
+                map_state.visual_mode.visual_connection = true;
                 
                 map_state.can_exit = false;
             }

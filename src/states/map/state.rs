@@ -4,7 +4,7 @@ use ratatui::style::Color;
 
 use crate::{
     states::{
-        map::{BackupResult, ConnectionsState, DiscardMenuType, ModalEditMode, Mode, NotesState, Notification, ViewportState},
+        map::{BackupResult, ConnectionsState, DiscardMenuType, ModalEditMode, Mode, NotesState, Notification, ViewportState, VisualModeState},
         settings::{Settings, SettingsType, get_settings},
         start::ErrMsg},
         utils::{get_duration_rt, handle_runtime_backup, save_map_file}
@@ -19,8 +19,7 @@ pub struct MapState {
     pub current_mode: Mode,
     pub viewport: ViewportState,
     pub notes_state: NotesState,
-    pub visual_move: bool,
-    pub visual_connection: bool,
+    pub visual_mode: VisualModeState,
     pub connections_state: ConnectionsState,
     /// The path provided by the user to write the map data to
     /// e.g /home/user/maps/map_0.json
@@ -72,8 +71,7 @@ impl MapState {
             current_mode: Mode::Normal,
             viewport: ViewportState::new(),
             notes_state: NotesState::new(),
-            visual_move: false,
-            visual_connection: false,
+            visual_mode: VisualModeState::new(),
             connections_state: ConnectionsState::new(),
             file_write_path,
             show_notification: None,

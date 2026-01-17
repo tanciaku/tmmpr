@@ -510,7 +510,7 @@ fn test_switch_notes_focus_with_visual_connection() {
     let mut map_state = create_test_map_state();
     
     // Set up visual connection mode
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     let connection = Connection {
         from_id: 0,
         from_side: Side::Right,
@@ -541,7 +541,7 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
     let mut map_state = create_test_map_state();
     
     // Set up visual connection mode
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     let connection = Connection {
         from_id: 0,
         from_side: Side::Right,

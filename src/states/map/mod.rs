@@ -6,6 +6,7 @@ mod enums;
 mod viewport;
 mod notes_state;
 mod connections_state;
+mod visual_mode;
 
 #[cfg(test)]
 mod tests;
@@ -19,3 +20,4 @@ pub use enums::*;
 pub use viewport::*;
 pub use notes_state::*;
 pub use connections_state::*;
+pub use visual_mode::*;

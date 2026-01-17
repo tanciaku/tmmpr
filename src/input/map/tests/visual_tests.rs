@@ -77,7 +77,7 @@ fn test_visual_enter_move_mode() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('m')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.visual_move, true);
+    assert_eq!(map_state.visual_mode.visual_move, true);
     assert_eq!(map_state.current_mode, Mode::Visual);
 }
 
@@ -142,7 +142,7 @@ fn test_visual_create_new_connection() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('C')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.visual_connection, true);
+    assert_eq!(map_state.visual_mode.visual_connection, true);
     assert_eq!(map_state.can_exit, false); // Should mark as dirty
     
     // Should have created a focused connection
@@ -177,7 +177,7 @@ fn test_visual_enter_connection_mode_with_existing_connection() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('c')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.visual_connection, true);
+    assert_eq!(map_state.visual_mode.visual_connection, true);
     assert_eq!(map_state.connections_state.visual_editing_a_connection, true);
     
     // Connection should be in focus
@@ -198,7 +198,7 @@ fn test_visual_enter_connection_mode_no_connections() {
 
     assert_eq!(result, AppAction::Continue);
     // Should not enter connection mode if no connections exist
-    assert_eq!(map_state.visual_connection, false);
+    assert_eq!(map_state.visual_mode.visual_connection, false);
     assert_eq!(map_state.connections_state.visual_editing_a_connection, false);
 }
 
@@ -265,12 +265,12 @@ fn test_move_mode_exit_with_m() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('m')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.visual_move, false);
+    assert_eq!(map_state.visual_mode.visual_move, false);
     assert_eq!(map_state.current_mode, Mode::Visual);
 }
 
@@ -282,12 +282,12 @@ fn test_move_mode_escape_to_normal() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Esc));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.visual_move, false);
+    assert_eq!(map_state.visual_mode.visual_move, false);
     assert_eq!(map_state.current_mode, Mode::Normal);
     // Note should be deselected
     assert_eq!(map_state.notes_state.notes.get(&0).unwrap().selected, false);
@@ -301,7 +301,7 @@ fn test_move_mode_move_left_h() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('h')));
 
@@ -318,7 +318,7 @@ fn test_move_mode_move_left_arrow() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Left));
 
@@ -333,7 +333,7 @@ fn test_move_mode_move_left_5_capital_h() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('H')));
 
@@ -349,7 +349,7 @@ fn test_move_mode_move_left_5_shift_arrow() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event_with_modifiers(KeyCode::Left, KeyModifiers::SHIFT));
 
@@ -364,7 +364,7 @@ fn test_move_mode_move_down_j() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('j')));
 
@@ -379,7 +379,7 @@ fn test_move_mode_move_down_arrow() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Down));
 
@@ -394,7 +394,7 @@ fn test_move_mode_move_down_5_capital_j() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('J')));
 
@@ -409,7 +409,7 @@ fn test_move_mode_move_up_k() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('k')));
 
@@ -424,7 +424,7 @@ fn test_move_mode_move_up_5_capital_k() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('K')));
 
@@ -439,7 +439,7 @@ fn test_move_mode_move_right_l() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('l')));
 
@@ -454,7 +454,7 @@ fn test_move_mode_move_right_5_capital_l() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('L')));
 
@@ -470,7 +470,7 @@ fn test_move_mode_clear_and_redraw() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     let _result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('h')));
 
@@ -485,7 +485,7 @@ fn test_move_mode_unhandled_keys() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
 
     // Test various unhandled keys
     let test_keys = vec![
@@ -498,7 +498,7 @@ fn test_move_mode_unhandled_keys() {
     for key in test_keys {
         let result = map_visual_kh(&mut map_state, create_key_event(key));
         assert_eq!(result, AppAction::Continue);
-        assert_eq!(map_state.visual_move, true); // Should remain in move mode
+        assert_eq!(map_state.visual_mode.visual_move, true); // Should remain in move mode
     }
 }
 
@@ -514,7 +514,7 @@ fn test_connection_mode_exit_with_c() {
     map_state.notes_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     
     // Set up a focused connection
     map_state.connections_state.focused_connection = Some(Connection {
@@ -528,7 +528,7 @@ fn test_connection_mode_exit_with_c() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('c')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.visual_connection, false);
+    assert_eq!(map_state.visual_mode.visual_connection, false);
     assert_eq!(map_state.connections_state.visual_editing_a_connection, false);
     assert_eq!(map_state.connections_state.editing_connection_index, None);
     // The connection should have been stashed back
@@ -541,7 +541,7 @@ fn test_connection_mode_rotate_from_side() {
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     
     // Set up a focused connection starting from note 0
     map_state.connections_state.focused_connection = Some(Connection {
@@ -570,7 +570,7 @@ fn test_connection_mode_rotate_to_side() {
     map_state.notes_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), true, Color::White));
     map_state.notes_state.selected_note = Some(1); // Select the target note
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     
     // Set up a focused connection with note 1 as target
     map_state.connections_state.focused_connection = Some(Connection {
@@ -598,7 +598,7 @@ fn test_connection_mode_rotate_no_selected_note() {
     let mut map_state = create_test_map_state();
     
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     map_state.notes_state.selected_note = None;
     
     map_state.connections_state.focused_connection = Some(Connection {
@@ -626,7 +626,7 @@ fn test_connection_mode_cycle_connections() {
     map_state.notes_state.notes.insert(2, Note::new(90, 40, String::from("Note 2"), false, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     map_state.connections_state.visual_editing_a_connection = true;
     
     // Add three connections involving note 0
@@ -698,7 +698,7 @@ fn test_connection_mode_cycle_connections_not_editing() {
     map_state.notes_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     map_state.connections_state.visual_editing_a_connection = false; // Creating a new connection, not editing existing
     
     // Set up a focused connection (partial - being created)
@@ -745,7 +745,7 @@ fn test_connection_mode_delete_connection() {
     map_state.notes_state.notes.insert(1, Note::new(50, 25, String::from("Note 1"), false, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     map_state.connections_state.visual_editing_a_connection = true;
     
     let connection = Connection {
@@ -764,7 +764,7 @@ fn test_connection_mode_delete_connection() {
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.can_exit, false); // Should mark as dirty
     assert_eq!(map_state.connections_state.focused_connection, None); // Connection should be deleted
-    assert_eq!(map_state.visual_connection, false); // Should exit connection mode
+    assert_eq!(map_state.visual_mode.visual_connection, false); // Should exit connection mode
     assert_eq!(map_state.connections_state.visual_editing_a_connection, false);
     assert_eq!(map_state.connections_state.editing_connection_index, None);
 }
@@ -776,7 +776,7 @@ fn test_connection_mode_delete_not_editing() {
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     map_state.connections_state.visual_editing_a_connection = false; // Not editing
     
     let connection = Connection {
@@ -794,7 +794,7 @@ fn test_connection_mode_delete_not_editing() {
     assert_eq!(result, AppAction::Continue);
     // Should not delete when not editing an existing connection
     assert!(map_state.connections_state.focused_connection.is_some());
-    assert_eq!(map_state.visual_connection, true);
+    assert_eq!(map_state.visual_mode.visual_connection, true);
 }
 
 #[test]
@@ -805,7 +805,7 @@ fn test_connection_mode_switch_focus_for_target() {
     map_state.notes_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     
     // Creating a new connection
     map_state.connections_state.focused_connection = Some(Connection {
@@ -837,7 +837,7 @@ fn test_connection_mode_cycle_color() {
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     
     map_state.connections_state.focused_connection = Some(Connection {
         from_id: 0,
@@ -865,7 +865,7 @@ fn test_connection_mode_cycle_color_no_focused_connection() {
     let mut map_state = create_test_map_state();
     
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     map_state.connections_state.focused_connection = None;
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
@@ -883,7 +883,7 @@ fn test_connection_mode_clear_and_redraw() {
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     
     map_state.connections_state.focused_connection = Some(Connection {
         from_id: 0,
@@ -905,7 +905,7 @@ fn test_connection_mode_unhandled_keys() {
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     
     map_state.connections_state.focused_connection = Some(Connection {
         from_id: 0,
@@ -926,7 +926,7 @@ fn test_connection_mode_unhandled_keys() {
     for key in test_keys {
         let result = map_visual_kh(&mut map_state, create_key_event(key));
         assert_eq!(result, AppAction::Continue);
-        assert_eq!(map_state.visual_connection, true); // Should remain in connection mode
+        assert_eq!(map_state.visual_mode.visual_connection, true); // Should remain in connection mode
     }
 }
 
@@ -944,7 +944,7 @@ fn test_visual_mode_no_selected_note() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('m')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.visual_move, true); // Should still enter move mode
+    assert_eq!(map_state.visual_mode.visual_move, true); // Should still enter move mode
 }
 
 #[test]
@@ -981,7 +981,7 @@ fn test_multiple_notes_with_connections() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('c')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.visual_connection, true);
+    assert_eq!(map_state.visual_mode.visual_connection, true);
     assert_eq!(map_state.connections_state.visual_editing_a_connection, true);
     assert!(map_state.connections_state.focused_connection.is_some());
     // Confirm it is the 0->1 connection
@@ -1000,12 +1000,12 @@ fn test_exit_visual_mode_from_nested_states() {
     map_state.current_mode = Mode::Visual;
     
     // Enter move mode then escape
-    map_state.visual_move = true;
+    map_state.visual_mode.visual_move = true;
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Esc));
     
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.current_mode, Mode::Normal);
-    assert_eq!(map_state.visual_move, false);
+    assert_eq!(map_state.visual_mode.visual_move, false);
 }
 
 #[test]
@@ -1023,7 +1023,7 @@ fn test_create_connection_no_selected_note() {
     assert_eq!(result, AppAction::Continue);
     // Should not create a connection without selected note
     assert!(map_state.connections_state.focused_connection.is_none());
-    assert_eq!(map_state.visual_connection, false);
+    assert_eq!(map_state.visual_mode.visual_connection, false);
 }
 
 #[test]
@@ -1063,7 +1063,7 @@ fn test_connection_mode_with_partial_connection() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('C')));
     
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.visual_connection, true);
+    assert_eq!(map_state.visual_mode.visual_connection, true);
     
     let connection = map_state.connections_state.focused_connection.unwrap();
     assert_eq!(connection.from_id, 0);
@@ -1079,7 +1079,7 @@ fn test_stash_and_cycle_connections_wraparound() {
     map_state.notes_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Visual;
-    map_state.visual_connection = true;
+    map_state.visual_mode.visual_connection = true;
     map_state.connections_state.visual_editing_a_connection = true;
     
     // Add a connection

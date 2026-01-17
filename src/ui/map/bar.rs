@@ -30,9 +30,9 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     let (mode_text, mode_text_color) = match &map_state.current_mode {
         Mode::Normal => (String::from("[ NORMAL ]"), Style::new().fg(Color::White)),
         Mode::Visual => {
-            if map_state.visual_move {
+            if map_state.visual_mode.visual_move {
                 (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow))
-            } else if map_state.visual_connection {
+            } else if map_state.visual_mode.visual_connection {
                 (String::from("[ VISUAL (CONNECTION) ]"), Style::new().fg(Color::Yellow))
             } else {
                 (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow))
