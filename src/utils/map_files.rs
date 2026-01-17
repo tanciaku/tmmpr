@@ -51,8 +51,8 @@ pub fn create_map_file(app: &mut App, path: &Path) {
         next_note_id: map_state.notes_state.next_note_id,
         notes: map_state.notes_state.notes,
         render_order: map_state.notes_state.render_order,
-        connections: map_state.connections,
-        connection_index: map_state.connection_index,
+        connections: map_state.connections_state.connections,
+        connection_index: map_state.connections_state.connection_index,
     };
 
     // Attempt to write that data to the file
@@ -93,8 +93,8 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
         next_note_id: map_state.notes_state.next_note_id,
         notes: map_state.notes_state.notes.clone(),
         render_order: map_state.notes_state.render_order.clone(),
-        connections: map_state.connections.clone(),
-        connection_index: map_state.connection_index.clone(),
+        connections: map_state.connections_state.connections.clone(),
+        connection_index: map_state.connections_state.connection_index.clone(),
     };
 
     // Attempt to write map data to the file
@@ -160,8 +160,8 @@ pub fn load_map_file(app: &mut App, path: &Path) {
             map_state.notes_state.next_note_id = map_data.next_note_id;
             map_state.notes_state.notes = map_data.notes;
             map_state.notes_state.render_order = map_data.render_order;
-            map_state.connections = map_data.connections;
-            map_state.connection_index = map_data.connection_index;
+            map_state.connections_state.connections = map_data.connections;
+            map_state.connections_state.connection_index = map_data.connection_index;
         }
         Err(_) => {
             // Failed to read or parse the map file - show error to user

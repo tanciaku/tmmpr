@@ -85,11 +85,11 @@ fn test_new() {
     assert_eq!(map_state.notes_state.cursor_pos, 0);
     assert_eq!(map_state.visual_move, false);
     assert_eq!(map_state.visual_connection, false);
-    assert!(map_state.connections.is_empty());
-    assert!(map_state.connection_index.is_empty());
-    assert_eq!(map_state.focused_connection, None);
-    assert_eq!(map_state.visual_editing_a_connection, false);
-    assert_eq!(map_state.editing_connection_index, None);
+    assert!(map_state.connections_state.connections.is_empty());
+    assert!(map_state.connections_state.connection_index.is_empty());
+    assert_eq!(map_state.connections_state.focused_connection, None);
+    assert_eq!(map_state.connections_state.visual_editing_a_connection, false);
+    assert_eq!(map_state.connections_state.editing_connection_index, None);
     assert_eq!(map_state.file_write_path, path);
     assert_eq!(map_state.show_notification, None);
     assert_eq!(map_state.can_exit, true);
@@ -194,22 +194,22 @@ fn test_stash_connection_with_target() {
         to_side: Some(Side::Left),
         color: Color::White,
     };
-    map_state.focused_connection = Some(connection);
+    map_state.connections_state.focused_connection = Some(connection);
 
-    map_state.stash_connection();
+    map_state.connections_state.stash_connection();
 
     // Connection should be added to connections vector
-    assert_eq!(map_state.connections.len(), 1);
-    assert_eq!(map_state.connections[0], connection);
+    assert_eq!(map_state.connections_state.connections.len(), 1);
+    assert_eq!(map_state.connections_state.connections[0], connection);
     
     // Connection should be added to connection_index for both from_id and to_id
-    assert!(map_state.connection_index.contains_key(&1));
-    assert!(map_state.connection_index.contains_key(&2));
-    assert_eq!(map_state.connection_index[&1].len(), 1);
-    assert_eq!(map_state.connection_index[&2].len(), 1);
+    assert!(map_state.connections_state.connection_index.contains_key(&1));
+    assert!(map_state.connections_state.connection_index.contains_key(&2));
+    assert_eq!(map_state.connections_state.connection_index[&1].len(), 1);
+    assert_eq!(map_state.connections_state.connection_index[&2].len(), 1);
     
     // focused_connection should be None
-    assert_eq!(map_state.focused_connection, None);
+    assert_eq!(map_state.connections_state.focused_connection, None);
 }
 
 #[test]
@@ -224,16 +224,16 @@ fn test_stash_connection_without_target() {
         to_side: None,
         color: Color::White,
     };
-    map_state.focused_connection = Some(connection);
+    map_state.connections_state.focused_connection = Some(connection);
 
-    map_state.stash_connection();
+    map_state.connections_state.stash_connection();
 
     // Connection should not be added to connections vector (dropped)
-    assert_eq!(map_state.connections.len(), 0);
-    assert!(map_state.connection_index.is_empty());
+    assert_eq!(map_state.connections_state.connections.len(), 0);
+    assert!(map_state.connections_state.connection_index.is_empty());
     
     // focused_connection should be None
-    assert_eq!(map_state.focused_connection, None);
+    assert_eq!(map_state.connections_state.focused_connection, None);
 }
 
 #[test]
@@ -250,21 +250,21 @@ fn test_take_out_connection() {
     };
     
     // Add connection to vectors and index
-    map_state.connections.push(connection);
-    map_state.connection_index.entry(1).or_default().push(connection);
-    map_state.connection_index.entry(2).or_default().push(connection);
+    map_state.connections_state.connections.push(connection);
+    map_state.connections_state.connection_index.entry(1).or_default().push(connection);
+    map_state.connections_state.connection_index.entry(2).or_default().push(connection);
 
-    map_state.take_out_connection(0);
+    map_state.connections_state.take_out_connection(0);
 
     // Connection should be removed from connections vector
-    assert_eq!(map_state.connections.len(), 0);
+    assert_eq!(map_state.connections_state.connections.len(), 0);
     
     // Connection should be removed from connection_index
-    assert_eq!(map_state.connection_index[&1].len(), 0);
-    assert_eq!(map_state.connection_index[&2].len(), 0);
+    assert_eq!(map_state.connections_state.connection_index[&1].len(), 0);
+    assert_eq!(map_state.connections_state.connection_index[&2].len(), 0);
     
     // focused_connection should now contain the removed connection
-    assert_eq!(map_state.focused_connection, Some(connection));
+    assert_eq!(map_state.connections_state.focused_connection, Some(connection));
 }
 
 #[test]

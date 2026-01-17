@@ -69,18 +69,18 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             // Switch back to Visual Mode Normal State
             KeyCode::Char('c') => {
 
-                map_state.stash_connection();
+                map_state.connections_state.stash_connection();
 
                 map_state.visual_connection = false;
-                map_state.visual_editing_a_connection = false; // (if already isn't)
-                map_state.editing_connection_index = None; // (if already isn't)
+                map_state.connections_state.visual_editing_a_connection = false; // (if already isn't)
+                map_state.connections_state.editing_connection_index = None; // (if already isn't)
             }
 
             // Rotating the start/end side of the connection 
             KeyCode::Char('r') => {
                 if let Some(selected_note) = map_state.notes_state.selected_note {
                     map_state.can_exit = false;
-                    if let Some(focused_connection) = map_state.focused_connection.as_mut() {
+                    if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
                         if focused_connection.from_id == selected_note {
                             focused_connection.from_side = cycle_side(focused_connection.from_side);
                         }
@@ -103,19 +103,19 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     // Can only cycle through the available connections on this note if
                     // entered the visual_connection mode to edit existing connections
                     // and not currently making a new one
-                    if map_state.visual_editing_a_connection {
+                    if map_state.connections_state.visual_editing_a_connection {
 
                         // Stash the Current Connection
-                        map_state.stash_connection();
+                        map_state.connections_state.stash_connection();
                         // Index of the connection just stashed
-                        let start_index = map_state.editing_connection_index.unwrap();
+                        let start_index = map_state.connections_state.editing_connection_index.unwrap();
 
                         // Start by assuming we haven't found it.
                         let mut next_index_option = None;
 
                         // Only search the latter part of the vector if it's safe to do so.
-                        if start_index < map_state.connections.len() {
-                            next_index_option = map_state.connections[start_index..]
+                        if start_index < map_state.connections_state.connections.len() {
+                            next_index_option = map_state.connections_state.connections[start_index..]
                                 .iter()
                                 .position(|c| {
                                     selected_note == c.from_id || selected_note == c.to_id.unwrap()
@@ -126,7 +126,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         // If that connection was last in the vector or no match was found after it -
                         // search from the start
                         if next_index_option.is_none() {
-                            next_index_option = map_state.connections
+                            next_index_option = map_state.connections_state.connections
                                 .iter()
                                 .position(|c| {
                                     selected_note == c.from_id || selected_note == c.to_id.unwrap()
@@ -136,8 +136,8 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         if let Some(next_index) = next_index_option {
                             // If found one - remove it and put it in focus.
                             // Note: it will always "find" one - since
-                            map_state.take_out_connection(next_index);
-                            map_state.editing_connection_index = Some(next_index);
+                            map_state.connections_state.take_out_connection(next_index);
+                            map_state.connections_state.editing_connection_index = Some(next_index);
                         }
                     }
                 }
@@ -145,16 +145,16 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
             // Delete the selected connection
             KeyCode::Char('d') => {
-                if map_state.visual_editing_a_connection {
+                if map_state.connections_state.visual_editing_a_connection {
                     map_state.can_exit = false;
 
                     // Delete that connection
-                    map_state.focused_connection = None;
+                    map_state.connections_state.focused_connection = None;
 
                     // Exit
                     map_state.visual_connection = false;
-                    map_state.visual_editing_a_connection = false;
-                    map_state.editing_connection_index = None;
+                    map_state.connections_state.visual_editing_a_connection = false;
+                    map_state.connections_state.editing_connection_index = None;
                 }
             }
 
@@ -175,7 +175,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
             // Cycle through colors for the "in progress"/focused connection
             KeyCode::Char('e') => {
-                if let Some(focused_connection) = map_state.focused_connection.as_mut() {
+                if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
                     focused_connection.color = cycle_color(focused_connection.color);
                     map_state.can_exit = false;
                 }
@@ -212,15 +212,15 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         // is associated with, if it has any.
         KeyCode::Char('c') => {
             if let Some(selected_note) = map_state.notes_state.selected_note {
-                if let Some(index) = map_state.connections.iter().position(|c| {
+                if let Some(index) = map_state.connections_state.connections.iter().position(|c| {
                     selected_note == c.from_id || selected_note == c.to_id.unwrap()
                     // unwrap() is safe here since all the connections have an endpoint if
                     // they are in the connections vector.
                 }) {
-                    map_state.take_out_connection(index);
-                    map_state.editing_connection_index = Some(index);
+                    map_state.connections_state.take_out_connection(index);
+                    map_state.connections_state.editing_connection_index = Some(index);
                     map_state.visual_connection = true;
-                    map_state.visual_editing_a_connection = true;
+                    map_state.connections_state.visual_editing_a_connection = true;
                 }
             }
         }
@@ -228,7 +228,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         // Add a new Connection for the selected note
         KeyCode::Char('C') => {
             if let Some(selected_note) = map_state.notes_state.selected_note {
-                map_state.focused_connection = Some(
+                map_state.connections_state.focused_connection = Some(
                     Connection {
                         from_id: selected_note,
                         from_side: map_state.settings.default_start_side, // default side

@@ -54,9 +54,9 @@ fn create_populated_map_state(path: PathBuf) -> MapState {
         color: Color::White,
     };
     
-    map_state.connections.push(connection);
-    map_state.connection_index.entry(0).or_default().push(connection);
-    map_state.connection_index.entry(1).or_default().push(connection);
+    map_state.connections_state.connections.push(connection);
+    map_state.connections_state.connection_index.entry(0).or_default().push(connection);
+    map_state.connections_state.connection_index.entry(1).or_default().push(connection);
     
     map_state
 }
@@ -397,8 +397,8 @@ fn test_save_map_file_preserves_connections() {
         color: Color::Blue,
     };
     
-    map_state.connections.push(conn1);
-    map_state.connections.push(conn2);
+    map_state.connections_state.connections.push(conn1);
+    map_state.connections_state.connections.push(conn2);
     
     save_map_file(&mut map_state, &file_path, false, false);
     
@@ -450,7 +450,7 @@ fn test_load_map_file_loads_valid_file() {
         assert_eq!(loaded_state.notes_state.next_note_id, 2);
         assert_eq!(loaded_state.notes_state.notes.len(), 2);
         assert_eq!(loaded_state.notes_state.render_order, vec![0, 1]);
-        assert_eq!(loaded_state.connections.len(), 1);
+        assert_eq!(loaded_state.connections_state.connections.len(), 1);
         assert_eq!(loaded_state.file_write_path, file_path);
     }
 }
@@ -502,9 +502,9 @@ fn test_load_map_file_loads_connections() {
         color: Color::Yellow,
     };
     
-    map_state.connections.push(conn);
-    map_state.connection_index.entry(0).or_default().push(conn);
-    map_state.connection_index.entry(1).or_default().push(conn);
+    map_state.connections_state.connections.push(conn);
+    map_state.connections_state.connection_index.entry(0).or_default().push(conn);
+    map_state.connections_state.connection_index.entry(1).or_default().push(conn);
     
     save_map_file(&mut map_state, &file_path, false, false);
     
@@ -514,14 +514,14 @@ fn test_load_map_file_loads_connections() {
     
     // Verify: Connections loaded
     if let Screen::Map(loaded_state) = &app.screen {
-        assert_eq!(loaded_state.connections.len(), 1);
-        assert_eq!(loaded_state.connections[0].from_id, 0);
-        assert_eq!(loaded_state.connections[0].to_id, Some(1));
-        assert_eq!(loaded_state.connections[0].from_side, Side::Bottom);
-        assert_eq!(loaded_state.connections[0].color, Color::Yellow);
+        assert_eq!(loaded_state.connections_state.connections.len(), 1);
+        assert_eq!(loaded_state.connections_state.connections[0].from_id, 0);
+        assert_eq!(loaded_state.connections_state.connections[0].to_id, Some(1));
+        assert_eq!(loaded_state.connections_state.connections[0].from_side, Side::Bottom);
+        assert_eq!(loaded_state.connections_state.connections[0].color, Color::Yellow);
         
         // Connection index should also be loaded
-        assert_eq!(loaded_state.connection_index.len(), 2);
+        assert_eq!(loaded_state.connections_state.connection_index.len(), 2);
     }
 }
 
@@ -626,7 +626,7 @@ fn test_load_map_file_empty_map() {
         assert_eq!(loaded_state.notes_state.next_note_id, 0);
         assert!(loaded_state.notes_state.notes.is_empty());
         assert!(loaded_state.notes_state.render_order.is_empty());
-        assert!(loaded_state.connections.is_empty());
+        assert!(loaded_state.connections_state.connections.is_empty());
     }
 }
 
@@ -701,12 +701,12 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
         color: Color::Cyan,
     };
     
-    original_state.connections.push(conn1);
-    original_state.connections.push(conn2);
+    original_state.connections_state.connections.push(conn1);
+    original_state.connections_state.connections.push(conn2);
     
-    original_state.connection_index.entry(0).or_default().push(conn1);
-    original_state.connection_index.entry(1).or_default().push(conn1);
-    original_state.connection_index.entry(5).or_default().push(conn2);
+    original_state.connections_state.connection_index.entry(0).or_default().push(conn1);
+    original_state.connections_state.connection_index.entry(1).or_default().push(conn1);
+    original_state.connections_state.connection_index.entry(5).or_default().push(conn2);
     
     // Set view position
     original_state.viewport.view_pos.x = 100;
@@ -737,14 +737,14 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
         assert_eq!(loaded_state.notes_state.render_order, vec![0, 5, 1]);
         
         // Check connections
-        assert_eq!(loaded_state.connections.len(), 2);
-        assert_eq!(loaded_state.connections[0].from_id, 0);
-        assert_eq!(loaded_state.connections[0].to_id, Some(1));
-        assert_eq!(loaded_state.connections[1].from_id, 5);
-        assert_eq!(loaded_state.connections[1].to_id, None);
+        assert_eq!(loaded_state.connections_state.connections.len(), 2);
+        assert_eq!(loaded_state.connections_state.connections[0].from_id, 0);
+        assert_eq!(loaded_state.connections_state.connections[0].to_id, Some(1));
+        assert_eq!(loaded_state.connections_state.connections[1].from_id, 5);
+        assert_eq!(loaded_state.connections_state.connections[1].to_id, None);
         
         // Check connection index
-        assert_eq!(loaded_state.connection_index.len(), 3);
+        assert_eq!(loaded_state.connections_state.connection_index.len(), 3);
     }
 }
 
@@ -854,12 +854,12 @@ fn test_connection_index_roundtrip() {
         color: Color::White,
     };
     
-    map_state.connections.extend_from_slice(&[conn1, conn2]);
+    map_state.connections_state.connections.extend_from_slice(&[conn1, conn2]);
     
     // Build connection index
-    map_state.connection_index.entry(0).or_default().push(conn1);
-    map_state.connection_index.entry(1).or_default().extend_from_slice(&[conn1, conn2]);
-    map_state.connection_index.entry(2).or_default().push(conn2);
+    map_state.connections_state.connection_index.entry(0).or_default().push(conn1);
+    map_state.connections_state.connection_index.entry(1).or_default().extend_from_slice(&[conn1, conn2]);
+    map_state.connections_state.connection_index.entry(2).or_default().push(conn2);
     
     save_map_file(&mut map_state, &file_path, false, false);
     
@@ -869,9 +869,9 @@ fn test_connection_index_roundtrip() {
     
     if let Screen::Map(loaded_state) = &app.screen {
         // Verify connection index structure
-        assert_eq!(loaded_state.connection_index.len(), 3);
-        assert_eq!(loaded_state.connection_index.get(&0).unwrap().len(), 1);
-        assert_eq!(loaded_state.connection_index.get(&1).unwrap().len(), 2);
-        assert_eq!(loaded_state.connection_index.get(&2).unwrap().len(), 1);
+        assert_eq!(loaded_state.connections_state.connection_index.len(), 3);
+        assert_eq!(loaded_state.connections_state.connection_index.get(&0).unwrap().len(), 1);
+        assert_eq!(loaded_state.connections_state.connection_index.get(&1).unwrap().len(), 2);
+        assert_eq!(loaded_state.connections_state.connection_index.get(&2).unwrap().len(), 1);
     }
 }

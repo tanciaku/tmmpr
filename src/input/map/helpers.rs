@@ -243,7 +243,7 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
 
             // If in the middle of creating a connection:
             if map_state.visual_connection {
-                if let Some(focused_connection) = map_state.focused_connection.as_mut() {
+                if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
                     // only create a connection on note other than the start note
                     // (otherwise could have a connection going from start note to itself)
                     if id == focused_connection.from_id {

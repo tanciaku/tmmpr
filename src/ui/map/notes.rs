@@ -190,7 +190,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 // optimization, avoiding any of this work for off-screen notes.
 
                 // Get the connections associated with the note's id
-                if let Some(connection_vec) = map_state.connection_index.get(&note_id) {
+                if let Some(connection_vec) = map_state.connections_state.connection_index.get(&note_id) {
                     // Loop through the connections in the connection vector that are 
                     // associated with the note's id
                     // NOTE: if there are multiple connections to the same side - it draws
@@ -208,7 +208,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
     }
 
     // Render the start/end point for the "in progress" connection, if any
-    if let Some(connection) = &map_state.focused_connection {
+    if let Some(connection) = &map_state.connections_state.focused_connection {
     
         if let Some(start_note) = map_state.notes_state.notes.get(&connection.from_id){
             draw_connecting_character(start_note, connection.from_side, true, Color::Yellow, frame, map_state);

@@ -131,7 +131,7 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         let mut current_color = Color::White;
 
         if let Some(selected_note) = &map_state.notes_state.selected_note {
-            if let Some(focused_connection) = &map_state.focused_connection {
+            if let Some(focused_connection) = &map_state.connections_state.focused_connection {
                 current_color_text = String::from("Selected connection color: ");
                 current_color_name = get_color_name_in_string(focused_connection.color);
                 current_color = focused_connection.color;

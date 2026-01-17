@@ -25,14 +25,14 @@ pub fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 // -- Updating the connections Vec --
                 // Remove any connections that were associated with that note
                 // (Only keep the ones that aren't)
-                map_state.connections.retain(|c| {
+                map_state.connections_state.connections.retain(|c| {
                     *selected_note != c.from_id && *selected_note != c.to_id.unwrap()
                     // .unwrap() is okay here since all the connections in the vector have an endpoint
                 });
 
                 // -- Updating the connection_index HashMap --
                 // Get the Vec of connections for the deleted note AND remove it from the map in one step.
-                if let Some(connections_to_delete) = map_state.connection_index.remove(selected_note) {
+                if let Some(connections_to_delete) = map_state.connections_state.connection_index.remove(selected_note) {
                     // Now loop through that Vec you just got back.
                     for connection in connections_to_delete {
                         // Figure out the ID of the other end in the connection.
@@ -44,7 +44,7 @@ pub fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
                         // Go to the "other" note's entry and clean up the connections
                         // that involve the deleted note's id
-                        if let Some(associated_vec) = map_state.connection_index.get_mut(&id_to_look_up) {
+                        if let Some(associated_vec) = map_state.connections_state.connection_index.get_mut(&id_to_look_up) {
                             associated_vec.retain(|c| { c != &connection });
                         }
                     }

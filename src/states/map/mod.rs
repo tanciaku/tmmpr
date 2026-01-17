@@ -5,6 +5,7 @@ mod geometry;
 mod enums;
 mod viewport;
 mod notes_state;
+mod connections_state;
 
 #[cfg(test)]
 mod tests;
@@ -17,3 +18,4 @@ pub use geometry::*;
 pub use enums::*;
 pub use viewport::*;
 pub use notes_state::*;
+pub use connections_state::*;

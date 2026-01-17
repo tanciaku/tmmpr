@@ -518,7 +518,7 @@ fn test_switch_notes_focus_with_visual_connection() {
         to_side: None,
         color: Color::White,
     };
-    map_state.focused_connection = Some(connection);
+    map_state.connections_state.focused_connection = Some(connection);
     
     // Add notes
     map_state.notes_state.notes.insert(0, Note::new(10, 25, String::from("Start"), true, Color::White));
@@ -529,7 +529,7 @@ fn test_switch_notes_focus_with_visual_connection() {
     
     // Should update the focused connection
     assert_eq!(map_state.notes_state.selected_note, Some(1));
-    if let Some(focused_conn) = &map_state.focused_connection {
+    if let Some(focused_conn) = &map_state.connections_state.focused_connection {
         assert_eq!(focused_conn.to_id, Some(1));
         assert_eq!(focused_conn.to_side, Some(map_state.settings.default_end_side));
     }
@@ -549,7 +549,7 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
         to_side: None,
         color: Color::White,
     };
-    map_state.focused_connection = Some(connection);
+    map_state.connections_state.focused_connection = Some(connection);
     
     // Add a note
     map_state.notes_state.notes.insert(0, Note::new(50, 25, String::from("Only"), true, Color::White));
@@ -561,7 +561,7 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
 
     // Check that fields changed to target note id
     assert_eq!(map_state.notes_state.selected_note, Some(1));
-    if let Some(focused_conn) = &map_state.focused_connection {
+    if let Some(focused_conn) = &map_state.connections_state.focused_connection {
         assert_eq!(focused_conn.to_id, Some(1));
         assert_eq!(focused_conn.to_side, Some(map_state.settings.default_end_side));
     }
@@ -572,7 +572,7 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
     // Should reset to_id and to_side
     // This is to prevent being able to make connection from source note to source note
     assert_eq!(map_state.notes_state.selected_note, Some(0));
-    if let Some(focused_conn) = &map_state.focused_connection {
+    if let Some(focused_conn) = &map_state.connections_state.focused_connection {
         assert_eq!(focused_conn.to_id, None);
         assert_eq!(focused_conn.to_side, None);
     }
