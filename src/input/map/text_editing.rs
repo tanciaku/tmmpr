@@ -47,7 +47,7 @@ pub fn remove_char(map_state: &mut MapState, selected_note: usize) {
 
 pub fn insert_char(map_state: &mut MapState, selected_note: usize, c: char) {
     // Edited note's contents - need to save or discard changes before exiting.
-    map_state.can_exit = false;
+    map_state.persistence.mark_dirty();
 
     if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
         // Insert the typed character at the cursor's current position.

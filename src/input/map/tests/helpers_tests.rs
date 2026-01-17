@@ -11,7 +11,7 @@ fn create_test_map_state() -> MapState {
     map_state.settings.edit_modal = false;
     map_state.viewport.screen_width = 100;
     map_state.viewport.screen_height = 50;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
     map_state
 }
 
@@ -92,7 +92,7 @@ fn test_move_viewport_x_positive() {
     
     assert_eq!(map_state.viewport.view_pos.x, 15);
     assert_eq!(map_state.viewport.view_pos.y, 20); // Should remain unchanged
-    assert_eq!(map_state.can_exit, false); // Should be set to false
+    assert_eq!(map_state.persistence.can_exit, false); // Should be set to false
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn test_move_viewport_x_negative() {
     
     assert_eq!(map_state.viewport.view_pos.x, 5);
     assert_eq!(map_state.viewport.view_pos.y, 20); // Should remain unchanged
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -118,7 +118,7 @@ fn test_move_viewport_x_negative_saturating() {
     
     assert_eq!(map_state.viewport.view_pos.x, 0); // Should saturate at 0
     assert_eq!(map_state.viewport.view_pos.y, 20);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -131,7 +131,7 @@ fn test_move_viewport_y_positive() {
     
     assert_eq!(map_state.viewport.view_pos.x, 10); // Should remain unchanged
     assert_eq!(map_state.viewport.view_pos.y, 27);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -144,7 +144,7 @@ fn test_move_viewport_y_negative() {
     
     assert_eq!(map_state.viewport.view_pos.x, 10); // Should remain unchanged
     assert_eq!(map_state.viewport.view_pos.y, 12);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -157,7 +157,7 @@ fn test_move_viewport_y_negative_saturating() {
     
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 0); // Should saturate at 0
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -171,7 +171,7 @@ fn test_move_viewport_invalid_axis() {
     // Should not change anything for invalid axis
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 20);
-    assert_eq!(map_state.can_exit, false); // Still should set can_exit to false
+    assert_eq!(map_state.persistence.can_exit, false); // Still should set can_exit to false
 }
 
 #[test]
@@ -186,7 +186,7 @@ fn test_move_note_no_selected_note() {
     // Should not change anything when no note is selected
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 10);
-    assert_eq!(map_state.can_exit, true); // Should remain unchanged
+    assert_eq!(map_state.persistence.can_exit, true); // Should remain unchanged
 }
 
 #[test]
@@ -208,7 +208,7 @@ fn test_move_note_x_positive_simple() {
     // Viewport shouldn't move since note is still in view
     assert_eq!(map_state.viewport.view_pos.x, 0);
     assert_eq!(map_state.viewport.view_pos.y, 0);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -230,7 +230,7 @@ fn test_move_note_x_positive_viewport_adjustment() {
     // Note width + cursor space = minimum 21, so note right edge is at 121
     // Screen width is 100, so viewport needs to move
     assert_eq!(map_state.viewport.view_pos.x, 5);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -252,7 +252,7 @@ fn test_move_note_x_negative_simple() {
     // Viewport shouldn't move since note is still in view
     assert_eq!(map_state.viewport.view_pos.x, 0);
     assert_eq!(map_state.viewport.view_pos.y, 0);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -272,7 +272,7 @@ fn test_move_note_x_negative_viewport_adjustment() {
     assert_eq!(map_state.notes_state.notes[&0].x, 2);
     // Viewport should move to keep note in view
     assert_eq!(map_state.viewport.view_pos.x, 2);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -294,7 +294,7 @@ fn test_move_note_y_positive_simple() {
     // Viewport shouldn't move since note is still in view
     assert_eq!(map_state.viewport.view_pos.x, 0);
     assert_eq!(map_state.viewport.view_pos.y, 0);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -316,7 +316,7 @@ fn test_move_note_y_positive_viewport_adjustment() {
     // Viewport should move to keep note in view
     // Note height is minimum 4, so bottom at y=54, viewport limit is 47, so viewport moves
     assert_eq!(map_state.viewport.view_pos.y, 5);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -338,7 +338,7 @@ fn test_move_note_y_negative_simple() {
     // Viewport shouldn't move since note is still in view
     assert_eq!(map_state.viewport.view_pos.x, 0);
     assert_eq!(map_state.viewport.view_pos.y, 0);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -358,7 +358,7 @@ fn test_move_note_y_negative_viewport_adjustment() {
     assert_eq!(map_state.notes_state.notes[&0].y, 2);
     // Viewport should move to keep note in view
     assert_eq!(map_state.viewport.view_pos.y, 2);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -374,7 +374,7 @@ fn test_move_note_invalid_axis() {
     // Note position should remain unchanged for invalid axis
     assert_eq!(map_state.notes_state.notes[&0].x, 40);
     assert_eq!(map_state.notes_state.notes[&0].y, 20);
-    assert_eq!(map_state.can_exit, false); // Still should set can_exit to false
+    assert_eq!(map_state.persistence.can_exit, false); // Still should set can_exit to false
 }
 
 #[test]
@@ -533,7 +533,7 @@ fn test_switch_notes_focus_with_visual_connection() {
         assert_eq!(focused_conn.to_id, Some(1));
         assert_eq!(focused_conn.to_side, Some(map_state.settings.default_end_side));
     }
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]

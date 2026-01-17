@@ -22,7 +22,7 @@ pub fn handle_on_load_backup(map_state: &mut MapState) {
         (&map_state.settings.backups_path, &map_state.settings.backups_interval) {
         
         // Get the name of the map file opened
-        let filename = map_state.file_write_path.file_stem()
+        let filename = map_state.persistence.file_write_path.file_stem()
             .and_then(|name| name.to_str())
             .unwrap_or("unknown");
         // Get the current date
@@ -64,13 +64,13 @@ pub fn handle_on_load_backup(map_state: &mut MapState) {
                 .with_extension("json");
 
             // Attempt to create the backup file
-            // (save_map_file changes map_state.backup_res depending 
+            // (save_map_file changes map_state.persistence.backup_res depending 
             //      on the result of the write operation)
             save_map_file(map_state, &backups_file_path, true, true);
 
  
             // Handle the backup result and update settings if successful
-            match &map_state.backup_res {
+            match &map_state.persistence.backup_res {
                 Some(BackupResult::BackupSuccess) => {
                     // Update the backup date in settings
                     map_state.settings.backup_dates.insert(filename, date);
@@ -82,13 +82,13 @@ pub fn handle_on_load_backup(map_state: &mut MapState) {
                     }
 
                     // Reset the result of a backup operation
-                    map_state.backup_res = None;
+                    map_state.persistence.backup_res = None;
                 }
                 Some(BackupResult::BackupFail) => {
                     // Backup failed - notification already handled by save_map_file
                     
                     // Reset the result of a backup operation
-                    map_state.backup_res = None;
+                    map_state.persistence.backup_res = None;
                 }
                 None => unreachable!(), // save_map_file with backup flag always sets backup_res
             }
@@ -109,7 +109,7 @@ pub fn handle_runtime_backup(map_state: &mut MapState) {
         (&map_state.settings.backups_path, &map_state.settings.runtime_backups_interval) {
         
         // Get the name of the map file opened
-        let filename = map_state.file_write_path.file_stem()
+        let filename = map_state.persistence.file_write_path.file_stem()
             .and_then(|name| name.to_str())
             .unwrap_or("unknown");
         // Get the current date
@@ -138,23 +138,23 @@ pub fn handle_runtime_backup(map_state: &mut MapState) {
             .with_extension("json");
 
         // Attempt to create the backup file
-        // (save_map_file changes map_state.backup_res depending 
+        // (save_map_file changes map_state.persistence.backup_res depending 
         //      on the result of the write operation)
         save_map_file(map_state, &backups_file_path, true, true);
 
         // Handle the backup result and update settings if successful
-        match &map_state.backup_res {
+        match &map_state.persistence.backup_res {
             Some(BackupResult::BackupSuccess) => {
                 // Backup succeeded - notification already handled by save_map_file 
 
                 // Reset the result of a backup operation
-                map_state.backup_res = None;
+                map_state.persistence.backup_res = None;
             }
             Some(BackupResult::BackupFail) => {
                 // Backup failed - notification already handled by save_map_file
                 
                 // Reset the result of a backup operation
-                map_state.backup_res = None;
+                map_state.persistence.backup_res = None;
             }
             None => unreachable!(), // save_map_file with backup flag always sets backup_res
         }

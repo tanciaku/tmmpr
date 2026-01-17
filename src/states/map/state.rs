@@ -1,13 +1,13 @@
-use std::{io::stdout, path::PathBuf, time::{Duration, Instant}};
+use std::{io::stdout, path::PathBuf};
 use crossterm::{cursor::SetCursorStyle, execute};
 use ratatui::style::Color;
 
 use crate::{
     states::{
-        map::{BackupResult, ConnectionsState, DiscardMenuType, ModalEditMode, Mode, NotesState, Notification, ViewportState, VisualModeState},
+        map::{ConnectionsState, DiscardMenuType, ModalEditMode, Mode, NotesState, Notification, PersistenceState, ViewportState, VisualModeState},
         settings::{Settings, SettingsType, get_settings},
         start::ErrMsg},
-        utils::{get_duration_rt, handle_runtime_backup, save_map_file}
+        utils::{handle_runtime_backup, save_map_file}
 };
 
 
@@ -21,18 +21,11 @@ pub struct MapState {
     pub notes_state: NotesState,
     pub visual_mode: VisualModeState,
     pub connections_state: ConnectionsState,
-    /// The path provided by the user to write the map data to
-    /// e.g /home/user/maps/map_0.json
-    pub file_write_path: PathBuf,
+    pub persistence: PersistenceState,
     pub show_notification: Option<Notification>,
-    /// Determines whether the user has saved the changes
-    /// to the map file, before switching screens or exiting.
-    pub can_exit: bool,
     /// Whether to render a menu for confirming to discard 
     /// unsaved changes
     pub confirm_discard_menu: Option<DiscardMenuType>,
-    /// Timestamp for automatically saving changes to the map file
-    pub last_save: Instant,
     /// Whether to show the help screen, and take all input for it
     /// usize - represents the page of the help screen
     pub help_screen: Option<usize>,
@@ -41,10 +34,6 @@ pub struct MapState {
     /// Whether to notify the user that something went wrong with
     /// using the settings functionality
     pub settings_err_msg: Option<ErrMsg>,
-    /// The result of attempting to make a backup file
-    pub backup_res: Option<BackupResult>,
-    /// Timestamp for automatically making a runtime backup file
-    pub rt_backup_ts: Instant,
 }
 
 impl MapState {
@@ -73,16 +62,12 @@ impl MapState {
             notes_state: NotesState::new(),
             visual_mode: VisualModeState::new(),
             connections_state: ConnectionsState::new(),
-            file_write_path,
+            persistence: PersistenceState::new(file_write_path),
             show_notification: None,
-            can_exit: true,
             confirm_discard_menu: None,
-            last_save: Instant::now(),
             help_screen: None,
             settings: settings, // set the settings
             settings_err_msg: settings_err_msg,
-            backup_res: None,
-            rt_backup_ts: Instant::now(),
         }
     }
 
@@ -97,7 +82,7 @@ impl MapState {
     /// selected, and the application switches to `Mode::Edit` to allow for
     /// immediate text entry.
     pub fn add_note(&mut self) {
-        self.can_exit = false;
+        self.persistence.mark_dirty();
 
         let (note_x, note_y) = self.viewport.center();
 
@@ -149,13 +134,13 @@ impl MapState {
             // Save changes every _ seconds
             Some(interval) => {
                 // If there were changes made to the map and _ seconds have passed
-                if self.can_exit == false && self.last_save.elapsed() > Duration::from_secs(interval as u64) { 
+                if self.persistence.should_save(interval) { 
                     // Copy the write path for use here
-                    let map_file_path = self.file_write_path.clone();
+                    let map_file_path = self.persistence.file_write_path.clone();
                     // Attempt to save changes to the map file
                     // Notifications handled by save_map_file itself
                     save_map_file(self, &map_file_path, false, false);
-                    self.last_save = Instant::now(); // Restart the timer (take another timestamp) 
+                    self.persistence.reset_save_timer();
                 }
             }
         }
@@ -167,11 +152,11 @@ impl MapState {
             // Make a backup every set interval
             Some(interval) => {
                 // If a set duration has passed since opening the map file or last runtime backup:
-                if self.rt_backup_ts.elapsed() > get_duration_rt(interval) {
+                if self.persistence.should_backup(interval) {
                     // NOTE: if there is a runtime backups interval - there is a backups path.
                     // Notifications handled by save_map_file, which is within handle_runtime_backup.
                     handle_runtime_backup(self);
-                    self.rt_backup_ts = Instant::now(); // Restart the timer (take another timestamp)
+                    self.persistence.reset_backup_timer();
                 }
             }
         }

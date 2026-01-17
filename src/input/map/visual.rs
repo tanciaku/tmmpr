@@ -79,7 +79,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             // Rotating the start/end side of the connection 
             KeyCode::Char('r') => {
                 if let Some(selected_note) = map_state.notes_state.selected_note {
-                    map_state.can_exit = false;
+                    map_state.persistence.mark_dirty();
                     if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
                         if focused_connection.from_id == selected_note {
                             focused_connection.from_side = cycle_side(focused_connection.from_side);
@@ -146,7 +146,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             // Delete the selected connection
             KeyCode::Char('d') => {
                 if map_state.connections_state.visual_editing_a_connection {
-                    map_state.can_exit = false;
+                    map_state.persistence.mark_dirty();
 
                     // Delete that connection
                     map_state.connections_state.focused_connection = None;
@@ -177,7 +177,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Char('e') => {
                 if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
                     focused_connection.color = cycle_color(focused_connection.color);
-                    map_state.can_exit = false;
+                    map_state.persistence.mark_dirty();
                 }
             }
 
@@ -240,7 +240,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
                 map_state.visual_mode.visual_connection = true;
                 
-                map_state.can_exit = false;
+                map_state.persistence.mark_dirty();
             }
         }
 
@@ -268,7 +268,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
                     note.color = cycle_color(note.color);
                     
-                    map_state.can_exit = false;
+                    map_state.persistence.mark_dirty();
                 }
             }
         }

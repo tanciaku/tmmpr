@@ -24,7 +24,7 @@ fn test_add_note() {
 
     map_state.add_note();
 
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
     assert_eq!(map_state.notes_state.notes, HashMap::from([(0, Note::new(50, 25, String::from(""), true, Color::White))]));
     assert_eq!(map_state.notes_state.render_order, vec![0]);
     assert_eq!(map_state.notes_state.selected_note, Some(0));
@@ -40,7 +40,7 @@ fn test_add_several_notes() {
     map_state.add_note();
     map_state.add_note();
 
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
     assert_eq!(map_state.notes_state.notes, HashMap::from([
         (0, Note::new(50, 25, String::from(""), true, Color::White)),
         (1, Note::new(50, 25, String::from(""), true, Color::White)),
@@ -58,7 +58,7 @@ fn test_add_note_diff_viewpos() {
 
     map_state.add_note();
 
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
     assert_eq!(map_state.notes_state.notes, HashMap::from([(0, Note::new(145, 120, String::from(""), true, Color::White))]));
     assert_eq!(map_state.notes_state.render_order, vec![0]);
     assert_eq!(map_state.notes_state.selected_note, Some(0));
@@ -90,13 +90,13 @@ fn test_new() {
     assert_eq!(map_state.connections_state.focused_connection, None);
     assert_eq!(map_state.connections_state.visual_editing_a_connection, false);
     assert_eq!(map_state.connections_state.editing_connection_index, None);
-    assert_eq!(map_state.file_write_path, path);
+    assert_eq!(map_state.persistence.file_write_path, path);
     assert_eq!(map_state.show_notification, None);
-    assert_eq!(map_state.can_exit, true);
+    assert_eq!(map_state.persistence.can_exit, true);
     assert_eq!(map_state.confirm_discard_menu, None);
     assert_eq!(map_state.help_screen, None);
     assert_eq!(map_state.settings_err_msg, None);
-    assert_eq!(map_state.backup_res, None);
+    assert_eq!(map_state.persistence.backup_res, None);
 }
 
 #[test]
@@ -272,14 +272,14 @@ fn test_on_tick_save_changes_disabled() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
     map_state.settings.save_interval = None;
     map_state.settings.runtime_backups_interval = None;
-    map_state.can_exit = false; // Simulate unsaved changes
+    map_state.persistence.mark_dirty(); // Simulate unsaved changes
     
-    let old_last_save = map_state.last_save;
+    let old_last_save = map_state.persistence.last_save;
 
     map_state.on_tick_save_changes();
 
     // Timestamps should not change when saving is disabled
-    assert_eq!(map_state.last_save, old_last_save);
+    assert_eq!(map_state.persistence.last_save, old_last_save);
 }
 
 #[test]
@@ -287,15 +287,15 @@ fn test_on_tick_save_changes_not_enough_time_passed() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
     map_state.settings.save_interval = Some(20); // 20 seconds
     map_state.settings.runtime_backups_interval = None;
-    map_state.can_exit = false; // Simulate unsaved changes
-    map_state.last_save = Instant::now(); // Just saved
+    map_state.persistence.mark_dirty(); // Simulate unsaved changes
+    map_state.persistence.last_save = Instant::now(); // Just saved
     
-    let old_last_save = map_state.last_save;
+    let old_last_save = map_state.persistence.last_save;
 
     map_state.on_tick_save_changes();
 
     // Should not trigger save since not enough time has passed
-    assert_eq!(map_state.last_save, old_last_save);
+    assert_eq!(map_state.persistence.last_save, old_last_save);
 }
 
 #[test]
@@ -303,13 +303,13 @@ fn test_on_tick_save_changes_no_unsaved_changes() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
     map_state.settings.save_interval = Some(20); // 20 seconds
     map_state.settings.runtime_backups_interval = None;
-    map_state.can_exit = true; // No unsaved changes
-    map_state.last_save = Instant::now() - Duration::from_secs(30); // Long time ago
+    map_state.persistence.mark_clean(); // No unsaved changes
+    map_state.persistence.last_save = Instant::now() - Duration::from_secs(30); // Long time ago
     
-    let old_last_save = map_state.last_save;
+    let old_last_save = map_state.persistence.last_save;
 
     map_state.on_tick_save_changes();
 
     // Should not trigger save since there are no unsaved changes
-    assert_eq!(map_state.last_save, old_last_save);
+    assert_eq!(map_state.persistence.last_save, old_last_save);
 }

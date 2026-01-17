@@ -13,7 +13,7 @@ fn create_test_map_state() -> MapState {
     map_state.settings.edit_modal = false;
     map_state.viewport.screen_width = 100;
     map_state.viewport.screen_height = 50;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
     map_state
 }
 
@@ -237,7 +237,7 @@ fn test_discard_menu_confirm_to_start_screen() {
 fn test_discard_menu_confirm_to_settings_screen() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.file_write_path = PathBuf::from("/test/map.json");
+    map_state.persistence.file_write_path = PathBuf::from("/test/map.json");
     map_state.confirm_discard_menu = Some(DiscardMenuType::Settings);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')));
@@ -275,7 +275,7 @@ fn test_discard_menu_blocks_other_input() {
 fn test_quit_when_can_exit_is_true() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')));
 
@@ -291,7 +291,7 @@ fn test_quit_when_can_exit_is_true() {
 fn test_quit_when_can_exit_is_false_shows_discard_menu() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.can_exit = false;
+    map_state.persistence.mark_dirty();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')));
 
@@ -306,7 +306,7 @@ fn test_quit_when_can_exit_is_false_shows_discard_menu() {
 fn test_save_map_file() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.file_write_path = PathBuf::from("/test/my_map.json");
+    map_state.persistence.file_write_path = PathBuf::from("/test/my_map.json");
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('s')));
 
@@ -324,8 +324,8 @@ fn test_save_map_file() {
 fn test_open_settings_when_can_exit_is_true() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.can_exit = true;
-    map_state.file_write_path = PathBuf::from("/test/map.json");
+    map_state.persistence.mark_clean();
+    map_state.persistence.file_write_path = PathBuf::from("/test/map.json");
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('o')));
 
@@ -341,7 +341,7 @@ fn test_open_settings_when_can_exit_is_true() {
 fn test_open_settings_when_can_exit_is_false_shows_discard_menu() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.can_exit = false;
+    map_state.persistence.mark_dirty();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('o')));
 
@@ -358,14 +358,14 @@ fn test_move_viewport_left_with_h() {
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('h')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 9);
     assert_eq!(map_state.viewport.view_pos.y, 10);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
     assert_eq!(map_state.needs_clear_and_redraw, true);
 }
 
@@ -374,13 +374,13 @@ fn test_move_viewport_left_with_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Left));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 9);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -400,13 +400,13 @@ fn test_move_viewport_left_by_5_with_shift_h() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 20;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('H')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 15);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -414,13 +414,13 @@ fn test_move_viewport_left_by_5_with_shift_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 20;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event_with_mods(KeyCode::Left, KeyModifiers::SHIFT));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 15);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -429,14 +429,14 @@ fn test_move_viewport_down_with_j() {
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('j')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 11);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -444,13 +444,13 @@ fn test_move_viewport_down_with_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.y = 10;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Down));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 11);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -458,13 +458,13 @@ fn test_move_viewport_down_by_5_with_shift_j() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.y = 20;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('J')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 25);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -472,13 +472,13 @@ fn test_move_viewport_down_by_5_with_shift_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.y = 20;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event_with_mods(KeyCode::Down, KeyModifiers::SHIFT));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 25);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -487,14 +487,14 @@ fn test_move_viewport_up_with_k() {
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('k')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 9);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -502,13 +502,13 @@ fn test_move_viewport_up_with_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.y = 10;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Up));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 9);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -528,13 +528,13 @@ fn test_move_viewport_up_by_5_with_shift_k() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.y = 20;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('K')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 15);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -542,13 +542,13 @@ fn test_move_viewport_up_by_5_with_shift_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.y = 20;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event_with_mods(KeyCode::Up, KeyModifiers::SHIFT));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 15);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -557,14 +557,14 @@ fn test_move_viewport_right_with_l() {
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('l')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 11);
     assert_eq!(map_state.viewport.view_pos.y, 10);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -572,13 +572,13 @@ fn test_move_viewport_right_with_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Right));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 11);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -586,13 +586,13 @@ fn test_move_viewport_right_by_5_with_shift_l() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 20;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('L')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 25);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]
@@ -600,13 +600,13 @@ fn test_move_viewport_right_by_5_with_shift_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.viewport.view_pos.x = 20;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event_with_mods(KeyCode::Right, KeyModifiers::SHIFT));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 25);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 // ==================== NOTE MANIPULATION TESTS ====================
@@ -619,7 +619,7 @@ fn test_add_note() {
     map_state.viewport.view_pos.y = 50;
     map_state.viewport.screen_width = 80;
     map_state.viewport.screen_height = 40;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('a')));
 
@@ -647,7 +647,7 @@ fn test_add_note() {
     assert!(matches!(map_state.current_mode, Mode::Edit(_)));
     
     // Check can_exit is false
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
     
     // Check next_note_id incremented
     assert_eq!(map_state.notes_state.next_note_id, 1);

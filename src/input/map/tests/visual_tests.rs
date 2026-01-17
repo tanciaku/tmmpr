@@ -12,7 +12,7 @@ fn create_test_map_state() -> MapState {
     map_state.settings.edit_modal = false;
     map_state.viewport.screen_width = 100;
     map_state.viewport.screen_height = 50;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
     map_state
 }
 
@@ -110,7 +110,7 @@ fn test_visual_cycle_note_color() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false); // Should mark as dirty
+    assert_eq!(map_state.persistence.can_exit, false); // Should mark as dirty
     
     let new_color = map_state.notes_state.notes.get(&0).unwrap().color;
     assert_ne!(original_color, new_color); // Color should have changed
@@ -127,7 +127,7 @@ fn test_visual_cycle_note_color_no_selected_note() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, true); // Should not mark as dirty
+    assert_eq!(map_state.persistence.can_exit, true); // Should not mark as dirty
 }
 
 #[test]
@@ -143,7 +143,7 @@ fn test_visual_create_new_connection() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.visual_mode.visual_connection, true);
-    assert_eq!(map_state.can_exit, false); // Should mark as dirty
+    assert_eq!(map_state.persistence.can_exit, false); // Should mark as dirty
     
     // Should have created a focused connection
     assert!(map_state.connections_state.focused_connection.is_some());
@@ -555,7 +555,7 @@ fn test_connection_mode_rotate_from_side() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('r')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false); // Should mark as dirty
+    assert_eq!(map_state.persistence.can_exit, false); // Should mark as dirty
     
     // Side should have cycled
     let connection = map_state.connections_state.focused_connection.unwrap();
@@ -584,7 +584,7 @@ fn test_connection_mode_rotate_to_side() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('r')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
     
     // to_side should have cycled
     let connection = map_state.connections_state.focused_connection.unwrap();
@@ -762,7 +762,7 @@ fn test_connection_mode_delete_connection() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false); // Should mark as dirty
+    assert_eq!(map_state.persistence.can_exit, false); // Should mark as dirty
     assert_eq!(map_state.connections_state.focused_connection, None); // Connection should be deleted
     assert_eq!(map_state.visual_mode.visual_connection, false); // Should exit connection mode
     assert_eq!(map_state.connections_state.visual_editing_a_connection, false);
@@ -850,7 +850,7 @@ fn test_connection_mode_cycle_color() {
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false); // Should mark as dirty
+    assert_eq!(map_state.persistence.can_exit, false); // Should mark as dirty
     
     let connection = map_state.connections_state.focused_connection.unwrap();
     assert_ne!(connection.color, Color::White); // Color should have changed
@@ -872,7 +872,7 @@ fn test_connection_mode_cycle_color_no_focused_connection() {
 
     assert_eq!(result, AppAction::Continue);
     // Should not change anything without focused connection
-    assert_eq!(map_state.can_exit, true);
+    assert_eq!(map_state.persistence.can_exit, true);
 }
 
 #[test]

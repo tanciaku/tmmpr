@@ -39,7 +39,7 @@ pub fn map_edit_kh(map_state: &mut MapState, key: KeyEvent, modal: Option<ModalE
                     KeyCode::Char(c) => insert_char(map_state, *selected_note, c),
                     KeyCode::Enter => insert_char(map_state, *selected_note, '\n'),
                     KeyCode::Backspace => {
-                        map_state.can_exit = false;
+                        map_state.persistence.mark_dirty();
                         backspace_char(map_state, *selected_note);
                     }
                     KeyCode::Left => {

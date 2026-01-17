@@ -43,7 +43,7 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         return AppAction::Switch(
                             Screen::Settings(SettingsState::new(
                                 // Pass in the file path that was opened to return to it after closing settings
-                                map_state.file_write_path.clone())))
+                                map_state.persistence.file_write_path.clone())))
                     }
                 }
             }
@@ -59,7 +59,7 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         // Exiting the app
         KeyCode::Char('q') => {
             // Can exit to start screen if saved the changes
-            if map_state.can_exit {
+            if map_state.persistence.can_exit {
                 return AppAction::Switch(Screen::Start(StartState::new()))
             } else { // Otherwise show the confirmation to discard unsaved changes menu
                 map_state.confirm_discard_menu = Some(DiscardMenuType::Start);
@@ -71,16 +71,16 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         KeyCode::F(1) | KeyCode::Char('?') => map_state.help_screen = Some(1),
 
         // Save the map file
-        KeyCode::Char('s') => return AppAction::SaveMapFile(map_state.file_write_path.clone()),
+        KeyCode::Char('s') => return AppAction::SaveMapFile(map_state.persistence.file_write_path.clone()),
 
         // Open the settings
         KeyCode::Char('o') => {
             // Can exit to settings if saved the changes
-            if map_state.can_exit {
+            if map_state.persistence.can_exit {
                 return AppAction::Switch(
                     Screen::Settings(SettingsState::new(
                         // Pass in the file path that was opened to return to it after closing settings
-                        map_state.file_write_path.clone())))
+                        map_state.persistence.file_write_path.clone())))
             } else { // Otherwise show the confirmation to discard unsaved changes menu
                 map_state.confirm_discard_menu = Some(DiscardMenuType::Settings);
                 map_state.needs_clear_and_redraw = true;

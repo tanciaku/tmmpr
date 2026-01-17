@@ -11,7 +11,7 @@ fn create_test_map_state() -> MapState {
     map_state.settings.edit_modal = false;
     map_state.viewport.screen_width = 100;
     map_state.viewport.screen_height = 50;
-    map_state.can_exit = true;
+    map_state.persistence.mark_clean();
     map_state
 }
 
@@ -310,7 +310,7 @@ fn test_insert_at_beginning() {
     
     assert_eq!(map_state.notes_state.notes.get(&0).unwrap().content, "XHello");
     assert_eq!(map_state.notes_state.cursor_pos, 1);
-    assert_eq!(map_state.can_exit, false); // Should set can_exit to false
+    assert_eq!(map_state.persistence.can_exit, false); // Should set can_exit to false
 }
 
 #[test]
@@ -412,13 +412,13 @@ fn test_insert_nonexistent_note() {
     
     // Should not panic, just do nothing
     assert_eq!(map_state.notes_state.cursor_pos, 0);
-    assert_eq!(map_state.can_exit, false); // Still sets can_exit to false
+    assert_eq!(map_state.persistence.can_exit, false); // Still sets can_exit to false
 }
 
 #[test]
 fn test_insert_can_exit_flag() {
     let mut map_state = create_test_map_state();
-    map_state.can_exit = true; // Start with true
+    map_state.persistence.mark_clean(); // Start with true
     
     let note = Note::new(10, 10, String::from("Test"), false, Color::White);
     map_state.notes_state.notes.insert(0, note);
@@ -427,7 +427,7 @@ fn test_insert_can_exit_flag() {
     insert_char(&mut map_state, 0, 'X');
     
     // Should always set can_exit to false on edit
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
 }
 
 #[test]

@@ -12,7 +12,7 @@ fn create_test_map_state() -> MapState {
     map_state.settings.edit_modal = false;
     map_state.viewport.screen_width = 100;
     map_state.viewport.screen_height = 50;
-    map_state.can_exit = true; // Start with can_exit as true to test it gets set to false
+    map_state.persistence.mark_clean(); // Start with can_exit as true to test it gets set to false
     map_state
 }
 
@@ -32,7 +32,7 @@ fn test_edit_kh_no_selected_note() {
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.current_mode, Mode::Edit(None));
     assert_eq!(map_state.notes_state.selected_note, None);
-    assert_eq!(map_state.can_exit, true); // Should remain unchanged for non-modifying operations
+    assert_eq!(map_state.persistence.can_exit, true); // Should remain unchanged for non-modifying operations
 }
 
 #[test]
@@ -113,7 +113,7 @@ fn test_insert_char_non_modal() {
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('X')), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false); // Should be set to false for modifications
+    assert_eq!(map_state.persistence.can_exit, false); // Should be set to false for modifications
     assert_eq!(map_state.notes_state.cursor_pos, 3); // Should advance cursor
     
     if let Some(note) = map_state.notes_state.notes.get(&0) {
@@ -135,7 +135,7 @@ fn test_insert_enter_character() {
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Enter), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false); // Should be set to false
+    assert_eq!(map_state.persistence.can_exit, false); // Should be set to false
     assert_eq!(map_state.notes_state.cursor_pos, 3); // Should advance cursor
     
     if let Some(note) = map_state.notes_state.notes.get(&0) {
@@ -157,7 +157,7 @@ fn test_backspace_char() {
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Backspace), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false); // Should be set to false
+    assert_eq!(map_state.persistence.can_exit, false); // Should be set to false
     assert_eq!(map_state.notes_state.cursor_pos, 2); // Should move cursor back
     
     if let Some(note) = map_state.notes_state.notes.get(&0) {
@@ -179,7 +179,7 @@ fn test_backspace_at_beginning() {
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Backspace), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false); // Should still be set to false
+    assert_eq!(map_state.persistence.can_exit, false); // Should still be set to false
     assert_eq!(map_state.notes_state.cursor_pos, 0); // Should stay at beginning
     
     if let Some(note) = map_state.notes_state.notes.get(&0) {

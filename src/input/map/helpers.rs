@@ -53,7 +53,7 @@ pub fn move_viewport(map_state: &mut MapState, axis: &str, amount: isize) {
         _ => {}
     }
     
-    map_state.can_exit = false;
+    map_state.persistence.mark_dirty();
 }
 
 pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {    
@@ -115,7 +115,7 @@ pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {
                 _ => {}
             }
             
-            map_state.can_exit = false;
+            map_state.persistence.mark_dirty();
         }
     }
 }
@@ -257,7 +257,7 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
                         focused_connection.to_side = Some(map_state.settings.default_end_side); // default side
                     }
 
-                    map_state.can_exit = false;
+                    map_state.persistence.mark_dirty();
                 }
             }
         }

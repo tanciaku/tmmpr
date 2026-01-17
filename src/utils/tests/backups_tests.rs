@@ -113,7 +113,7 @@ fn test_handle_on_load_backup_disabled_backups() {
     handle_on_load_backup(&mut map_state);
     
     // Verify no backup was created (backup_res should remain None)
-    assert_eq!(map_state.backup_res, None);
+    assert_eq!(map_state.persistence.backup_res, None);
     
     // Verify no notification was set
     assert_eq!(map_state.show_notification, None);

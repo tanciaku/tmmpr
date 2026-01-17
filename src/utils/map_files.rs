@@ -103,10 +103,10 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
             // Show successfully saved the map file message and redraw
 
             // Can exit the app - now that have successfully saved the map file.
-            map_state.can_exit = true;
+            map_state.persistence.mark_clean();
 
             if making_backup {
-                map_state.backup_res = Some(BackupResult::BackupSuccess);
+                map_state.persistence.backup_res = Some(BackupResult::BackupSuccess);
             }
 
             if show_save_notification {
@@ -123,7 +123,7 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
             // Show failed saving the map file message and redraw
 
             if making_backup {
-                map_state.backup_res = Some(BackupResult::BackupFail);
+                map_state.persistence.backup_res = Some(BackupResult::BackupFail);
             }
 
             if show_save_notification {

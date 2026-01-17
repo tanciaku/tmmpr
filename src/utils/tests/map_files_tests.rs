@@ -114,7 +114,7 @@ fn test_create_map_file_transitions_to_map_screen() {
     
     // Verify: Map state has correct file path
     if let Screen::Map(map_state) = &app.screen {
-        assert_eq!(map_state.file_write_path, file_path);
+        assert_eq!(map_state.persistence.file_write_path, file_path);
     }
 }
 
@@ -221,12 +221,12 @@ fn test_save_map_file_sets_can_exit_flag() {
     let mut map_state = create_populated_map_state(file_path.clone());
     
     // Initially can_exit should be true
-    map_state.can_exit = false;
+    map_state.persistence.mark_dirty();
     
     save_map_file(&mut map_state, &file_path, false, false);
     
     // After successful save, can_exit should be true
-    assert!(map_state.can_exit);
+    assert!(map_state.persistence.can_exit);
 }
 
 #[test]
@@ -272,13 +272,13 @@ fn test_save_map_file_backup_mode_success() {
     let file_path = temp_dir.path().join("test.json");
     let mut map_state = create_populated_map_state(file_path.clone());
     
-    map_state.backup_res = None;
+    map_state.persistence.backup_res = None;
     
     // Save in backup mode with notification
     save_map_file(&mut map_state, &file_path, true, true);
     
     // Verify: Backup success result set
-    assert_eq!(map_state.backup_res, Some(BackupResult::BackupSuccess));
+    assert_eq!(map_state.persistence.backup_res, Some(BackupResult::BackupSuccess));
     
     // Verify: Backup notification shown
     assert_eq!(map_state.show_notification, Some(Notification::BackupSuccess));
@@ -307,13 +307,13 @@ fn test_save_map_file_backup_mode_failure() {
     let invalid_path = PathBuf::from("/invalid/path/map.json");
     let mut map_state = create_populated_map_state(invalid_path.clone());
     
-    map_state.backup_res = None;
+    map_state.persistence.backup_res = None;
     
     // Attempt backup save with notification
     save_map_file(&mut map_state, &invalid_path, true, true);
     
     // Verify: Backup failure result set
-    assert_eq!(map_state.backup_res, Some(BackupResult::BackupFail));
+    assert_eq!(map_state.persistence.backup_res, Some(BackupResult::BackupFail));
     
     // Verify: Backup failure notification shown
     assert_eq!(map_state.show_notification, Some(Notification::BackupFail));
@@ -451,7 +451,7 @@ fn test_load_map_file_loads_valid_file() {
         assert_eq!(loaded_state.notes_state.notes.len(), 2);
         assert_eq!(loaded_state.notes_state.render_order, vec![0, 1]);
         assert_eq!(loaded_state.connections_state.connections.len(), 1);
-        assert_eq!(loaded_state.file_write_path, file_path);
+        assert_eq!(loaded_state.persistence.file_write_path, file_path);
     }
 }
 

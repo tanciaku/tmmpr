@@ -12,7 +12,7 @@ fn create_test_map_state() -> MapState {
     map_state.settings.edit_modal = false;
     map_state.viewport.screen_width = 100;
     map_state.viewport.screen_height = 50;
-    map_state.can_exit = true; // Start with can_exit as true to test it gets set to false
+    map_state.persistence.mark_clean(); // Start with can_exit as true to test it gets set to false
     map_state
 }
 
@@ -32,7 +32,7 @@ fn test_delete_kh_no_selected_note() {
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.current_mode, Mode::Delete);
     assert_eq!(map_state.notes_state.selected_note, None);
-    assert_eq!(map_state.can_exit, true); // Should remain unchanged
+    assert_eq!(map_state.persistence.can_exit, true); // Should remain unchanged
 }
 
 #[test]
@@ -62,7 +62,7 @@ fn test_delete_single_note() {
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false); // Should be set to false
+    assert_eq!(map_state.persistence.can_exit, false); // Should be set to false
     assert!(map_state.notes_state.notes.is_empty()); // Note should be removed
     assert!(map_state.notes_state.render_order.is_empty()); // Render order should be empty
     assert_eq!(map_state.notes_state.selected_note, None); // No selected note
@@ -85,7 +85,7 @@ fn test_delete_note_with_multiple_notes() {
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.can_exit, false);
+    assert_eq!(map_state.persistence.can_exit, false);
     
     // Check that only note 1 was removed
     assert_eq!(map_state.notes_state.notes.len(), 2);
@@ -313,7 +313,7 @@ fn test_delete_kh_other_keys_ignored() {
         assert_eq!(map_state.current_mode, Mode::Delete);
         assert_eq!(map_state.notes_state.selected_note, Some(0));
         assert_eq!(map_state.notes_state.notes.len(), 1); // Note should still be there
-        assert_eq!(map_state.can_exit, true); // Should remain unchanged
+        assert_eq!(map_state.persistence.can_exit, true); // Should remain unchanged
     }
 }
 
