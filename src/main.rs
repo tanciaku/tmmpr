@@ -46,9 +46,9 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                 map_state.on_tick_save_changes();
 
                 // Clear and redraw the screen if need to
-                if map_state.needs_clear_and_redraw {
+                if map_state.ui_state.needs_clear_and_redraw {
                     terminal.draw(|frame| render_map(frame, map_state))?;
-                    map_state.needs_clear_and_redraw = false;
+                    map_state.ui_state.mark_redrawn();
                 }
             }
         };

@@ -171,7 +171,7 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     }
 
     // Render a notification message if need to
-    if let Some(notification) = &map_state.show_notification {
+    if let Some(notification) = &map_state.ui_state.show_notification {
         // Render the corresponding notification message once
         match notification {
             Notification::SaveSuccess => {
@@ -197,11 +197,11 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         };
 
         // Reset what notification to show
-        map_state.show_notification = None;
+        map_state.ui_state.clear_notification();
     }
 
     // Render a confirmation menu to discard changes if need to
-    if let Some(discard_menu_type) = &map_state.confirm_discard_menu {
+    if let Some(discard_menu_type) = &map_state.ui_state.confirm_discard_menu {
         // Define the area for the menu
         let confirm_discard_menu_area = Layout::default()
             .direction(Direction::Vertical)

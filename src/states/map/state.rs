@@ -4,16 +4,16 @@ use ratatui::style::Color;
 
 use crate::{
     states::{
-        map::{ConnectionsState, DiscardMenuType, ModalEditMode, Mode, NotesState, Notification, PersistenceState, ViewportState, VisualModeState},
+        map::{ConnectionsState, ModalEditMode, Mode, NotesState, PersistenceState, UIState, ViewportState, VisualModeState},
         settings::{Settings, SettingsType, get_settings},
-        start::ErrMsg},
-        utils::{handle_runtime_backup, save_map_file}
+        start::ErrMsg
+    },
+    utils::{handle_runtime_backup, save_map_file}
 };
 
 
 #[derive(PartialEq, Debug)]
 pub struct MapState {
-    pub needs_clear_and_redraw: bool,
     /// A flag indicating that the screen needs to be cleared and redrawn on the next frame.
     /// The current input mode of the application, similar to Vim modes.
     pub current_mode: Mode,
@@ -22,13 +22,7 @@ pub struct MapState {
     pub visual_mode: VisualModeState,
     pub connections_state: ConnectionsState,
     pub persistence: PersistenceState,
-    pub show_notification: Option<Notification>,
-    /// Whether to render a menu for confirming to discard 
-    /// unsaved changes
-    pub confirm_discard_menu: Option<DiscardMenuType>,
-    /// Whether to show the help screen, and take all input for it
-    /// usize - represents the page of the help screen
-    pub help_screen: Option<usize>,
+    pub ui_state: UIState,
     /// Settings
     pub settings: Settings,
     /// Whether to notify the user that something went wrong with
@@ -56,24 +50,21 @@ impl MapState {
         };
 
         MapState {
-            needs_clear_and_redraw: true,
             current_mode: Mode::Normal,
             viewport: ViewportState::new(),
             notes_state: NotesState::new(),
             visual_mode: VisualModeState::new(),
             connections_state: ConnectionsState::new(),
             persistence: PersistenceState::new(file_write_path),
-            show_notification: None,
-            confirm_discard_menu: None,
-            help_screen: None,
-            settings: settings, // set the settings
+            ui_state: UIState::new(),
+            settings: settings,
             settings_err_msg: settings_err_msg,
         }
     }
 
-    /// Sets the flag to force a screen clear and redraw on the next frame.
+    /// Sets the flag to clear and redraw the screen on the next frame.
     pub fn clear_and_redraw(&mut self) {
-        self.needs_clear_and_redraw = true;
+        self.ui_state.request_redraw();
     }
 
     /// Adds a new, empty note to the canvas.

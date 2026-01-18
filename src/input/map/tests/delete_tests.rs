@@ -368,7 +368,7 @@ fn test_delete_note_last_in_render_order() {
 #[test]
 fn test_delete_note_clears_and_redraws() {
     let mut map_state = create_test_map_state();
-    map_state.needs_clear_and_redraw = false; // Set to false initially
+    map_state.ui_state.mark_redrawn();
     
     // Add a note
     map_state.notes_state.notes.insert(0, Note::new(50, 25, String::from("Test Note"), true, Color::White));
@@ -379,18 +379,18 @@ fn test_delete_note_clears_and_redraws() {
     let _result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
     // Should call clear_and_redraw() which sets needs_clear_and_redraw to true
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_escape_clears_and_redraws() {
     let mut map_state = create_test_map_state();
-    map_state.needs_clear_and_redraw = false; // Set to false initially
+    map_state.ui_state.mark_redrawn();
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Delete;
 
     let _result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Esc));
 
     // Should call clear_and_redraw() which sets needs_clear_and_redraw to true
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }

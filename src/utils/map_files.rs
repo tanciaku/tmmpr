@@ -111,12 +111,12 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
 
             if show_save_notification {
                 if making_backup {
-                    map_state.show_notification = Some(Notification::BackupSuccess);
+                    map_state.ui_state.set_notification(Notification::BackupSuccess);
                 } else {
-                    map_state.show_notification = Some(Notification::SaveSuccess);
+                    map_state.ui_state.set_notification(Notification::SaveSuccess);
                 }
 
-                map_state.needs_clear_and_redraw = true;
+                map_state.clear_and_redraw();
             }
         }
         Err(_) => {
@@ -128,12 +128,12 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
 
             if show_save_notification {
                 if making_backup {
-                    map_state.show_notification = Some(Notification::BackupFail);
+                    map_state.ui_state.set_notification(Notification::BackupFail);
                 } else {
-                    map_state.show_notification = Some(Notification::SaveFail);
+                    map_state.ui_state.set_notification(Notification::SaveFail);
                 }
 
-                map_state.needs_clear_and_redraw = true;
+                map_state.clear_and_redraw();
             }
         }
     }            

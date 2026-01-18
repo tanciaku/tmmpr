@@ -8,6 +8,7 @@ mod notes_state;
 mod connections_state;
 mod visual_mode;
 mod persistence;
+mod ui_state;
 
 #[cfg(test)]
 mod tests;
@@ -23,3 +24,4 @@ pub use notes_state::*;
 pub use connections_state::*;
 pub use visual_mode::*;
 pub use persistence::*;
+pub use ui_state::*;

@@ -78,7 +78,7 @@ pub fn handle_on_load_backup(map_state: &mut MapState) {
                     // Save updated settings (backup_dates field) to file
                     if let Err(_) = save_settings_to_file(&map_state.settings) {
                         // If there was an error updating backup records - notify user.
-                        map_state.show_notification = Some(Notification::BackupRecordFail);
+                        map_state.ui_state.set_notification(Notification::BackupRecordFail);
                     }
 
                     // Reset the result of a backup operation

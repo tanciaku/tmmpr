@@ -62,7 +62,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                 match &mut app.screen {
                     Screen::Start(start_state) => start_state.needs_clear_and_redraw = true,
                     Screen::Settings(settings_state) => settings_state.needs_clear_and_redraw = true,
-                    Screen::Map(map_state) => map_state.needs_clear_and_redraw = true,
+                    Screen::Map(map_state) => map_state.clear_and_redraw(),
                 }
             }
 

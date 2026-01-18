@@ -20,33 +20,33 @@ fn test_help_next_page_cycles_forward() {
     let mut map_state = create_test_map_state();
     
     // Test cycling through all pages
-    map_state.help_screen = Some(1);
+    map_state.ui_state.show_help(1);
     help_next_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(2));
+    assert_eq!(map_state.ui_state.help_screen, Some(2));
     
     help_next_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(3));
+    assert_eq!(map_state.ui_state.help_screen, Some(3));
     
     help_next_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(4));
+    assert_eq!(map_state.ui_state.help_screen, Some(4));
     
     help_next_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(5));
+    assert_eq!(map_state.ui_state.help_screen, Some(5));
     
     // Should wrap back to 1
     help_next_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(1));
+    assert_eq!(map_state.ui_state.help_screen, Some(1));
 }
 
 #[test]
 fn test_help_next_page_no_help_screen() {
     let mut map_state = create_test_map_state();
-    map_state.help_screen = None;
+    map_state.ui_state.hide_help();
     
     help_next_page(&mut map_state);
     
     // Should remain None when help_screen is not active
-    assert_eq!(map_state.help_screen, None);
+    assert_eq!(map_state.ui_state.help_screen, None);
 }
 
 #[test]
@@ -54,32 +54,32 @@ fn test_help_previous_page_cycles_backward() {
     let mut map_state = create_test_map_state();
     
     // Test cycling backward through all pages
-    map_state.help_screen = Some(1);
+    map_state.ui_state.show_help(1);
     help_previous_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(5));
+    assert_eq!(map_state.ui_state.help_screen, Some(5));
     
     help_previous_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(4));
+    assert_eq!(map_state.ui_state.help_screen, Some(4));
     
     help_previous_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(3));
+    assert_eq!(map_state.ui_state.help_screen, Some(3));
     
     help_previous_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(2));
+    assert_eq!(map_state.ui_state.help_screen, Some(2));
     
     help_previous_page(&mut map_state);
-    assert_eq!(map_state.help_screen, Some(1));
+    assert_eq!(map_state.ui_state.help_screen, Some(1));
 }
 
 #[test]
 fn test_help_previous_page_no_help_screen() {
     let mut map_state = create_test_map_state();
-    map_state.help_screen = None;
+    map_state.ui_state.hide_help();
     
     help_previous_page(&mut map_state);
     
     // Should remain None when help_screen is not active
-    assert_eq!(map_state.help_screen, None);
+    assert_eq!(map_state.ui_state.help_screen, None);
 }
 
 #[test]

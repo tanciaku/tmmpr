@@ -31,163 +31,163 @@ fn create_key_event_with_mods(code: KeyCode, modifiers: KeyModifiers) -> KeyEven
 fn test_toggle_help_screen_with_f1() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = None;
+    map_state.ui_state.hide_help();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::F(1)));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, Some(1));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, Some(1));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_toggle_help_screen_with_question_mark() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = None;
+    map_state.ui_state.hide_help();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('?')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, Some(1));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, Some(1));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_close_help_screen_with_f1() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(1);
+    map_state.ui_state.show_help(1);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::F(1)));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, None);
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, None);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_close_help_screen_with_question_mark() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(1);
+    map_state.ui_state.show_help(1);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('?')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, None);
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, None);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_close_help_screen_with_escape() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(3);
+    map_state.ui_state.show_help(3);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Esc));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, None);
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, None);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_help_next_page_with_right_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(1);
+    map_state.ui_state.show_help(1);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Right));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, Some(2));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, Some(2));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_help_next_page_with_l() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(2);
+    map_state.ui_state.show_help(2);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('l')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, Some(3));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, Some(3));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_help_next_page_with_tab() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(4);
+    map_state.ui_state.show_help(4);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Tab));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, Some(5));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, Some(5));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_help_next_page_wraps_to_first() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(5);
+    map_state.ui_state.show_help(5);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Right));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, Some(1));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, Some(1));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_help_previous_page_with_left_arrow() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(2);
+    map_state.ui_state.show_help(2);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Left));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, Some(1));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, Some(1));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_help_previous_page_with_h() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(3);
+    map_state.ui_state.show_help(3);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('h')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, Some(2));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, Some(2));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_help_previous_page_wraps_to_last() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(1);
+    map_state.ui_state.show_help(1);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Left));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.help_screen, Some(5));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.help_screen, Some(5));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_help_screen_blocks_other_input() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.help_screen = Some(1);
+    map_state.ui_state.show_help(1);
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
 
@@ -199,7 +199,7 @@ fn test_help_screen_blocks_other_input() {
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 10);
     // Still on help screen
-    assert_eq!(map_state.help_screen, Some(1));
+    assert_eq!(map_state.ui_state.help_screen, Some(1));
 }
 
 // ==================== DISCARD MENU TESTS ====================
@@ -208,20 +208,20 @@ fn test_help_screen_blocks_other_input() {
 fn test_discard_menu_cancel_with_escape() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.confirm_discard_menu = Some(DiscardMenuType::Start);
+    map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Esc));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.confirm_discard_menu, None);
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.confirm_discard_menu, None);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
 fn test_discard_menu_confirm_to_start_screen() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.confirm_discard_menu = Some(DiscardMenuType::Start);
+    map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')));
 
@@ -238,7 +238,7 @@ fn test_discard_menu_confirm_to_settings_screen() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
     map_state.persistence.file_write_path = PathBuf::from("/test/map.json");
-    map_state.confirm_discard_menu = Some(DiscardMenuType::Settings);
+    map_state.ui_state.show_discard_menu(DiscardMenuType::Settings);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')));
 
@@ -254,7 +254,7 @@ fn test_discard_menu_confirm_to_settings_screen() {
 fn test_discard_menu_blocks_other_input() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.confirm_discard_menu = Some(DiscardMenuType::Start);
+    map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
 
@@ -266,7 +266,7 @@ fn test_discard_menu_blocks_other_input() {
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 10);
     // Still showing discard menu
-    assert_eq!(map_state.confirm_discard_menu, Some(DiscardMenuType::Start));
+    assert_eq!(map_state.ui_state.confirm_discard_menu, Some(DiscardMenuType::Start));
 }
 
 // ==================== EXIT/QUIT TESTS ====================
@@ -296,8 +296,8 @@ fn test_quit_when_can_exit_is_false_shows_discard_menu() {
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.confirm_discard_menu, Some(DiscardMenuType::Start));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.confirm_discard_menu, Some(DiscardMenuType::Start));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 // ==================== SAVE TESTS ====================
@@ -346,8 +346,8 @@ fn test_open_settings_when_can_exit_is_false_shows_discard_menu() {
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('o')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.confirm_discard_menu, Some(DiscardMenuType::Settings));
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.confirm_discard_menu, Some(DiscardMenuType::Settings));
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 // ==================== VIEWPORT NAVIGATION TESTS ====================
@@ -366,7 +366,7 @@ fn test_move_viewport_left_with_h() {
     assert_eq!(map_state.viewport.view_pos.x, 9);
     assert_eq!(map_state.viewport.view_pos.y, 10);
     assert_eq!(map_state.persistence.can_exit, false);
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
@@ -764,12 +764,12 @@ fn test_select_note_updates_render_order() {
 fn test_unhandled_keys_still_trigger_redraw() {
     let mut map_state = create_test_map_state();
     map_state.current_mode = Mode::Normal;
-    map_state.needs_clear_and_redraw = false;
+    map_state.ui_state.mark_redrawn();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('z')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]

@@ -15,7 +15,7 @@ pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {
     frame.render_widget(Clear, frame.area());
 
     // If help page toggled, show it and stop there.
-    if let Some(page_number) = map_state.help_screen {
+    if let Some(page_number) = map_state.ui_state.help_screen {
         render_map_help_page(frame, page_number);
         return;
     }

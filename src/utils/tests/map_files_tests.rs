@@ -235,16 +235,16 @@ fn test_save_map_file_shows_save_success_notification() {
     let file_path = temp_dir.path().join("test.json");
     let mut map_state = create_populated_map_state(file_path.clone());
     
-    map_state.show_notification = None;
+    map_state.ui_state.clear_notification();
     
     // Save with notification enabled
     save_map_file(&mut map_state, &file_path, true, false);
     
     // Verify: Success notification shown
-    assert_eq!(map_state.show_notification, Some(Notification::SaveSuccess));
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::SaveSuccess));
     
     // Verify: Needs redraw
-    assert!(map_state.needs_clear_and_redraw);
+    assert!(map_state.ui_state.needs_clear_and_redraw);
 }
 
 #[test]
@@ -253,17 +253,17 @@ fn test_save_map_file_without_notification() {
     let file_path = temp_dir.path().join("test.json");
     let mut map_state = create_populated_map_state(file_path.clone());
     
-    map_state.show_notification = None;
-    map_state.needs_clear_and_redraw = false;
+    map_state.ui_state.clear_notification();
+    map_state.ui_state.mark_redrawn();
     
     // Save with notification disabled
     save_map_file(&mut map_state, &file_path, false, false);
     
     // Verify: No notification shown
-    assert_eq!(map_state.show_notification, None);
+    assert_eq!(map_state.ui_state.show_notification, None);
     
     // Verify: No redraw triggered
-    assert!(!map_state.needs_clear_and_redraw);
+    assert!(!map_state.ui_state.needs_clear_and_redraw);
 }
 
 #[test]
@@ -281,7 +281,7 @@ fn test_save_map_file_backup_mode_success() {
     assert_eq!(map_state.persistence.backup_res, Some(BackupResult::BackupSuccess));
     
     // Verify: Backup notification shown
-    assert_eq!(map_state.show_notification, Some(Notification::BackupSuccess));
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
 }
 
 #[test]
@@ -290,16 +290,16 @@ fn test_save_map_file_handles_write_failure() {
     let invalid_path = PathBuf::from("/invalid/path/map.json");
     let mut map_state = create_populated_map_state(invalid_path.clone());
     
-    map_state.show_notification = None;
+    map_state.ui_state.clear_notification();
     
     // Attempt to save with notification enabled
     save_map_file(&mut map_state, &invalid_path, true, false);
     
     // Verify: Save failure notification shown
-    assert_eq!(map_state.show_notification, Some(Notification::SaveFail));
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::SaveFail));
     
     // Verify: Redraw triggered
-    assert!(map_state.needs_clear_and_redraw);
+    assert!(map_state.ui_state.needs_clear_and_redraw);
 }
 
 #[test]
@@ -316,7 +316,7 @@ fn test_save_map_file_backup_mode_failure() {
     assert_eq!(map_state.persistence.backup_res, Some(BackupResult::BackupFail));
     
     // Verify: Backup failure notification shown
-    assert_eq!(map_state.show_notification, Some(Notification::BackupFail));
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupFail));
 }
 
 #[test]

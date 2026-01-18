@@ -476,12 +476,12 @@ fn test_always_triggers_clear_and_redraw() {
     map_state.notes_state.notes.insert(0, note);
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::Edit(None);
-    map_state.needs_clear_and_redraw = false; // Set to false initially
+    map_state.ui_state.mark_redrawn();
 
     let result = map_edit_kh(&mut map_state, create_key_event(KeyCode::Char('a')), None);
 
     assert_eq!(result, AppAction::Continue);
-    assert!(map_state.needs_clear_and_redraw); // Should be set to true by clear_and_redraw()
+    assert!(map_state.ui_state.needs_clear_and_redraw); // Should be set to true by clear_and_redraw()
 }
 
 #[test]

@@ -6,10 +6,10 @@ use crate::{app::Screen, input::{AppAction, map::{help_next_page, help_previous_
 /// Key handling for Normal Mode in the Map Screen
 pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     // Showing help page (takes all input if toggled)
-    if let Some(_) = map_state.help_screen {
+    if map_state.ui_state.is_help_visible() {
         match key.code {
             // F1, ? - toggle the help page
-            KeyCode::F(1) | KeyCode::Char('?') | KeyCode::Esc => map_state.help_screen = None,
+            KeyCode::F(1) | KeyCode::Char('?') | KeyCode::Esc => map_state.ui_state.hide_help(),
 
             // Right, l, Tab - go forward a page in the help screen.
             KeyCode::Right | KeyCode::Char('l') | KeyCode::Tab => help_next_page(map_state),
@@ -26,12 +26,12 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     }
     
     // Confirm discard unsaved changes menu (takes all input if triggered)
-    if let Some(discard_menu_type) = &map_state.confirm_discard_menu {
+    if let Some(discard_menu_type) = &map_state.ui_state.confirm_discard_menu {
         match key.code {
             // Cancel
             KeyCode::Esc => {
-                map_state.confirm_discard_menu = None;
-                map_state.needs_clear_and_redraw = true;
+                map_state.ui_state.hide_discard_menu();
+                map_state.clear_and_redraw();
             }
             // Confirm exiting and discarding unsaved changes
             KeyCode::Char('q') => {
@@ -62,13 +62,13 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             if map_state.persistence.can_exit {
                 return AppAction::Switch(Screen::Start(StartState::new()))
             } else { // Otherwise show the confirmation to discard unsaved changes menu
-                map_state.confirm_discard_menu = Some(DiscardMenuType::Start);
-                map_state.needs_clear_and_redraw = true;
+                map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
+                map_state.clear_and_redraw();
             }
         }
 
         // F1, ? - toggle the help page
-        KeyCode::F(1) | KeyCode::Char('?') => map_state.help_screen = Some(1),
+        KeyCode::F(1) | KeyCode::Char('?') => map_state.ui_state.show_help(1),
 
         // Save the map file
         KeyCode::Char('s') => return AppAction::SaveMapFile(map_state.persistence.file_write_path.clone()),
@@ -82,8 +82,8 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                         // Pass in the file path that was opened to return to it after closing settings
                         map_state.persistence.file_write_path.clone())))
             } else { // Otherwise show the confirmation to discard unsaved changes menu
-                map_state.confirm_discard_menu = Some(DiscardMenuType::Settings);
-                map_state.needs_clear_and_redraw = true;
+                map_state.ui_state.show_discard_menu(DiscardMenuType::Settings);
+                map_state.clear_and_redraw();
             }
         }
 

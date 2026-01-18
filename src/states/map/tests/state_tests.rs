@@ -72,7 +72,7 @@ fn test_new() {
     let map_state = MapState::new(path.clone());
 
     // Test initial values
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
     assert_eq!(map_state.current_mode, Mode::Normal);
     assert_eq!(map_state.viewport.view_pos.x, 0);
     assert_eq!(map_state.viewport.view_pos.y, 0);
@@ -91,10 +91,10 @@ fn test_new() {
     assert_eq!(map_state.connections_state.visual_editing_a_connection, false);
     assert_eq!(map_state.connections_state.editing_connection_index, None);
     assert_eq!(map_state.persistence.file_write_path, path);
-    assert_eq!(map_state.show_notification, None);
+    assert_eq!(map_state.ui_state.show_notification, None);
     assert_eq!(map_state.persistence.can_exit, true);
-    assert_eq!(map_state.confirm_discard_menu, None);
-    assert_eq!(map_state.help_screen, None);
+    assert_eq!(map_state.ui_state.confirm_discard_menu, None);
+    assert_eq!(map_state.ui_state.help_screen, None);
     assert_eq!(map_state.settings_err_msg, None);
     assert_eq!(map_state.persistence.backup_res, None);
 }
@@ -102,11 +102,11 @@ fn test_new() {
 #[test]
 fn test_clear_and_redraw() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
-    map_state.needs_clear_and_redraw = false;
+    map_state.ui_state.mark_redrawn();
 
     map_state.clear_and_redraw();
 
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]

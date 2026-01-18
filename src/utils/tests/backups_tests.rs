@@ -116,7 +116,7 @@ fn test_handle_on_load_backup_disabled_backups() {
     assert_eq!(map_state.persistence.backup_res, None);
     
     // Verify no notification was set
-    assert_eq!(map_state.show_notification, None);
+    assert_eq!(map_state.ui_state.show_notification, None);
 }
 
 #[test]
@@ -140,7 +140,7 @@ fn test_handle_on_load_backup_first_backup() {
     handle_on_load_backup(&mut map_state);
      
     // Verify notification was set to BackupSuccess
-    assert_eq!(map_state.show_notification, Some(Notification::BackupSuccess));
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
     
     // Verify a backup file was created in the backup directory
     let backup_files: Vec<_> = fs::read_dir(backup_dir.path())
@@ -189,7 +189,7 @@ fn test_handle_on_load_backup_skip_recent_backup() {
     handle_on_load_backup(&mut map_state);
     
     // Verify no new backup was created
-    assert_eq!(map_state.show_notification, None);
+    assert_eq!(map_state.ui_state.show_notification, None);
     
     // Verify no backup files were created
     let backup_files: Vec<_> = fs::read_dir(backup_dir.path())
@@ -225,7 +225,7 @@ fn test_handle_on_load_backup_old_backup_triggers_new() {
     handle_on_load_backup(&mut map_state);
     
     // Verify backup was created successfully
-    assert_eq!(map_state.show_notification, Some(Notification::BackupSuccess));
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
     
     // Verify a backup file was created
     let backup_files: Vec<_> = fs::read_dir(backup_dir.path())
@@ -309,7 +309,7 @@ fn test_handle_on_load_backup_invalid_backup_directory() {
     handle_on_load_backup(&mut map_state);
     
     // Verify backup failed
-    assert_eq!(map_state.show_notification, Some(Notification::BackupFail));
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupFail));
 }
 
 // ============================================================================
@@ -338,7 +338,7 @@ fn test_handle_runtime_backup_disabled_backups() {
     handle_runtime_backup(&mut map_state);
     
     // Verify no notification was set
-    assert_eq!(map_state.show_notification, None);
+    assert_eq!(map_state.ui_state.show_notification, None);
 }
 
 #[test]
@@ -359,7 +359,7 @@ fn test_handle_runtime_backup_creates_backup() {
     handle_runtime_backup(&mut map_state);
     
     // Verify notification was set to BackupSuccess
-    assert_eq!(map_state.show_notification, Some(Notification::BackupSuccess));
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
     
     // Verify a backup file was created in the backup directory
     let backup_files: Vec<_> = fs::read_dir(backup_dir.path())
@@ -469,7 +469,7 @@ fn test_handle_runtime_backup_invalid_backup_directory() {
     handle_runtime_backup(&mut map_state);
     
     // Verify backup failed
-    assert_eq!(map_state.show_notification, Some(Notification::BackupFail));
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupFail));
 }
 
 #[test]
@@ -491,7 +491,7 @@ fn test_handle_runtime_backup_backups_enabled_but_no_interval() {
     handle_runtime_backup(&mut map_state);
     
     // Verify no backup was created (both backups_path and runtime_interval required)
-    assert_eq!(map_state.show_notification, None);
+    assert_eq!(map_state.ui_state.show_notification, None);
     
     // Verify no files in backup directory
     let backup_files: Vec<_> = fs::read_dir(backup_dir.path())

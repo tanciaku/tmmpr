@@ -6,8 +6,8 @@ use crate::states::{MapState, map::Side};
 
 /// Go forward a page in the help screen
 pub fn help_next_page(map_state: &mut MapState) {
-    if let Some(current_page) = &mut map_state.help_screen {
-        map_state.help_screen = Some(
+    if let Some(current_page) = &mut map_state.ui_state.help_screen {
+        map_state.ui_state.help_screen = Some(
             match current_page {
                 1 => 2,
                 2 => 3,
@@ -21,8 +21,8 @@ pub fn help_next_page(map_state: &mut MapState) {
 
 /// Go back a page in the help screen
 pub fn help_previous_page(map_state: &mut MapState) {
-    if let Some(current_page) = &mut map_state.help_screen {
-        map_state.help_screen = Some(
+    if let Some(current_page) = &mut map_state.ui_state.help_screen {
+        map_state.ui_state.help_screen = Some(
             match current_page {
                 1 => 5,
                 2 => 1,

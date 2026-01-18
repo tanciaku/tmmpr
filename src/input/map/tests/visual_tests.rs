@@ -240,7 +240,7 @@ fn test_visual_switch_focus_with_arrow_keys() {
 #[test]
 fn test_visual_clear_and_redraw_called() {
     let mut map_state = create_test_map_state();
-    map_state.needs_clear_and_redraw = false;
+    map_state.ui_state.mark_redrawn();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
     map_state.notes_state.notes.insert(0, note);
@@ -250,7 +250,7 @@ fn test_visual_clear_and_redraw_called() {
     let _result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
     // Should trigger clear_and_redraw
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 // ============================================================================
@@ -464,7 +464,7 @@ fn test_move_mode_move_right_5_capital_l() {
 #[test]
 fn test_move_mode_clear_and_redraw() {
     let mut map_state = create_test_map_state();
-    map_state.needs_clear_and_redraw = false;
+    map_state.ui_state.mark_redrawn();
     
     let note = Note::new(50, 25, String::from("Test Note"), true, Color::White);
     map_state.notes_state.notes.insert(0, note);
@@ -474,7 +474,7 @@ fn test_move_mode_clear_and_redraw() {
 
     let _result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('h')));
 
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
@@ -878,7 +878,7 @@ fn test_connection_mode_cycle_color_no_focused_connection() {
 #[test]
 fn test_connection_mode_clear_and_redraw() {
     let mut map_state = create_test_map_state();
-    map_state.needs_clear_and_redraw = false;
+    map_state.ui_state.mark_redrawn();
     
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("Note 0"), true, Color::White));
     map_state.notes_state.selected_note = Some(0);
@@ -895,7 +895,7 @@ fn test_connection_mode_clear_and_redraw() {
 
     let _result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
-    assert_eq!(map_state.needs_clear_and_redraw, true);
+    assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
 #[test]
