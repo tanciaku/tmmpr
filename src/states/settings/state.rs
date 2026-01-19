@@ -6,6 +6,58 @@ use crate::states::settings::{
     SelectedToggle, SettingsNotification, SettingsType, get_settings
 };
 
+/// Trait for filesystem operations to enable testing with mocks
+pub trait FileSystemOps {
+    fn get_home_dir(&self) -> Option<PathBuf>;
+    fn create_dir_all(&self, path: &PathBuf) -> Result<(), std::io::Error>;
+    fn test_write_to_dir(&self, path: &PathBuf) -> Result<(), std::io::Error>;
+}
+
+/// Default implementation that uses the actual filesystem
+pub struct RealFileSystem;
+
+impl FileSystemOps for RealFileSystem {
+    fn get_home_dir(&self) -> Option<PathBuf> {
+        home::home_dir()
+    }
+
+    fn create_dir_all(&self, path: &PathBuf) -> Result<(), std::io::Error> {
+        fs::create_dir_all(path)
+    }
+
+    fn test_write_to_dir(&self, path: &PathBuf) -> Result<(), std::io::Error> {
+        NamedTempFile::new_in(path)?;
+        Ok(())
+    }
+}
+
+/// Resolve the backup path from user input
+/// If absolute (starts with '/'), returns as-is
+/// If relative, joins with home directory
+pub fn resolve_backup_path<F: FileSystemOps>(input_path: &str, fs_ops: &F) -> Result<PathBuf, BackupsErr> {
+    if input_path.starts_with('/') {
+        // Absolute path - use as-is
+        Ok(PathBuf::from(input_path))
+    } else {
+        // Relative path - resolve from home directory
+        let home_path = fs_ops.get_home_dir()
+            .ok_or(BackupsErr::DirFind)?;
+        Ok(home_path.join(input_path))
+    }
+}
+
+/// Validate that the backup directory can be created and written to
+pub fn validate_backup_directory<F: FileSystemOps>(path: &PathBuf, fs_ops: &F) -> Result<(), BackupsErr> {
+    // Create the directory
+    fs_ops.create_dir_all(path)
+        .map_err(|_| BackupsErr::DirCreate)?;
+
+    // Test writing to the directory
+    fs_ops.test_write_to_dir(path)
+        .map_err(|_| BackupsErr::FileWrite)?;
+
+    Ok(())
+}
 
 #[derive(PartialEq, Debug)]
 pub struct SettingsState {
@@ -89,43 +141,32 @@ impl SettingsState {
     }
 
     pub fn submit_path(&mut self) {
+        self.submit_path_with_fs(&RealFileSystem)
+    }
+
+    /// Submit path with injectable filesystem operations for testing
+    pub fn submit_path_with_fs<F: FileSystemOps>(&mut self, fs_ops: &F) {
         // User entered path for backups
         // .unwrap() used here - because while in the input prompt - backups_path cannot be None 
         let input_dir_path = self.settings.settings().backups_path.as_ref().unwrap();
 
-        // If the path start with '/' - keep the path as it is (it's an absolute path e.g. /mnt/map_backups/)
-        let backups_dir = if input_dir_path.starts_with('/') {
-            PathBuf::from(input_dir_path)
-        } else { // If it doesn't - append that path to the home user directory path (e.g. /home/user/map_backups/)
-            // Get the user's home directory path
-            let home_path = match home::home_dir() {
-                Some(path) => path,
-                None => {
-                    self.input_prompt_err = Some(BackupsErr::DirFind);
-                    return;
-                }
-            };
-            // Construct the full path
-            let backups_dir = home_path.join(input_dir_path);
+        // Resolve the full path
+        let backups_dir = match resolve_backup_path(input_dir_path, fs_ops) {
+            Ok(path) => path,
+            Err(err) => {
+                self.input_prompt_err = Some(err);
+                return;
+            }
+        };
 
-            // Set that path in the Settings field
-            // "Setting it" doesn't mean submitting succeded - it's for in case it does - use
-            // the full path from home directory instead of the user entered directory path.
+        // Update the path in settings if it was resolved from relative to absolute
+        if !input_dir_path.starts_with('/') {
             self.settings.settings_mut().backups_path = Some(backups_dir.to_string_lossy().to_string());
+        }
 
-            // Return it into a variable for use in this function
-            backups_dir
-        };
-    
-        // Create the directory
-        if let Err(_) = fs::create_dir_all(&backups_dir) {
-            self.input_prompt_err = Some(BackupsErr::DirCreate);
-            return;
-        };
-
-        // Attempt to write data to that directory
-        if let Err(_) = NamedTempFile::new_in(&backups_dir) {
-            self.input_prompt_err = Some(BackupsErr::FileWrite);
+        // Validate the directory (create and test write)
+        if let Err(err) = validate_backup_directory(&backups_dir, fs_ops) {
+            self.input_prompt_err = Some(err);
             return;
         }
 

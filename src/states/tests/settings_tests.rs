@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use tempfile::tempdir;
+use std::io;
 use ratatui::style::{Color, Style};
 use serde_json;
 use chrono::{Local, TimeZone};
@@ -9,6 +9,62 @@ use crate::states::{
         BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, Settings, SettingsNotification, SettingsState, SettingsType, cycle_side, get_settings, side_to_string
     }
 };
+use crate::states::settings::{FileSystemOps, resolve_backup_path, validate_backup_directory};
+
+/// Mock filesystem for testing
+pub struct MockFileSystem {
+    pub home_dir: Option<PathBuf>,
+    pub create_dir_result: Result<(), io::Error>,
+    pub test_write_result: Result<(), io::Error>,
+}
+
+impl MockFileSystem {
+    pub fn new_success() -> Self {
+        MockFileSystem {
+            home_dir: Some(PathBuf::from("/mock/home")),
+            create_dir_result: Ok(()),
+            test_write_result: Ok(()),
+        }
+    }
+
+    pub fn new_no_home() -> Self {
+        MockFileSystem {
+            home_dir: None,
+            create_dir_result: Ok(()),
+            test_write_result: Ok(()),
+        }
+    }
+
+    pub fn new_create_fails() -> Self {
+        MockFileSystem {
+            home_dir: Some(PathBuf::from("/mock/home")),
+            create_dir_result: Err(io::Error::new(io::ErrorKind::PermissionDenied, "Permission denied")),
+            test_write_result: Ok(()),
+        }
+    }
+
+    pub fn new_write_fails() -> Self {
+        MockFileSystem {
+            home_dir: Some(PathBuf::from("/mock/home")),
+            create_dir_result: Ok(()),
+            test_write_result: Err(io::Error::new(io::ErrorKind::PermissionDenied, "Permission denied")),
+        }
+    }
+}
+
+impl FileSystemOps for MockFileSystem {
+    fn get_home_dir(&self) -> Option<PathBuf> {
+        self.home_dir.clone()
+    }
+
+    fn create_dir_all(&self, _path: &PathBuf) -> Result<(), io::Error> {
+        self.create_dir_result.as_ref().map(|_| ()).map_err(|e| io::Error::new(e.kind(), "mock error"))
+    }
+
+    fn test_write_to_dir(&self, _path: &PathBuf) -> Result<(), io::Error> {
+        self.test_write_result.as_ref().map(|_| ()).map_err(|e| io::Error::new(e.kind(), "mock error"))
+    }
+}
 
 // ============================================================================
 // Tests for SettingsState
@@ -111,55 +167,107 @@ fn test_toggle_go_up_with_runtime_backups() {
     assert_eq!(state.selected_toggle, SelectedToggle::Toggle2);
 }
 
+// ============================================================================
+// Tests for path resolution functions
+// ============================================================================
+
+#[test]
+fn test_resolve_backup_path_absolute() {
+    let mock_fs = MockFileSystem::new_success();
+    let result = resolve_backup_path("/absolute/path", &mock_fs);
+    assert_eq!(result.unwrap(), PathBuf::from("/absolute/path"));
+}
+
+#[test]
+fn test_resolve_backup_path_relative() {
+    let mock_fs = MockFileSystem::new_success();
+    let result = resolve_backup_path("relative/path", &mock_fs);
+    assert_eq!(result.unwrap(), PathBuf::from("/mock/home/relative/path"));
+}
+
+#[test]
+fn test_resolve_backup_path_no_home() {
+    let mock_fs = MockFileSystem::new_no_home();
+    let result = resolve_backup_path("relative/path", &mock_fs);
+    assert_eq!(result.unwrap_err(), BackupsErr::DirFind);
+}
+
+#[test]
+fn test_validate_backup_directory_success() {
+    let mock_fs = MockFileSystem::new_success();
+    let path = PathBuf::from("/test/path");
+    let result = validate_backup_directory(&path, &mock_fs);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_validate_backup_directory_create_fails() {
+    let mock_fs = MockFileSystem::new_create_fails();
+    let path = PathBuf::from("/test/path");
+    let result = validate_backup_directory(&path, &mock_fs);
+    assert_eq!(result.unwrap_err(), BackupsErr::DirCreate);
+}
+
+#[test]
+fn test_validate_backup_directory_write_fails() {
+    let mock_fs = MockFileSystem::new_write_fails();
+    let path = PathBuf::from("/test/path");
+    let result = validate_backup_directory(&path, &mock_fs);
+    assert_eq!(result.unwrap_err(), BackupsErr::FileWrite);
+}
+
+// ============================================================================
+// Tests for submit_path() with mocks
+// ============================================================================
+
 #[test]
 fn test_submit_path_with_absolute_path() {
     let map_path = PathBuf::from("/test/path/map.json");
     let mut state = SettingsState::new(map_path);
+    let mock_fs = MockFileSystem::new_success();
     
-    // Create a temporary directory for testing
-    let temp_dir = tempdir().unwrap();
-    let absolute_path = temp_dir.path().join("backups");
+    state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
+    state.input_prompt = true;
     
-    state.settings.settings_mut().backups_path = Some(absolute_path.to_string_lossy().to_string());
-    state.submit_path();
+    state.submit_path_with_fs(&mock_fs);
 
-    // Should have set backup intervals
-    assert!(state.settings.settings().backups_interval.is_some());
-    assert!(state.settings.settings().runtime_backups_interval.is_some());
     assert_eq!(state.input_prompt, false);
     assert_eq!(state.input_prompt_err, None);
+    assert_eq!(state.settings.settings().backups_interval, Some(BackupsInterval::Daily));
+    assert_eq!(state.settings.settings().runtime_backups_interval, Some(RuntimeBackupsInterval::Every2Hours));
 }
 
 #[test]
 fn test_submit_path_with_relative_path() {
     let map_path = PathBuf::from("/test/path/map.json");
     let mut state = SettingsState::new(map_path);
+    let mock_fs = MockFileSystem::new_success();
     
-    state.settings.settings_mut().backups_path = Some("test_backups".to_string());
-    state.submit_path();
+    state.settings.settings_mut().backups_path = Some("backups".to_string());
+    state.input_prompt = true;
+    
+    state.submit_path_with_fs(&mock_fs);
 
-    // The path should have been converted to an absolute path
-    let backups_path = state.settings.settings().backups_path.as_ref().unwrap();
-    assert!(backups_path.contains("test_backups"));
-    assert!(backups_path.starts_with("/"));
+    assert_eq!(state.input_prompt, false);
+    assert_eq!(state.input_prompt_err, None);
+    // Path should be updated to absolute path
+    assert_eq!(state.settings.settings().backups_path, Some("/mock/home/backups".to_string()));
 }
 
 #[test]
 fn test_submit_path_sets_correct_intervals() {
     let map_path = PathBuf::from("/test/path/map.json");
     let mut state = SettingsState::new(map_path);
+    let mock_fs = MockFileSystem::new_success();
     
-    // Create a temporary directory for testing
-    let temp_dir = tempdir().unwrap();
-    let absolute_path = temp_dir.path().join("backups");
-    
-    state.settings.settings_mut().backups_path = Some(absolute_path.to_string_lossy().to_string());
+    state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
     
     // Ensure intervals are initially None/different
     state.settings.settings_mut().backups_interval = None;
     state.settings.settings_mut().runtime_backups_interval = None;
+    state.input_prompt = true;
     
-    state.submit_path();
+    state.submit_path_with_fs(&mock_fs);
 
     // Should have set specific default intervals
     assert_eq!(state.settings.settings().backups_interval, Some(BackupsInterval::Daily));
@@ -170,18 +278,15 @@ fn test_submit_path_sets_correct_intervals() {
 fn test_submit_path_resets_error_on_success() {
     let map_path = PathBuf::from("/test/path/map.json");
     let mut state = SettingsState::new(map_path);
+    let mock_fs = MockFileSystem::new_success();
     
-    // Create a temporary directory for testing
-    let temp_dir = tempdir().unwrap();
-    let absolute_path = temp_dir.path().join("backups");
-    
-    state.settings.settings_mut().backups_path = Some(absolute_path.to_string_lossy().to_string());
+    state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
     
     // Set an existing error
     state.input_prompt_err = Some(BackupsErr::DirCreate);
     state.input_prompt = true;
     
-    state.submit_path();
+    state.submit_path_with_fs(&mock_fs);
 
     // Should have cleared the error and exited input prompt
     assert_eq!(state.input_prompt_err, None);
@@ -189,17 +294,48 @@ fn test_submit_path_resets_error_on_success() {
 }
 
 #[test]
-fn test_submit_path_with_invalid_directory_path() {
+fn test_submit_path_no_home_directory() {
     let map_path = PathBuf::from("/test/path/map.json");
     let mut state = SettingsState::new(map_path);
+    let mock_fs = MockFileSystem::new_no_home();
     
-    // Use a path that will fail to create (permission denied on most systems)
-    state.settings.settings_mut().backups_path = Some("/root/restricted/backups".to_string());
+    state.settings.settings_mut().backups_path = Some("backups".to_string());
+    state.input_prompt = true;
     
-    state.submit_path();
+    state.submit_path_with_fs(&mock_fs);
 
-    // Should have set DirCreate error
+    assert_eq!(state.input_prompt, true);
+    assert_eq!(state.input_prompt_err, Some(BackupsErr::DirFind));
+}
+
+#[test]
+fn test_submit_path_directory_create_fails() {
+    let map_path = PathBuf::from("/test/path/map.json");
+    let mut state = SettingsState::new(map_path);
+    let mock_fs = MockFileSystem::new_create_fails();
+    
+    state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
+    state.input_prompt = true;
+    
+    state.submit_path_with_fs(&mock_fs);
+
+    assert_eq!(state.input_prompt, true);
     assert_eq!(state.input_prompt_err, Some(BackupsErr::DirCreate));
+}
+
+#[test]
+fn test_submit_path_write_test_fails() {
+    let map_path = PathBuf::from("/test/path/map.json");
+    let mut state = SettingsState::new(map_path);
+    let mock_fs = MockFileSystem::new_write_fails();
+    
+    state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
+    state.input_prompt = true;
+    
+    state.submit_path_with_fs(&mock_fs);
+
+    assert_eq!(state.input_prompt, true);
+    assert_eq!(state.input_prompt_err, Some(BackupsErr::FileWrite));
 }
 
 // ============================================================================
