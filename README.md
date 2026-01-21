@@ -36,9 +36,9 @@ The application is entirely keyboard-centered, offering efficient navigation and
 
 ## Previews
 
-* add preview image
+<img src="images/preview.png" width="800" alt="Preview">
 
-* add preview gif
+<img src="images/preview.gif" width="800" alt="Preview">
 
 ## Installation
 
