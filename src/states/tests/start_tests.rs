@@ -1,63 +1,14 @@
-use std::{path::PathBuf, collections::HashSet};
+use std::path::PathBuf;
 use ratatui::style::{Color, Style};
 
 use crate::{
     input::AppAction,
     states::start::{
         StartState, SelectedStartButton, FocusedInputBox, ErrMsg, 
-        RecentPaths, FileSystem,
+        RecentPaths,
     },
+    utils::filesystem::test_utils::MockFileSystem,
 };
-
-/// Mock filesystem for testing
-struct MockFileSystem {
-    existing_paths: HashSet<PathBuf>,
-    home_dir: Option<PathBuf>,
-    fail_dir_create: bool,
-}
-
-impl MockFileSystem {
-    fn new() -> Self {
-        MockFileSystem {
-            existing_paths: HashSet::new(),
-            home_dir: Some(PathBuf::from("/mock/home")),
-            fail_dir_create: false,
-        }
-    }
-
-    fn with_existing_path(mut self, path: PathBuf) -> Self {
-        self.existing_paths.insert(path);
-        self
-    }
-
-    fn with_home_dir(mut self, home: Option<PathBuf>) -> Self {
-        self.home_dir = home;
-        self
-    }
-
-    fn with_dir_create_failure(mut self) -> Self {
-        self.fail_dir_create = true;
-        self
-    }
-}
-
-impl FileSystem for MockFileSystem {
-    fn path_exists(&self, path: &PathBuf) -> bool {
-        self.existing_paths.contains(path)
-    }
-
-    fn create_dir_all(&self, _path: &PathBuf) -> Result<(), ()> {
-        if self.fail_dir_create {
-            Err(())
-        } else {
-            Ok(())
-        }
-    }
-
-    fn get_home_dir(&self) -> Option<PathBuf> {
-        self.home_dir.clone()
-    }
-}
 
 #[test]
 fn test_navigate_start_buttons_up() {

@@ -1,59 +1,36 @@
-use std::{fs, path::PathBuf};
-use tempfile::NamedTempFile;
+use std::path::PathBuf;
 
-use crate::states::settings::{
-    BackupsErr, BackupsInterval, DiscardExitTo, RuntimeBackupsInterval,
-    SelectedToggle, SettingsNotification, SettingsType, get_settings
+use crate::{
+    states::settings::{
+        BackupsErr, BackupsInterval, DiscardExitTo, RuntimeBackupsInterval,
+        SelectedToggle, SettingsNotification, SettingsType, get_settings
+    },
+    utils::{FileSystem, RealFileSystem}
 };
-
-/// Trait for filesystem operations to enable testing with mocks
-pub trait FileSystemOps {
-    fn get_home_dir(&self) -> Option<PathBuf>;
-    fn create_dir_all(&self, path: &PathBuf) -> Result<(), std::io::Error>;
-    fn test_write_to_dir(&self, path: &PathBuf) -> Result<(), std::io::Error>;
-}
-
-/// Default implementation that uses the actual filesystem
-pub struct RealFileSystem;
-
-impl FileSystemOps for RealFileSystem {
-    fn get_home_dir(&self) -> Option<PathBuf> {
-        home::home_dir()
-    }
-
-    fn create_dir_all(&self, path: &PathBuf) -> Result<(), std::io::Error> {
-        fs::create_dir_all(path)
-    }
-
-    fn test_write_to_dir(&self, path: &PathBuf) -> Result<(), std::io::Error> {
-        NamedTempFile::new_in(path)?;
-        Ok(())
-    }
-}
 
 /// Resolve the backup path from user input
 /// If absolute (starts with '/'), returns as-is
 /// If relative, joins with home directory
-pub fn resolve_backup_path<F: FileSystemOps>(input_path: &str, fs_ops: &F) -> Result<PathBuf, BackupsErr> {
+pub fn resolve_backup_path<F: FileSystem>(input_path: &str, fs: &F) -> Result<PathBuf, BackupsErr> {
     if input_path.starts_with('/') {
         // Absolute path - use as-is
         Ok(PathBuf::from(input_path))
     } else {
         // Relative path - resolve from home directory
-        let home_path = fs_ops.get_home_dir()
+        let home_path = fs.get_home_dir()
             .ok_or(BackupsErr::DirFind)?;
         Ok(home_path.join(input_path))
     }
 }
 
 /// Validate that the backup directory can be created and written to
-pub fn validate_backup_directory<F: FileSystemOps>(path: &PathBuf, fs_ops: &F) -> Result<(), BackupsErr> {
+pub fn validate_backup_directory<F: FileSystem>(path: &PathBuf, fs: &F) -> Result<(), BackupsErr> {
     // Create the directory
-    fs_ops.create_dir_all(path)
+    fs.create_dir_all(path)
         .map_err(|_| BackupsErr::DirCreate)?;
 
     // Test writing to the directory
-    fs_ops.test_write_to_dir(path)
+    fs.test_write_to_dir(path)
         .map_err(|_| BackupsErr::FileWrite)?;
 
     Ok(())
@@ -145,13 +122,13 @@ impl SettingsState {
     }
 
     /// Submit path with injectable filesystem operations for testing
-    pub fn submit_path_with_fs<F: FileSystemOps>(&mut self, fs_ops: &F) {
+    pub fn submit_path_with_fs<F: FileSystem>(&mut self, fs: &F) {
         // User entered path for backups
         // .unwrap() used here - because while in the input prompt - backups_path cannot be None 
         let input_dir_path = self.settings.settings().backups_path.as_ref().unwrap();
 
         // Resolve the full path
-        let backups_dir = match resolve_backup_path(input_dir_path, fs_ops) {
+        let backups_dir = match resolve_backup_path(input_dir_path, fs) {
             Ok(path) => path,
             Err(err) => {
                 self.input_prompt_err = Some(err);
@@ -165,7 +142,7 @@ impl SettingsState {
         }
 
         // Validate the directory (create and test write)
-        if let Err(err) = validate_backup_directory(&backups_dir, fs_ops) {
+        if let Err(err) = validate_backup_directory(&backups_dir, fs) {
             self.input_prompt_err = Some(err);
             return;
         }

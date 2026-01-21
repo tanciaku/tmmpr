@@ -1,33 +1,8 @@
 use std::path::PathBuf;
 use crate::{
     input::AppAction,
-    states::start::{ErrMsg, FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths},
+    states::start::{ErrMsg, FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths}, utils::{FileSystem, RealFileSystem},
 };
-
-/// Trait for filesystem operations to enable testing without touching the real filesystem
-pub trait FileSystem {
-    fn path_exists(&self, path: &PathBuf) -> bool;
-    fn create_dir_all(&self, path: &PathBuf) -> Result<(), ()>;
-    fn get_home_dir(&self) -> Option<PathBuf>;
-}
-
-/// Production implementation that uses the real filesystem
-#[derive(Debug, Clone, Copy)]
-pub struct RealFileSystem;
-
-impl FileSystem for RealFileSystem {
-    fn path_exists(&self, path: &PathBuf) -> bool {
-        path.exists()
-    }
-
-    fn create_dir_all(&self, path: &PathBuf) -> Result<(), ()> {
-        std::fs::create_dir_all(path).map_err(|_| ())
-    }
-
-    fn get_home_dir(&self) -> Option<PathBuf> {
-        home::home_dir()
-    }
-}
 
 #[derive(PartialEq, Debug)]
 pub struct StartState {
