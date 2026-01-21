@@ -99,55 +99,43 @@ mod tests {
 
     #[test]
     fn test_enter_on_recent_paths_loads_file() {
-        use std::fs::File;
-        use tempfile::tempdir;
-        
-        // Create temporary directory and files for testing
-        let temp_dir = tempdir().unwrap();
-        let temp_path1 = temp_dir.path().join("path1.json");
-        let temp_path2 = temp_dir.path().join("path2.json");
-        let temp_path3 = temp_dir.path().join("path3.json");
-        
-        // Create the temporary files
-        File::create(&temp_path1).unwrap();
-        File::create(&temp_path2).unwrap();
-        File::create(&temp_path3).unwrap();
+        // Note: This test still requires real files because start_kh calls
+        // submit_path() which uses the real filesystem. The actual filesystem
+        // interaction is tested in the states/tests/start_tests.rs file with mocks.
+        // Here we just verify that non-existent files are handled correctly.
         
         let mut state = create_test_start_state();
-        // Override with existing temporary file paths
+        // Use paths that don't exist
         state.recent_paths = Ok(RecentPaths {
-            recent_path_1: Some(temp_path1.clone()),
-            recent_path_2: Some(temp_path2.clone()),
-            recent_path_3: Some(temp_path3.clone()),
+            recent_path_1: Some(PathBuf::from("/nonexistent/path1.json")),
+            recent_path_2: Some(PathBuf::from("/nonexistent/path2.json")),
+            recent_path_3: Some(PathBuf::from("/nonexistent/path3.json")),
         });
         
-        // Test Recent1
+        // Test Recent1 - should return Continue since file doesn't exist
         state.selected_button = SelectedStartButton::Recent1;
         let key = create_key_event(KeyCode::Enter);
         let result = start_kh(&mut state, key);
-        if let AppAction::LoadMapFile(path) = result {
-            assert_eq!(path, temp_path1);
-        } else {
-            panic!("Expected LoadMapFile action, got: {:?}", result);
-        }
+        assert_eq!(result, AppAction::Continue);
+        assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
+
+        // Reset error message for next test
+        state.display_err_msg = None;
 
         // Test Recent2
         state.selected_button = SelectedStartButton::Recent2;
         let result = start_kh(&mut state, key);
-        if let AppAction::LoadMapFile(path) = result {
-            assert_eq!(path, temp_path2);
-        } else {
-            panic!("Expected LoadMapFile action, got: {:?}", result);
-        }
+        assert_eq!(result, AppAction::Continue);
+        assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
+
+        // Reset error message for next test
+        state.display_err_msg = None;
 
         // Test Recent3
         state.selected_button = SelectedStartButton::Recent3;
         let result = start_kh(&mut state, key);
-        if let AppAction::LoadMapFile(path) = result {
-            assert_eq!(path, temp_path3);
-        } else {
-            panic!("Expected LoadMapFile action, got: {:?}", result);
-        }
+        assert_eq!(result, AppAction::Continue);
+        assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
     }
 
     #[test]
@@ -277,30 +265,27 @@ mod tests {
 
     #[test]
     fn test_input_mode_enter_in_input_box2_submits() {
+        // Note: This test verifies that Enter in InputBox2 calls submit_path.
+        // The actual filesystem interactions are tested with mocks in 
+        // states/tests/start_tests.rs. Here we just verify the input handler
+        // correctly triggers the submission, without creating real directories.
+        
         let mut state = create_test_start_state();
         state.input_path = true;
-        state.input_path_string = Some("test_path".to_string());
+        state.input_path_string = Some("/nonexistent/test_path/".to_string());
         state.input_path_name = Some("test_name".to_string());
         state.focused_input_box = FocusedInputBox::InputBox2;
 
         let key = create_key_event(KeyCode::Enter);
         let result = start_kh(&mut state, key);
 
-        // The submit_path function will be called and can return:
-        // - AppAction::Continue (if there's an error like home dir not found)
-        // - AppAction::LoadMapFile (if file exists)  
-        // - AppAction::CreateMapFile (if file doesn't exist)
-        // We just verify that the function was called by checking that
-        // clear_and_redraw was called (needs_clear_and_redraw should be true)
+        // Since we're using a nonexistent absolute path that won't be created,
+        // submit_path will fail to create the directory and return Continue
+        // with an error message set
+        assert_eq!(result, AppAction::Continue);
         assert!(state.needs_clear_and_redraw);
-        
-        // The result can be any valid AppAction
-        match result {
-            AppAction::Continue | AppAction::LoadMapFile(_) | AppAction::CreateMapFile(_) => {
-                // These are all valid outcomes
-            }
-            _ => panic!("Unexpected AppAction returned: {:?}", result),
-        }
+        // Should have an error message (either DirCreate or DirFind)
+        assert!(state.display_err_msg.is_some());
     }
 
     #[test]

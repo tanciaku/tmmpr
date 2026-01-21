@@ -1,13 +1,63 @@
-use std::{path::PathBuf, fs};
+use std::{path::PathBuf, collections::HashSet};
 use ratatui::style::{Color, Style};
 
 use crate::{
     input::AppAction,
     states::start::{
         StartState, SelectedStartButton, FocusedInputBox, ErrMsg, 
-        RecentPaths
+        RecentPaths, FileSystem,
     },
 };
+
+/// Mock filesystem for testing
+struct MockFileSystem {
+    existing_paths: HashSet<PathBuf>,
+    home_dir: Option<PathBuf>,
+    fail_dir_create: bool,
+}
+
+impl MockFileSystem {
+    fn new() -> Self {
+        MockFileSystem {
+            existing_paths: HashSet::new(),
+            home_dir: Some(PathBuf::from("/mock/home")),
+            fail_dir_create: false,
+        }
+    }
+
+    fn with_existing_path(mut self, path: PathBuf) -> Self {
+        self.existing_paths.insert(path);
+        self
+    }
+
+    fn with_home_dir(mut self, home: Option<PathBuf>) -> Self {
+        self.home_dir = home;
+        self
+    }
+
+    fn with_dir_create_failure(mut self) -> Self {
+        self.fail_dir_create = true;
+        self
+    }
+}
+
+impl FileSystem for MockFileSystem {
+    fn path_exists(&self, path: &PathBuf) -> bool {
+        self.existing_paths.contains(path)
+    }
+
+    fn create_dir_all(&self, _path: &PathBuf) -> Result<(), ()> {
+        if self.fail_dir_create {
+            Err(())
+        } else {
+            Ok(())
+        }
+    }
+
+    fn get_home_dir(&self) -> Option<PathBuf> {
+        self.home_dir.clone()
+    }
+}
 
 #[test]
 fn test_navigate_start_buttons_up() {
@@ -68,12 +118,10 @@ fn test_navigate_start_buttons_other_keys() {
 fn test_submit_path_with_existing_recent_path() {
     let mut start_state = StartState::new();
     
-    // Create a temporary file for testing
-    let temp_dir = tempfile::tempdir().unwrap();
-    let test_file = temp_dir.path().join("test.json");
-    fs::write(&test_file, "test content").unwrap();
+    let test_file = PathBuf::from("/test/path.json");
+    let mock_fs = MockFileSystem::new().with_existing_path(test_file.clone());
     
-    let result = start_state.submit_path(Some(test_file.clone()));
+    let result = start_state.submit_path_with_fs(Some(test_file.clone()), &mock_fs);
     
     assert_eq!(result, AppAction::LoadMapFile(test_file));
     assert_eq!(start_state.display_err_msg, None);
@@ -84,7 +132,9 @@ fn test_submit_path_with_nonexistent_recent_path() {
     let mut start_state = StartState::new();
     
     let nonexistent_path = PathBuf::from("/nonexistent/path/file.json");
-    let result = start_state.submit_path(Some(nonexistent_path));
+    let mock_fs = MockFileSystem::new();
+    
+    let result = start_state.submit_path_with_fs(Some(nonexistent_path), &mock_fs);
     
     assert_eq!(result, AppAction::Continue);
     assert_eq!(start_state.display_err_msg, Some(ErrMsg::FileRead));
@@ -95,28 +145,20 @@ fn test_submit_path_with_nonexistent_recent_path() {
 fn test_submit_path_create_new_file() {
     let mut start_state = StartState::new();
     
-    // Set up input fields for creating a new file under a test subdirectory
-    // Use a path relative to home that doesn't exist yet
     start_state.input_path_string = Some("test_maps_temp/".to_string());
     start_state.input_path_name = Some("new_map".to_string());
     
-    let result = start_state.submit_path(None);
+    let mock_fs = MockFileSystem::new();
+    let result = start_state.submit_path_with_fs(None, &mock_fs);
     
     // Should create a new file since it doesn't exist
     match result {
         AppAction::CreateMapFile(path) => {
             assert!(path.to_string_lossy().contains("new_map.json"));
             assert!(path.to_string_lossy().contains("test_maps_temp"));
-            
-            // Clean up - remove the created directory
-            let _ = fs::remove_dir_all(path.parent().unwrap());
+            assert_eq!(path, PathBuf::from("/mock/home/test_maps_temp/new_map.json"));
         }
-        AppAction::Continue => {
-            // This might happen if there are permission issues or home dir problems
-            // In that case, the error handling should have been triggered
-            assert!(start_state.display_err_msg.is_some());
-        }
-        _ => panic!("Expected CreateMapFile or Continue action, got {:?}", result),
+        _ => panic!("Expected CreateMapFile action, got {:?}", result),
     }
 }
 
@@ -124,40 +166,57 @@ fn test_submit_path_create_new_file() {
 fn test_submit_path_load_existing_file() {
     let mut start_state = StartState::new();
     
-    // Create a temporary directory under home and a test file
-    let home_dir = match home::home_dir() {
-        Some(dir) => dir,
-        None => {
-            // If we can't get home directory, just verify the error handling
-            start_state.input_path_string = Some("test_maps_temp2/".to_string());
-            start_state.input_path_name = Some("existing_map".to_string());
-            let result = start_state.submit_path(None);
-            assert_eq!(result, AppAction::Continue);
-            return;
-        }
-    };
-    
-    let test_dir = home_dir.join("test_maps_temp2");
-    fs::create_dir_all(&test_dir).unwrap();
-    let existing_file = test_dir.join("existing_map.json");
-    fs::write(&existing_file, "test content").unwrap();
-    
-    // Set up input fields to point to existing file
     start_state.input_path_string = Some("test_maps_temp2/".to_string());
     start_state.input_path_name = Some("existing_map".to_string());
     
-    let result = start_state.submit_path(None);
+    let expected_path = PathBuf::from("/mock/home/test_maps_temp2/existing_map.json");
+    let mock_fs = MockFileSystem::new().with_existing_path(expected_path.clone());
+    
+    let result = start_state.submit_path_with_fs(None, &mock_fs);
     
     // Should load the existing file
     match result {
         AppAction::LoadMapFile(path) => {
-            assert_eq!(path, existing_file);
+            assert_eq!(path, expected_path);
         }
         _ => panic!("Expected LoadMapFile action, got {:?}", result),
     }
+}
+
+#[test]
+fn test_submit_path_no_home_dir() {
+    let mut start_state = StartState::new();
     
-    // Clean up
-    let _ = fs::remove_dir_all(&test_dir);
+    start_state.input_path_string = Some("maps/".to_string());
+    start_state.input_path_name = Some("my_map".to_string());
+    
+    let mock_fs = MockFileSystem::new().with_home_dir(None);
+    let result = start_state.submit_path_with_fs(None, &mock_fs);
+    
+    assert_eq!(result, AppAction::Continue);
+    assert_eq!(start_state.display_err_msg, Some(ErrMsg::DirFind));
+    // Input fields should be reset
+    assert_eq!(start_state.input_path_string, Some(String::new()));
+    assert_eq!(start_state.input_path_name, Some(String::new()));
+    assert_eq!(start_state.focused_input_box, FocusedInputBox::InputBox1);
+}
+
+#[test]
+fn test_submit_path_dir_create_failure() {
+    let mut start_state = StartState::new();
+    
+    start_state.input_path_string = Some("maps/".to_string());
+    start_state.input_path_name = Some("my_map".to_string());
+    
+    let mock_fs = MockFileSystem::new().with_dir_create_failure();
+    let result = start_state.submit_path_with_fs(None, &mock_fs);
+    
+    assert_eq!(result, AppAction::Continue);
+    assert_eq!(start_state.display_err_msg, Some(ErrMsg::DirCreate));
+    // Input fields should be reset
+    assert_eq!(start_state.input_path_string, Some(String::new()));
+    assert_eq!(start_state.input_path_name, Some(String::new()));
+    assert_eq!(start_state.focused_input_box, FocusedInputBox::InputBox1);
 }
 
 #[test]

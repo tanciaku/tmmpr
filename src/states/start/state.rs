@@ -1,8 +1,33 @@
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 use crate::{
     input::AppAction,
     states::start::{ErrMsg, FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths},
 };
+
+/// Trait for filesystem operations to enable testing without touching the real filesystem
+pub trait FileSystem {
+    fn path_exists(&self, path: &PathBuf) -> bool;
+    fn create_dir_all(&self, path: &PathBuf) -> Result<(), ()>;
+    fn get_home_dir(&self) -> Option<PathBuf>;
+}
+
+/// Production implementation that uses the real filesystem
+#[derive(Debug, Clone, Copy)]
+pub struct RealFileSystem;
+
+impl FileSystem for RealFileSystem {
+    fn path_exists(&self, path: &PathBuf) -> bool {
+        path.exists()
+    }
+
+    fn create_dir_all(&self, path: &PathBuf) -> Result<(), ()> {
+        std::fs::create_dir_all(path).map_err(|_| ())
+    }
+
+    fn get_home_dir(&self) -> Option<PathBuf> {
+        home::home_dir()
+    }
+}
 
 #[derive(PartialEq, Debug)]
 pub struct StartState {
@@ -64,10 +89,19 @@ impl StartState {
     }
 
     pub fn submit_path(&mut self, recent_path: Option<PathBuf>) -> AppAction {
+        self.submit_path_with_fs(recent_path, &RealFileSystem)
+    }
+
+    /// Submit a path with a custom filesystem implementation (for testing)
+    pub fn submit_path_with_fs(
+        &mut self,
+        recent_path: Option<PathBuf>,
+        fs: &dyn FileSystem,
+    ) -> AppAction {
         match recent_path {
             // Submitted a path from the "Recents" section
             Some(path) => {
-                if path.exists() {
+                if fs.path_exists(&path) {
                     AppAction::LoadMapFile(path)
                 } else {
                     self.display_err_msg = Some(ErrMsg::FileRead);
@@ -84,7 +118,7 @@ impl StartState {
 
                 // Get the user's home directory path 
                 //  or display an error and stop there
-                let home_path = match home::home_dir() {
+                let home_path = match fs.get_home_dir() {
                     Some(path) => path,
                     None => {
                         self.handle_submit_error(ErrMsg::DirFind);
@@ -97,7 +131,7 @@ impl StartState {
 
                 // Create the directory if it doesn't exist
                 //  or display an error and stop there
-                if let Err(_) = fs::create_dir_all(&map_path) {
+                if let Err(_) = fs.create_dir_all(&map_path) {
                     self.handle_submit_error(ErrMsg::DirCreate);
                     return AppAction::Continue
                 };
@@ -106,7 +140,7 @@ impl StartState {
                 let map_file_path = map_path.join(name).with_extension("json");
 
                 // Load the file if it exits:
-                if map_file_path.exists() {
+                if fs.path_exists(&map_file_path) {
                     AppAction::LoadMapFile(map_file_path)
                 } else { // Otherwise create it
                     AppAction::CreateMapFile(map_file_path)
