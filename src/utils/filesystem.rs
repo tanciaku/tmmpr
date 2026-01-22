@@ -115,4 +115,28 @@ pub mod test_utils {
             }
         }
     }
+
+    /// Temporary filesystem for testing. Uses TempDir as home_path in tests.
+    pub struct TempFileSystem {
+        pub home_path: PathBuf,
+    }
+    
+    impl FileSystem for TempFileSystem {
+        fn get_home_dir(&self) -> Option<PathBuf> {
+            Some(self.home_path.clone())
+        }
+        
+        fn create_dir_all(&self, path: &PathBuf) -> Result<(), std::io::Error> {
+            std::fs::create_dir_all(path)
+        }
+        
+        fn path_exists(&self, path: &PathBuf) -> bool {
+            path.exists()
+        }
+        
+        fn test_write_to_dir(&self, path: &PathBuf) -> Result<(), std::io::Error> {
+            tempfile::NamedTempFile::new_in(path)?;
+            Ok(())
+        }
+    } 
 }

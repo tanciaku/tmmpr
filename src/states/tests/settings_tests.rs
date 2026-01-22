@@ -2,17 +2,19 @@ use std::path::PathBuf;
 use ratatui::style::{Color, Style};
 use serde_json;
 use chrono::{Local, TimeZone};
+use tempfile::TempDir;
 
 use crate::{
     states::{
         map::Side, 
         settings::{
-            BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, Settings,
-            SettingsNotification, SettingsState, SettingsType, cycle_side, get_settings,
-            side_to_string, resolve_backup_path, validate_backup_directory
+            BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, Settings, SettingsNotification, SettingsState, SettingsType, cycle_side, get_settings_with_fs, resolve_backup_path, save_settings_with_fs, side_to_string, validate_backup_directory
         }
     },
-    utils::filesystem::test_utils::MockFileSystem,
+    utils::{
+        filesystem::test_utils::MockFileSystem,
+        read_json_data, test_utils::TempFileSystem
+    },
 };
 
 // ============================================================================
@@ -451,16 +453,16 @@ fn test_side_to_string() {
 
 #[test]
 fn test_get_settings_returns_settings_type() {
-    let settings_type = get_settings();
+    let mock_fs = MockFileSystem::new();
+    let settings_type = get_settings_with_fs(&mock_fs);
     
-    // Should return either Default or Custom, both are valid
+    // With MockFileSystem and no existing file, should return Default
     match settings_type {
         SettingsType::Default(settings, _) => {
             assert_eq!(settings.save_interval, Some(20));
         },
-        SettingsType::Custom(settings) => {
-            // Custom settings loaded from file, verify it's a Settings struct
-            assert!(settings.save_interval.is_some() || settings.save_interval.is_none());
+        SettingsType::Custom(_) => {
+            panic!("Expected Default settings, got Custom");
         }
     }
 }
@@ -555,14 +557,19 @@ fn test_settings_with_populated_backup_dates() {
 }
 
 // ============================================================================
-// Integration Tests for get_settings()
+// Integration Tests for get_settings() with TempDir
 // ============================================================================
 
 #[test]
 fn test_get_settings_returns_valid_settings_type() {
-    let settings_type = get_settings();
+    // Create a TempDir and use a custom FileSystem implementation that uses it as home
+    let temp_dir = TempDir::new().unwrap();
+    let temp_path = temp_dir.path().to_path_buf();
     
-    // Should return either Default or Custom variant
+    let temp_fs = TempFileSystem { home_path: temp_path.clone() };
+    let settings_type = get_settings_with_fs(&temp_fs);
+    
+    // Should return Default variant when no file exists
     match settings_type {
         SettingsType::Default(settings, _) => {
             // Verify default values
@@ -575,32 +582,157 @@ fn test_get_settings_returns_valid_settings_type() {
             assert_eq!(settings.edit_modal, false);
         },
         SettingsType::Custom(_) => {
-            // Custom settings loaded from file - valid either way
+            panic!("Expected Default settings when no file exists");
+        }
+    }
+    
+    // Verify that the settings file was created in the temp directory
+    let settings_file = temp_path.join(".config/tmmpr/settings.json");
+    assert!(settings_file.exists());
+    
+    // Verify the file contents match default settings
+    let saved: Settings = read_json_data(&settings_file).unwrap();
+    assert_eq!(saved.save_interval, Some(20));
+    
+    // TempDir automatically cleans up when dropped
+}
+
+#[test]
+fn test_get_settings_no_home_dir() {
+    let mock_fs = MockFileSystem::new().with_home_dir(None);
+    
+    let settings_type = get_settings_with_fs(&mock_fs);
+    
+    // Should return Default with DirFind error when home directory is not found
+    match settings_type {
+        SettingsType::Default(settings, err) => {
+            assert_eq!(settings.save_interval, Some(20));
+            assert_eq!(err, Some(crate::states::start::ErrMsg::DirFind));
+        },
+        SettingsType::Custom(_) => {
+            panic!("Expected Default settings with error when home dir is missing");
+        }
+    }
+}
+
+#[test]
+fn test_get_settings_dir_create_failure() {
+    let mock_fs = MockFileSystem::new().with_dir_create_failure();
+    
+    let settings_type = get_settings_with_fs(&mock_fs);
+    
+    // Should return Default with DirCreate error when directory creation fails
+    match settings_type {
+        SettingsType::Default(settings, err) => {
+            assert_eq!(settings.save_interval, Some(20));
+            assert_eq!(err, Some(crate::states::start::ErrMsg::DirCreate));
+        },
+        SettingsType::Custom(_) => {
+            panic!("Expected Default settings with error when dir creation fails");
         }
     }
 }
 
 // ============================================================================
-// Integration Tests for save_settings()
+// Integration Tests for save_settings() with TempDir
 // ============================================================================
 
 #[test]
 fn test_save_settings_success() {
+    let temp_dir = TempDir::new().unwrap();
+    let temp_path = temp_dir.path().to_path_buf();
+    
+    let temp_fs = TempFileSystem { home_path: temp_path.clone() };
+    
     let map_path = PathBuf::from("/test/path/map.json");
     let mut state = SettingsState::new(map_path);
+    
+    // Modify some settings to verify they get saved
+    state.settings.settings_mut().save_interval = Some(30);
+    state.settings.settings_mut().edit_modal = true;
     
     // Set can_exit to false to simulate unsaved changes
     state.can_exit = false;
     state.notification = None;
     
+    // Save settings with temp filesystem
+    save_settings_with_fs(&mut state, &temp_fs);
+    
+    // Should set success notification and allow exit
+    assert_eq!(state.notification, Some(SettingsNotification::SaveSuccess));
+    assert_eq!(state.can_exit, true);
+    
+    // Verify file was created in temp directory
+    let settings_file = temp_path.join(".config/tmmpr/settings.json");
+    assert!(settings_file.exists());
+    
+    // Verify file contents match what we saved
+    let saved: Settings = read_json_data(&settings_file).unwrap();
+    assert_eq!(saved.save_interval, Some(30));
+    assert_eq!(saved.edit_modal, true);
+    
+    // TempDir automatically cleans up when dropped
+}
+
+#[test]
+fn test_save_settings_no_home_dir() {
+    let mock_fs = MockFileSystem::new().with_home_dir(None);
+    
+    let map_path = PathBuf::from("/test/path/map.json");
+    let mut state = SettingsState::new(map_path);
+    
+    state.can_exit = false;
+    state.notification = None;
+    
+    // Save settings with mock filesystem that has no home dir
+    save_settings_with_fs(&mut state, &mock_fs);
+    
+    // Should set failure notification and show discard menu
+    assert_eq!(state.notification, Some(SettingsNotification::SaveFail));
+    assert_eq!(state.can_exit, false);
+}
+
+#[test]
+fn test_settings_round_trip() {
+    let temp_dir = TempDir::new().unwrap();
+    let temp_path = temp_dir.path().to_path_buf();
+    
+    let temp_fs = TempFileSystem { home_path: temp_path.clone() };
+    
+    let map_path = PathBuf::from("/test/path/map.json");
+    let mut state = SettingsState::new(map_path);
+    
+    // Modify settings
+    state.settings.settings_mut().save_interval = Some(60);
+    state.settings.settings_mut().backups_interval = Some(BackupsInterval::Weekly);
+    state.settings.settings_mut().backups_path = Some("/test/backups".to_string());
+    state.settings.settings_mut().runtime_backups_interval = Some(RuntimeBackupsInterval::Every4Hours);
+    state.settings.settings_mut().default_start_side = Side::Left;
+    state.settings.settings_mut().default_end_side = Side::Top;
+    state.settings.settings_mut().edit_modal = true;
+    
     // Save settings
-    crate::states::settings::save_settings(&mut state);
+    save_settings_with_fs(&mut state, &temp_fs);
+    assert_eq!(state.notification, Some(SettingsNotification::SaveSuccess));
     
-    // Should set a notification
-    assert!(state.notification.is_some());
+    // Load settings back
+    let loaded_settings = get_settings_with_fs(&temp_fs);
     
-    // If successful, should set can_exit to true
-    if state.notification == Some(SettingsNotification::SaveSuccess) {
-        assert_eq!(state.can_exit, true);
+    // Should load as Custom settings now
+    match loaded_settings {
+        SettingsType::Custom(settings) => {
+            assert_eq!(settings.save_interval, Some(60));
+            assert_eq!(settings.backups_interval, Some(BackupsInterval::Weekly));
+            assert_eq!(settings.backups_path, Some("/test/backups".to_string()));
+            assert_eq!(settings.runtime_backups_interval, Some(RuntimeBackupsInterval::Every4Hours));
+            assert_eq!(settings.default_start_side, Side::Left);
+            assert_eq!(settings.default_end_side, Side::Top);
+            assert_eq!(settings.edit_modal, true);
+        },
+        SettingsType::Default(_, _) => {
+            panic!("Expected Custom settings after save, got Default");
+        }
     }
+    
+    // TempDir automatically cleans up when dropped
 }
