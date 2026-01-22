@@ -9,7 +9,11 @@ use crate::{
         map::{Note, Connection, Side, Notification, BackupResult},
         start::{StartState, ErrMsg}
     },
-    utils::{create_map_file, save_map_file, load_map_file, MapData, read_json_data},
+    utils::{
+        create_map_file_with_fs, save_map_file, load_map_file_with_fs, 
+        MapData, read_json_data, 
+        filesystem::test_utils::TempFileSystem
+    },
 };
 
 // ============================================================================
@@ -23,14 +27,6 @@ fn create_test_app_with_start_state() -> App {
         screen: Screen::Start(StartState::new()),
     }
 }
-
-// Creates a test App with a basic MapState
-//fn create_test_app_with_map_state(path: PathBuf) -> App {
-//    App {
-//        running: true,
-//        screen: Screen::Map(MapState::new(path)),
-//    }
-//}
 
 /// Creates a MapState with some sample data for testing
 fn create_populated_map_state(path: PathBuf) -> MapState {
@@ -80,9 +76,10 @@ fn test_create_map_file_creates_valid_json_file() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("test_map.json");
     let mut app = create_test_app_with_start_state();
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Execute: Create the map file
-    create_map_file(&mut app, &file_path);
+    create_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: File exists
     assert!(file_path.exists(), "Map file should be created");
@@ -103,11 +100,12 @@ fn test_create_map_file_transitions_to_map_screen() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("test_map.json");
     let mut app = create_test_app_with_start_state();
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Before: App is in Start screen
     assert!(matches!(app.screen, Screen::Start(_)));
     
-    create_map_file(&mut app, &file_path);
+    create_map_file_with_fs(&mut app, &file_path, &fs);
     
     // After: App is in Map screen
     assert!(matches!(app.screen, Screen::Map(_)));
@@ -126,8 +124,9 @@ fn test_create_map_file_with_nested_directory_path() {
     
     let file_path = nested_path.join("map.json");
     let mut app = create_test_app_with_start_state();
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    create_map_file(&mut app, &file_path);
+    create_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: File created in nested directory
     assert!(file_path.exists());
@@ -141,8 +140,9 @@ fn test_create_map_file_with_special_characters_in_filename() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("my-map_2024.json");
     let mut app = create_test_app_with_start_state();
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    create_map_file(&mut app, &file_path);
+    create_map_file_with_fs(&mut app, &file_path, &fs);
     
     assert!(file_path.exists());
     
@@ -154,10 +154,12 @@ fn test_create_map_file_with_special_characters_in_filename() {
 #[test]
 fn test_create_map_file_handles_write_error() {
     // Use an invalid path to trigger write error
+    let temp_dir = tempdir().unwrap();
     let invalid_path = PathBuf::from("/invalid/nonexistent/path/map.json");
     let mut app = create_test_app_with_start_state();
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    create_map_file(&mut app, &invalid_path);
+    create_map_file_with_fs(&mut app, &invalid_path, &fs);
     
     // Verify: File was not created
     assert!(!invalid_path.exists());
@@ -176,8 +178,9 @@ fn test_create_map_file_default_viewpos_values() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("test_map.json");
     let mut app = create_test_app_with_start_state();
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    create_map_file(&mut app, &file_path);
+    create_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Read the created file
     let data: MapData = read_json_data(&file_path).unwrap();
@@ -432,6 +435,7 @@ fn test_save_map_file_empty_state() {
 fn test_load_map_file_loads_valid_file() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("load_test.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create and save a map file first
     let mut map_state = create_populated_map_state(file_path.clone());
@@ -440,7 +444,7 @@ fn test_load_map_file_loads_valid_file() {
     // Now load it with a fresh app
     let mut app = create_test_app_with_start_state();
     
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: App transitioned to Map screen
     assert!(matches!(app.screen, Screen::Map(_)));
@@ -459,6 +463,7 @@ fn test_load_map_file_loads_valid_file() {
 fn test_load_map_file_loads_note_properties() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("test.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with specific note properties
     let mut map_state = MapState::new(file_path.clone());
@@ -471,7 +476,7 @@ fn test_load_map_file_loads_note_properties() {
     
     // Load the file
     let mut app = create_test_app_with_start_state();
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: Note properties preserved
     if let Screen::Map(loaded_state) = &app.screen {
@@ -488,6 +493,7 @@ fn test_load_map_file_loads_note_properties() {
 fn test_load_map_file_loads_connections() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("test.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with connections
     let mut map_state = MapState::new(file_path.clone());
@@ -510,7 +516,7 @@ fn test_load_map_file_loads_connections() {
     
     // Load the file
     let mut app = create_test_app_with_start_state();
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: Connections loaded
     if let Screen::Map(loaded_state) = &app.screen {
@@ -529,6 +535,7 @@ fn test_load_map_file_loads_connections() {
 fn test_load_map_file_loads_view_position() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("test.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with modified view position
     let mut map_state = MapState::new(file_path.clone());
@@ -539,7 +546,7 @@ fn test_load_map_file_loads_view_position() {
     
     // Load the file
     let mut app = create_test_app_with_start_state();
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: View position loaded
     if let Screen::Map(loaded_state) = &app.screen {
@@ -552,10 +559,11 @@ fn test_load_map_file_loads_view_position() {
 fn test_load_map_file_handles_missing_file() {
     let temp_dir = tempdir().unwrap();
     let missing_file = temp_dir.path().join("nonexistent.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     let mut app = create_test_app_with_start_state();
     
-    load_map_file(&mut app, &missing_file);
+    load_map_file_with_fs(&mut app, &missing_file, &fs);
     
     // Verify: App stays on Start screen
     assert!(matches!(app.screen, Screen::Start(_)));
@@ -570,13 +578,14 @@ fn test_load_map_file_handles_missing_file() {
 fn test_load_map_file_handles_invalid_json() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("invalid.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Write invalid JSON to the file
     fs::write(&file_path, "{ this is not valid json }").unwrap();
     
     let mut app = create_test_app_with_start_state();
     
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: App stays on Start screen
     assert!(matches!(app.screen, Screen::Start(_)));
@@ -591,13 +600,14 @@ fn test_load_map_file_handles_invalid_json() {
 fn test_load_map_file_handles_corrupt_json() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("corrupt.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Write JSON that's valid but missing required fields
     fs::write(&file_path, r#"{"next_note_id": 5}"#).unwrap();
     
     let mut app = create_test_app_with_start_state();
     
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: App stays on Start screen due to deserialization error
     assert!(matches!(app.screen, Screen::Start(_)));
@@ -612,6 +622,7 @@ fn test_load_map_file_handles_corrupt_json() {
 fn test_load_map_file_empty_map() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("empty.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Save an empty map
     let mut map_state = MapState::new(file_path.clone());
@@ -619,7 +630,7 @@ fn test_load_map_file_empty_map() {
     
     // Load it
     let mut app = create_test_app_with_start_state();
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: Loaded successfully with empty data
     if let Screen::Map(loaded_state) = &app.screen {
@@ -634,6 +645,7 @@ fn test_load_map_file_empty_map() {
 fn test_load_map_file_with_many_notes() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("many_notes.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with many notes
     let mut map_state = MapState::new(file_path.clone());
@@ -649,7 +661,7 @@ fn test_load_map_file_with_many_notes() {
     
     // Load it
     let mut app = create_test_app_with_start_state();
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: All notes loaded
     if let Screen::Map(loaded_state) = &app.screen {
@@ -672,6 +684,7 @@ fn test_load_map_file_with_many_notes() {
 fn test_roundtrip_save_and_load_preserves_all_data() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("roundtrip.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with comprehensive data
     let mut original_state = MapState::new(file_path.clone());
@@ -717,7 +730,7 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     
     // Load the file
     let mut app = create_test_app_with_start_state();
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Verify: Everything matches
     if let Screen::Map(loaded_state) = &app.screen {
@@ -752,10 +765,11 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
 fn test_roundtrip_create_save_load() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("full_cycle.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Step 1: Create a new map file
     let mut app = create_test_app_with_start_state();
-    create_map_file(&mut app, &file_path);
+    create_map_file_with_fs(&mut app, &file_path, &fs);
     
     // Step 2: Modify the map state
     if let Screen::Map(map_state) = &mut app.screen {
@@ -771,7 +785,7 @@ fn test_roundtrip_create_save_load() {
     
     // Step 3: Load the file in a fresh app
     let mut fresh_app = create_test_app_with_start_state();
-    load_map_file(&mut fresh_app, &file_path);
+    load_map_file_with_fs(&mut fresh_app, &file_path, &fs);
     
     // Step 4: Verify the modifications persisted
     if let Screen::Map(loaded_state) = &fresh_app.screen {
@@ -786,6 +800,7 @@ fn test_roundtrip_create_save_load() {
 fn test_multiple_save_load_cycles() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("cycles.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create initial map
     let mut map_state = MapState::new(file_path.clone());
@@ -795,7 +810,7 @@ fn test_multiple_save_load_cycles() {
     
     // Load and modify (cycle 1)
     let mut app = create_test_app_with_start_state();
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     if let Screen::Map(state) = &mut app.screen {
         state.notes_state.notes.insert(1, Note::new(20, 20, String::from("V2"), false, Color::White));
@@ -805,7 +820,7 @@ fn test_multiple_save_load_cycles() {
     
     // Load and modify (cycle 2)
     let mut app2 = create_test_app_with_start_state();
-    load_map_file(&mut app2, &file_path);
+    load_map_file_with_fs(&mut app2, &file_path, &fs);
     
     if let Screen::Map(state) = &mut app2.screen {
         state.notes_state.notes.insert(2, Note::new(30, 30, String::from("V3"), false, Color::White));
@@ -815,7 +830,7 @@ fn test_multiple_save_load_cycles() {
     
     // Final load - verify all changes persisted
     let mut final_app = create_test_app_with_start_state();
-    load_map_file(&mut final_app, &file_path);
+    load_map_file_with_fs(&mut final_app, &file_path, &fs);
     
     if let Screen::Map(final_state) = &final_app.screen {
         assert_eq!(final_state.notes_state.notes.len(), 3);
@@ -830,6 +845,7 @@ fn test_multiple_save_load_cycles() {
 fn test_connection_index_roundtrip() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("conn_index.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create complex connection structure
     let mut map_state = MapState::new(file_path.clone());
@@ -865,7 +881,7 @@ fn test_connection_index_roundtrip() {
     
     // Load and verify
     let mut app = create_test_app_with_start_state();
-    load_map_file(&mut app, &file_path);
+    load_map_file_with_fs(&mut app, &file_path, &fs);
     
     if let Screen::Map(loaded_state) = &app.screen {
         // Verify connection index structure

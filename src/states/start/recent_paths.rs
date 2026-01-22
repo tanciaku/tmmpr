@@ -57,12 +57,6 @@ impl RecentPaths {
         // Write the data (guaranteed at this point)
         let _ = write_json_data(&recent_paths_file_path, &self);
     }
-
-    /// Save recent paths to the real filesystem (production version).
-    /// Calls save_with_fs with RealFileSystem.
-    pub fn save(&self) {
-        self.save_with_fs(&RealFileSystem);
-    }
 }
 
 /// Gets the recent paths from the filesystem using a filesystem abstraction (testable version).

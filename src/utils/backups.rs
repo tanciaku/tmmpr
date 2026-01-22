@@ -7,11 +7,12 @@ use crate::{
         map::{BackupResult, Notification},
         settings::{BackupsInterval, RuntimeBackupsInterval}
     },
-    utils::{save_map_file, save_settings_to_file},
+    utils::{save_map_file, save_settings_to_file_with_fs, filesystem::FileSystem},
 };
 
-/// Handles creating backups when loading a map file, if backups are enabled
-pub fn handle_on_load_backup(map_state: &mut MapState) {
+/// Handles creating backups when loading a map file, if backups are enabled.
+/// With a custom filesystem.
+pub fn handle_on_load_backup_with_fs(map_state: &mut MapState, fs: &impl FileSystem) {
     // Extract backup configuration and file info
     // This function is structured like so - to prevent multiple borrow conflicts.
     // If backups are enabled - backups_path and backups_interval will be Some,
@@ -75,8 +76,8 @@ pub fn handle_on_load_backup(map_state: &mut MapState) {
                     // Update the backup date in settings
                     map_state.settings.backup_dates.insert(filename, date);
                     
-                    // Save updated settings (backup_dates field) to file
-                    if let Err(_) = save_settings_to_file(&map_state.settings) {
+                    // Save updated settings (backup_dates field) to file with the provided filesystem
+                    if let Err(_) = save_settings_to_file_with_fs(&map_state.settings, fs) {
                         // If there was an error updating backup records - notify user.
                         map_state.ui_state.set_notification(Notification::BackupRecordFail);
                     }

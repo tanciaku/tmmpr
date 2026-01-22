@@ -9,7 +9,10 @@ use crate::{
         settings::{BackupsInterval, RuntimeBackupsInterval},
         map::Notification,
     },
-    utils::backups::{get_duration, get_duration_rt, handle_on_load_backup, handle_runtime_backup},
+    utils::{
+        backups::{get_duration, get_duration_rt, handle_on_load_backup_with_fs, handle_runtime_backup},
+        filesystem::test_utils::TempFileSystem,
+    },
 };
 
 // ============================================================================
@@ -101,8 +104,9 @@ fn test_handle_on_load_backup_disabled_backups() {
     // Create a temp directory for the map file
     let temp_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    // Create MapState (may load user's actual settings from ~/.config/tmmpr/settings.json)
+    // Create MapState
     let mut map_state = MapState::new(map_file_path.clone());
     
     // Explicitly disable backups for this test
@@ -110,7 +114,7 @@ fn test_handle_on_load_backup_disabled_backups() {
     map_state.settings.backups_interval = None;
     
     // Call the function
-    handle_on_load_backup(&mut map_state);
+    handle_on_load_backup_with_fs(&mut map_state, &fs);
     
     // Verify no backup was created (backup_res should remain None)
     assert_eq!(map_state.persistence.backup_res, None);
@@ -125,8 +129,9 @@ fn test_handle_on_load_backup_first_backup() {
     let temp_dir = tempfile::tempdir().unwrap();
     let backup_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    // Create MapState (may load user's actual settings from ~/.config/tmmpr/settings.json)
+    // Create MapState
     let mut map_state = MapState::new(map_file_path.clone());
     
     // Enable backups with Daily interval
@@ -137,7 +142,7 @@ fn test_handle_on_load_backup_first_backup() {
     map_state.settings.backup_dates.clear();
     
     // Call the function
-    handle_on_load_backup(&mut map_state);
+    handle_on_load_backup_with_fs(&mut map_state, &fs);
      
     // Verify notification was set to BackupSuccess
     assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
@@ -172,6 +177,7 @@ fn test_handle_on_load_backup_skip_recent_backup() {
     let temp_dir = tempfile::tempdir().unwrap();
     let backup_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create MapState
     let mut map_state = MapState::new(map_file_path.clone());
@@ -186,7 +192,7 @@ fn test_handle_on_load_backup_skip_recent_backup() {
     map_state.settings.backup_dates = backup_dates;
     
     // Call the function
-    handle_on_load_backup(&mut map_state);
+    handle_on_load_backup_with_fs(&mut map_state, &fs);
     
     // Verify no new backup was created
     assert_eq!(map_state.ui_state.show_notification, None);
@@ -207,6 +213,7 @@ fn test_handle_on_load_backup_old_backup_triggers_new() {
     let temp_dir = tempfile::tempdir().unwrap();
     let backup_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create MapState
     let mut map_state = MapState::new(map_file_path.clone());
@@ -222,7 +229,7 @@ fn test_handle_on_load_backup_old_backup_triggers_new() {
     map_state.settings.backup_dates = backup_dates;
     
     // Call the function
-    handle_on_load_backup(&mut map_state);
+    handle_on_load_backup_with_fs(&mut map_state, &fs);
     
     // Verify backup was created successfully
     assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
@@ -248,6 +255,7 @@ fn test_handle_on_load_backup_different_intervals() {
     let temp_dir = tempfile::tempdir().unwrap();
     let backup_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     let mut map_state = MapState::new(map_file_path.clone());
     map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
@@ -259,7 +267,7 @@ fn test_handle_on_load_backup_different_intervals() {
     backup_dates.insert("test_map".to_string(), six_days_ago);
     map_state.settings.backup_dates = backup_dates;
     
-    handle_on_load_backup(&mut map_state);
+    handle_on_load_backup_with_fs(&mut map_state, &fs);
     
     // Verify no backup was created (not enough time passed)
     let backup_files: Vec<_> = fs::read_dir(backup_dir.path())
@@ -278,7 +286,7 @@ fn test_handle_on_load_backup_different_intervals() {
     backup_dates.insert("test_map".to_string(), eight_days_ago);
     map_state.settings.backup_dates = backup_dates;
     
-    handle_on_load_backup(&mut map_state);
+    handle_on_load_backup_with_fs(&mut map_state, &fs);
     
     // Verify backup was created
     let backup_files2: Vec<_> = fs::read_dir(backup_dir2.path())
@@ -294,8 +302,9 @@ fn test_handle_on_load_backup_invalid_backup_directory() {
     // Create temp directory for map file
     let temp_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    // Create MapState (may load user's actual settings from ~/.config/tmmpr/settings.json)
+    // Create MapState
     let mut map_state = MapState::new(map_file_path.clone());
     
     // Enable backups with an invalid/inaccessible path
@@ -306,7 +315,7 @@ fn test_handle_on_load_backup_invalid_backup_directory() {
     map_state.settings.backup_dates.clear();
     
     // Call the function
-    handle_on_load_backup(&mut map_state);
+    handle_on_load_backup_with_fs(&mut map_state, &fs);
     
     // Verify backup failed
     assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupFail));

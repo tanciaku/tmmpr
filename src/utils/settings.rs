@@ -2,21 +2,8 @@ use std::path::Path;
 
 use crate::{
     states::settings::Settings,
-    utils::{write_json_data, filesystem::{FileSystem, RealFileSystem}},
+    utils::{write_json_data, filesystem::FileSystem},
 };
-
-/// Saves the application settings to the settings file in the user's config directory.
-/// 
-/// This function writes the settings to `~/.config/tmmpr/settings.json`.
-/// 
-/// # Errors
-/// 
-/// Returns an error if:
-/// - The home directory cannot be found
-/// - The file cannot be written to
-pub fn save_settings_to_file(settings: &Settings) -> Result<(), Box<dyn std::error::Error>> { 
-    save_settings_to_file_with_fs(settings, &RealFileSystem)
-}
 
 /// Saves the application settings to the settings file using a custom FileSystem.
 /// 

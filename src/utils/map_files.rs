@@ -7,7 +7,7 @@ use crate::{
     states::{
         MapState, map::{BackupResult, Connection, Note, Notification, ViewPos}, start::ErrMsg
     },
-    utils::{handle_on_load_backup, read_json_data, write_json_data, get_color_name_in_string, get_color_from_string},
+    utils::{handle_on_load_backup_with_fs, read_json_data, write_json_data, get_color_name_in_string, get_color_from_string, filesystem::{FileSystem, RealFileSystem}},
 };
 
 /// A type for reading and writing relevant data from MapState
@@ -39,10 +39,17 @@ where
 }
 
 
-/// Creates a new map file.
+/// Creates a new map file (production version).
 /// 
 /// Handles file write error by displaying appropriate error message to the user.
 pub fn create_map_file(app: &mut App, path: &Path) {
+    create_map_file_with_fs(app, path, &RealFileSystem);
+}
+
+/// Creates a new map file with a custom filesystem.
+/// 
+/// Handles file write error by displaying appropriate error message to the user.
+pub fn create_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {
     // Create a new Map State for creating a new map file
     let map_state = MapState::new(path.to_path_buf()); // Only clone when storing
     // Take the default values from that to write to the file
@@ -72,8 +79,8 @@ pub fn create_map_file(app: &mut App, path: &Path) {
             if !recent_paths.contains_path(path) {
                 recent_paths.add(path.to_path_buf());
 
-                // Save the recent_paths file
-                recent_paths.save();
+                // Save the recent_paths file with the provided filesystem
+                recent_paths.save_with_fs(fs);
             }
         }
     }
@@ -139,7 +146,7 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
     }            
 }
 
-/// Loads map data from a file and transitions the application to the Map screen.
+/// Loads map data from a file and transitions the application to the Map screen (production version).
 /// 
 /// This function is exclusively called from the Start screen when the user wants to 
 /// open an existing map file. It reads the map data from the specified file path,
@@ -148,6 +155,18 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
 /// If the file cannot be read or contains invalid data, the function will show
 /// an error message via the Start screen's error handling and prevent screen transition.
 pub fn load_map_file(app: &mut App, path: &Path) {
+    load_map_file_with_fs(app, path, &RealFileSystem);
+}
+
+/// Loads map data from a file and transitions the application to the Map screen with a custom filesystem.
+/// 
+/// This function is exclusively called from the Start screen when the user wants to 
+/// open an existing map file. It reads the map data from the specified file path,
+/// populates a new MapState with the loaded data, and transitions the app to the Map screen.
+/// 
+/// If the file cannot be read or contains invalid data, the function will show
+/// an error message via the Start screen's error handling and prevent screen transition.
+pub fn load_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {
     // Initialize a default MapState that will be populated with loaded data.
     // This ensures we have valid defaults for any fields not present in the file.
     let mut map_state = MapState::new(path.to_path_buf()); // Only clone when storing
@@ -185,8 +204,8 @@ pub fn load_map_file(app: &mut App, path: &Path) {
             if !recent_paths.contains_path(path) {
                 recent_paths.add(path.to_path_buf());
 
-                // Save the recent_paths file
-                recent_paths.save();
+                // Save the recent_paths file with the provided filesystem
+                recent_paths.save_with_fs(fs);
             }
         }
     }
@@ -197,6 +216,6 @@ pub fn load_map_file(app: &mut App, path: &Path) {
 
     // If backups enabled - determine whether to create a load backup file.
     if let Screen::Map(map_state) = &mut app.screen {
-        handle_on_load_backup(map_state);
+        handle_on_load_backup_with_fs(map_state, fs);
     }
 }
