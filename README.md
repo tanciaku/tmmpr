@@ -88,8 +88,12 @@ You'll be greeted with a start screen where you can:
 
 > **📖 View In-App Help:** Press `?` or `F1` from the Map Screen to open the interactive help pages with all keybindings and detailed explanations.
 
+**💡 Zooming:** Since **tmmpr** runs in your terminal, zooming is controlled by adjusting your terminal emulator's font size. Most terminals use `Ctrl` + `+` / `Ctrl` + `-` (or `Cmd` + `+` / `Cmd` + `-` on macOS). The specific shortcuts vary by terminal emulator (GNOME Terminal, Konsole, iTerm2, Alacritty, etc.), so consult your terminal's documentation if needed.
+
+---
+
 <details>
-<summary><b>Click to expand full keybindings reference</b></summary>
+<summary><b>📋 Click to expand full keybindings reference ⬇️</b></summary>
 
 ### Normal Mode
 
