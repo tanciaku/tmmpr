@@ -5,9 +5,9 @@ use crate::{
     input::AppAction,
     states::start::{
         StartState, SelectedStartButton, FocusedInputBox, ErrMsg, 
-        RecentPaths,
+        RecentPaths, get_recent_paths_with_fs
     },
-    utils::filesystem::test_utils::MockFileSystem,
+    utils::filesystem::test_utils::MockFileSystem, 
 };
 
 #[test]
@@ -280,30 +280,48 @@ fn test_recent_paths_contains_path_empty() {
 }
 
 #[test]
-fn test_get_recent_paths_integration() {
-    use crate::states::start::get_recent_paths;
+fn test_get_recent_paths_no_home_dir() { 
+    // Test error when home directory is not available
+    let mock_fs = MockFileSystem::new().with_home_dir(None);
+    let result = get_recent_paths_with_fs(&mock_fs);
     
-    // Call the function - it will use the baked-in path ~/.config/tmmpr/recent_paths.json
-    // and create it if it doesn't exist
-    let result = get_recent_paths();
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err(), ErrMsg::DirFind);
+}
+
+#[test]
+fn test_get_recent_paths_dir_create_failure() {
+    // Test error when directory creation fails
+    let mock_fs = MockFileSystem::new().with_dir_create_failure();
+    let result = get_recent_paths_with_fs(&mock_fs);
     
-    // The function should either succeed or fail gracefully
-    match result {
-        Ok(recent_paths) => {
-            // If successful, verify it's a valid RecentPaths structure
-            // We don't make assumptions about what paths exist, just that the structure is valid
-            // These assertions may seem trivial, but they verify the deserialization worked correctly
-            assert!(recent_paths.recent_path_1.is_none() || recent_paths.recent_path_1.is_some());
-            assert!(recent_paths.recent_path_2.is_none() || recent_paths.recent_path_2.is_some());
-            assert!(recent_paths.recent_path_3.is_none() || recent_paths.recent_path_3.is_some());
-        }
-        Err(err_msg) => {
-            // If it fails, it should be one of the expected error types
-            // This can happen if there are permission issues or home directory problems
-            assert!(matches!(
-                err_msg,
-                ErrMsg::DirFind | ErrMsg::DirCreate | ErrMsg::FileRead | ErrMsg::FileWrite
-            ));
-        }
-    }
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err(), ErrMsg::DirCreate);
+}
+
+#[test]
+fn test_recent_paths_save_with_mock() {
+    let mut recent_paths = RecentPaths::new();
+    recent_paths.add(PathBuf::from("/test/path.json"));
+    
+    // Test that save_with_fs can be called with MockFileSystem
+    // This verifies the method signature works correctly with the trait
+    let mock_fs = MockFileSystem::new();
+    recent_paths.save_with_fs(&mock_fs);
+    
+    // The save returns () so we just verify it doesn't panic
+    // In production, this would write to ~/.config/tmmpr/recent_paths.json
+    // With the mock, it just validates the logic without touching the filesystem
+}
+
+#[test]
+fn test_recent_paths_save_no_home_dir() {
+    let mut recent_paths = RecentPaths::new();
+    recent_paths.add(PathBuf::from("/test/path.json"));
+    
+    // Test that save_with_fs handles missing home directory gracefully
+    let mock_fs = MockFileSystem::new().with_home_dir(None);
+    recent_paths.save_with_fs(&mock_fs);
+    
+    // Should return early without panicking when home dir is None
 }

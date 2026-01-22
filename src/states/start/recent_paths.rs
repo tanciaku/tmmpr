@@ -1,7 +1,10 @@
-use std::{fs, path::{Path, PathBuf}};
+use std::path::{Path, PathBuf};
 use serde::{Serialize, Deserialize};
 
-use crate::{states::start::ErrMsg, utils::{read_json_data, write_json_data}};
+use crate::{
+    states::start::ErrMsg, 
+    utils::{read_json_data, write_json_data, filesystem::{FileSystem, RealFileSystem}},
+};
 
 // PathBuf because the state needs to own it's fields.
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
@@ -37,12 +40,13 @@ impl RecentPaths {
         self.recent_path_3.as_deref() == Some(path)
     }
 
+    /// Save recent paths using a filesystem abstraction (testable version).
     /// There cannot be an error here since - if the user cannot use the
     /// recent_paths functionality - this will never be called.
     /// If the directories didn't exist before - they would at this point.
-    pub fn save(&self) {
+    pub fn save_with_fs(&self, fs: &impl FileSystem) {
         // Get the user's home directory path
-        let home_path = match home::home_dir() {
+        let home_path = match fs.get_home_dir() {
             Some(path) => path,
             None => return,
         };
@@ -53,15 +57,21 @@ impl RecentPaths {
         // Write the data (guaranteed at this point)
         let _ = write_json_data(&recent_paths_file_path, &self);
     }
+
+    /// Save recent paths to the real filesystem (production version).
+    /// Calls save_with_fs with RealFileSystem.
+    pub fn save(&self) {
+        self.save_with_fs(&RealFileSystem);
+    }
 }
 
-/// Gets the recent paths from the ~/.config/tmmpr/recent_paths.json file.
+/// Gets the recent paths from the filesystem using a filesystem abstraction (testable version).
 /// Or creates an empty one if it doesn't exist
-/// If there is an error somewhere along the way - returns None
+/// If there is an error somewhere along the way - returns an error message
 ///   (can't use recent_paths functionality in that case)
-pub fn get_recent_paths() -> Result<RecentPaths, ErrMsg> {
+pub fn get_recent_paths_with_fs(fs: &impl FileSystem) -> Result<RecentPaths, ErrMsg> {
     // Get the user's home directory path
-    let home_path = match home::home_dir() {
+    let home_path = match fs.get_home_dir() {
         Some(path) => path,
         None => return Err(ErrMsg::DirFind),
     };
@@ -70,7 +80,7 @@ pub fn get_recent_paths() -> Result<RecentPaths, ErrMsg> {
     let config_dir_path = home_path.join(".config/tmmpr/");
 
     // Create the directory if it doesn't exist
-    if let Err(_) = fs::create_dir_all(&config_dir_path) {
+    if let Err(_) = fs.create_dir_all(&config_dir_path) {
         return Err(ErrMsg::DirCreate)
     };
 
@@ -78,7 +88,7 @@ pub fn get_recent_paths() -> Result<RecentPaths, ErrMsg> {
     let recent_paths_file_path = config_dir_path.join("recent_paths").with_extension("json");
 
     // Load the file if it exits:
-    if recent_paths_file_path.exists() {
+    if fs.path_exists(&recent_paths_file_path) {
         match read_json_data(&recent_paths_file_path) {
             Ok(recent_paths) => Ok(recent_paths),
             Err(_) => Err(ErrMsg::FileRead),
@@ -90,4 +100,10 @@ pub fn get_recent_paths() -> Result<RecentPaths, ErrMsg> {
             Err(_) => Err(ErrMsg::FileWrite),
         }
     }
+}
+
+/// Gets the recent paths from the ~/.config/tmmpr/recent_paths.json file (production version).
+/// Calls get_recent_paths_with_fs with RealFileSystem.
+pub fn get_recent_paths() -> Result<RecentPaths, ErrMsg> {
+    get_recent_paths_with_fs(&RealFileSystem)
 }
