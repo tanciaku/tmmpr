@@ -4,49 +4,74 @@
 
 <div align="center">
 
+# tmmpr
+
 **t**erminal **m**ind **m**a**p**pe**r**
 
 \* add button links
 
-_tmmpr_ is a simple, lightweight mind mapping application that runs in your terminal,  
-built with [Rust](https://www.rust-lang.org/) and [Ratatui](https://ratatui.rs)
+_A simple, lightweight mind mapping application that runs in your terminal_
+
+[![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![Ratatui](https://img.shields.io/badge/Ratatui-000?logo=ratatui&logoColor=fff&style=for-the-badge)](https://ratatui.rs)
+
+[Installation](#-installation) • [Usage](#-usage) • [Features](#-features) • [Keybindings](#-keybindings)
 
 </div>
 
-## Overview
+---
 
-tmmpr is a Linux terminal application that lets you create, organize, and connect notes on an infinite canvas. Think of it as a digital whiteboard in your terminal where you can freely place notes anywhere and add connections between them.
+## 📖 Overview
 
-The application is entirely keyboard-centered, offering efficient navigation and control through keyboard shortcuts and vim-inspired keybindings.
+**tmmpr** is a Linux terminal application that lets you create, organize, and connect notes on an infinite canvas. Think of it as a digital whiteboard in your terminal where you can freely place notes anywhere and draw connections between them.
 
-## Features
+The application is entirely keyboard-driven, offering efficient navigation and control through vim-inspired keybindings. Perfect for brainstorming, project planning, or organizing complex ideas.
 
-- **Infinite Canvas**: Place notes anywhere on a positive coordinate system (0,0 to infinity)
-- **Visual Connections**: Draw and manage connections between notes with customizable colors and sides
-- **Vim-Inspired Navigation**: Efficient keyboard-driven interface with hjkl movement
-- **Multiple Modes**: 
+## ✨ Features
+
+- 🗺️ **Infinite Canvas** - Place notes anywhere on a positive coordinate system (0,0 to infinity)
+- 🔗 **Visual Connections** - Draw and manage connections between notes with customizable colors and sides
+- ⌨️ **Vim-Inspired Navigation** - Efficient keyboard-driven interface with hjkl movement
+- 🎯 **Multiple Modes**:
   - Normal Mode - viewport navigation and general commands
   - Visual Mode - select and manage notes
+  - Visual (Move) Mode - reposition notes on the canvas
+  - Visual (Connection) Mode - manage note connections
   - Edit Mode - text editing with optional modal (vim-inspired) editing
-  - Move Mode - reposition notes on the canvas
-  - Connection Mode - manage note connections
-- **Auto-Save**: Configurable auto-save intervals to prevent data loss
-- **Backup System**: Automatic backups with customizable intervals (daily, weekly, etc.)
-- **Customizable**: Adjustable settings for connections, auto-save intervals, and editing behavior
+- 💾 **Auto-Save** - Configurable auto-save intervals to prevent data loss
+- 🔄 **Backup System** - Automatic backups with customizable intervals (daily, weekly, etc.)
+- 🎨 **Customizable** - Color-coded notes and connections, adjustable settings
 
-## Previews
+## 📸 Previews
 
 <img src="images/preview.png" width="800" alt="Preview">
 
 <img src="images/preview.gif" width="800" alt="Preview">
 
-## Installation
+## 🚀 Installation
+
+### From Crates.io (Recommended)
 
 ```shell
 cargo install tmmpr
 ```
 
-## Usage
+### From Source
+
+```shell
+git clone https://github.com/tanciaku/tmmpr.git
+cd tmmpr
+cargo build --release
+# Binary will be at ./target/release/tmmpr
+```
+
+### System Requirements
+
+- **OS**: Linux (primary support)
+- **Rust**: 1.85.0 or higher (requires Rust 2024 edition)
+- **Terminal**: Any terminal emulator with Unicode support
+
+## 💻 Usage
 
 Simply run the application from your terminal:
 
@@ -54,11 +79,19 @@ Simply run the application from your terminal:
 tmmpr
 ```
 
-### Keybindings
+You'll be greeted with a start screen where you can:
+- Create a new mind map
+- Open an existing map file
+- Access recent files
+
+## ⌨️ Keybindings
 
 > **📖 View In-App Help:** Press `?` or `F1` from the Map Screen to open the interactive help pages with all keybindings and detailed explanations.
 
-#### Normal Mode
+<details>
+<summary><b>Click to expand full keybindings reference</b></summary>
+
+### Normal Mode
 
 **General Commands:**
 - `F1` / `?` - Toggle help screen
@@ -80,7 +113,7 @@ tmmpr
 - `a` - Add a new note and switch to Edit Mode
 - `v` - Select closest note to center of screen and switch to Visual Mode
 
-#### Visual Mode
+### Visual Mode
 
 **General Commands:**
 - `ESC` - Switch back to Normal Mode
@@ -97,7 +130,7 @@ tmmpr
 - `k` / `Up Arrow` - Switch focus to note above
 - `l` / `Right Arrow` - Switch focus to note on the right
 
-#### Visual (Move) Mode
+### Visual (Move) Mode
 
 - `m` - Switch back to Visual Mode normal state
 - `ESC` - Switch back to Normal Mode
@@ -110,7 +143,7 @@ tmmpr
 - `l` / `Right Arrow` - Move note right by 1
 - `L` / `Shift+Right Arrow` - Move note right by 5
 
-#### Visual (Connection) Mode
+### Visual (Connection) Mode
 
 **Connection Management:**
 - `c` - Confirm connection placement and switch to Visual Mode
@@ -125,7 +158,7 @@ tmmpr
 - `k` / `Up Arrow` - Switch focus to note above
 - `l` / `Right Arrow` - Switch focus to note on the right
 
-#### Edit Mode
+### Edit Mode
 
 **Normal Edit Mode (Default):**
 - Any character, `Enter`, `Backspace`, Arrow keys for typing/editing
@@ -148,7 +181,9 @@ tmmpr
 - Any character, `Enter`, `Backspace`, Arrow keys for typing/editing
 - `ESC` - Switch to Edit Normal Mode
 
-## Settings
+</details>
+
+## ⚙️ Settings
 
 Access settings by pressing `o` from the map screen. Configurable options include:
 
@@ -158,13 +193,44 @@ Access settings by pressing `o` from the map screen. Configurable options includ
 - **Default Connection Sides** - Default start/end sides for connections
 - **Modal Edit Mode** - Enable vim-inspired modal editing
 
-## Acknowledgements
+## 🛠️ Troubleshooting
 
-Concept taken from: [Obsidian Canvas][ObsidianCanvas]
+**Issue: Terminal display looks wrong**
+- Ensure your terminal supports Unicode characters
+- Try resizing your terminal window
 
-## License
+**Issue: Files not saving**
+- Check file permissions in your working directory
+- Verify disk space availability
+
+**Issue: Keybindings not working**
+- Check that your terminal is not intercepting key combinations
+- Some terminals may not support all key combinations
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+- Report bugs by opening an issue
+- Suggest new features
+- Submit pull requests
+
+## 📝 License
 
 This project is licensed under the [MIT License][MITLicense]
 
+## 🙏 Acknowledgements
+
+Concept inspired by: [Obsidian Canvas][ObsidianCanvas]
+
+Built with ❤️ using [Rust](https://www.rust-lang.org/) 🦀 and [Ratatui](https://ratatui.rs) 🐀
+
+---
+
+<div align="center">
+
+**Enjoy mapping your thoughts! 🗺️**
+
+</div>
+
 [ObsidianCanvas]: https://obsidian.md/canvas
-[MITLicense]: https://github.com/hotellogical05/tmmpr/blob/main/LICENSE
+[MITLicense]: https://github.com/tanciaku/tmmpr/blob/main/LICENSE
