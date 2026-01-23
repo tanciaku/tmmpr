@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::{app::Screen, input::{AppAction, map::{help_next_page, help_previous_page, move_viewport}}, states::{MapState, SettingsState, StartState, map::{DiscardMenuType, Mode}}};
+use crate::{app::Screen, input::{AppAction, map::{help_next_page, help_previous_page, move_viewport}}, states::{MapState, SettingsState, StartState, map::DiscardMenuType}};
 
 
 /// Key handling for Normal Mode in the Map Screen
@@ -125,7 +125,6 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         // Select note (selects the closest one to the center of the screen)
         KeyCode::Char('v') => {
             map_state.select_note();
-            map_state.current_mode = Mode::Visual;
         }
     
         _ => {}

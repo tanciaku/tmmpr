@@ -687,7 +687,7 @@ fn test_select_note_with_no_notes() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note, None);
-    assert_eq!(map_state.current_mode, Mode::Visual);
+    assert_eq!(map_state.current_mode, Mode::Normal);
 }
 
 #[test]

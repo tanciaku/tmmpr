@@ -110,7 +110,9 @@ impl MapState {
         
         // Use the new helper methods
         if let Some(id) = self.notes_state.find_closest_note(screen_center_x, screen_center_y) {
+            // When/If found the closest note - select it and switch to Visual Mode
             self.notes_state.select_note_by_id(id);
+            self.current_mode = Mode::Visual;
         }
     }
 
