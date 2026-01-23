@@ -2,6 +2,9 @@ use crate::states::MapState;
 
 
 pub fn backspace_char(map_state: &mut MapState, selected_note: usize) {
+    // Edited note's contents - need to save or discard changes before exiting.
+    map_state.persistence.mark_dirty();
+
     if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
         // We can only backspace if the cursor is not at the very beginning of the text.
         if map_state.notes_state.cursor_pos > 0 {
@@ -22,6 +25,9 @@ pub fn backspace_char(map_state: &mut MapState, selected_note: usize) {
 }
 
 pub fn remove_char(map_state: &mut MapState, selected_note: usize) {
+    // Edited note's contents - need to save or discard changes before exiting.
+    map_state.persistence.mark_dirty();
+
     if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
         if !note.content.is_empty() {
             let mut chars: Vec<char> = note.content.chars().collect();

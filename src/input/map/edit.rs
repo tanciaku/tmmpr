@@ -38,10 +38,7 @@ pub fn map_edit_kh(map_state: &mut MapState, key: KeyEvent, modal: Option<ModalE
                     // --- Text Editing ---
                     KeyCode::Char(c) => insert_char(map_state, *selected_note, c),
                     KeyCode::Enter => insert_char(map_state, *selected_note, '\n'),
-                    KeyCode::Backspace => {
-                        map_state.persistence.mark_dirty();
-                        backspace_char(map_state, *selected_note);
-                    }
+                    KeyCode::Backspace => backspace_char(map_state, *selected_note),
                     KeyCode::Left => {
                         if map_state.notes_state.cursor_pos > 0 { 
                             map_state.notes_state.cursor_pos -= 1 
