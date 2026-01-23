@@ -8,12 +8,9 @@
 
 **t**erminal **m**ind **m**a**p**pe**r**
 
-\* add button links
-
 _A simple, lightweight mind mapping application that runs in your terminal_
 
-[![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![Ratatui](https://img.shields.io/badge/Ratatui-000?logo=ratatui&logoColor=fff&style=for-the-badge)](https://ratatui.rs)
+![CI](https://github.com/tanciaku/tmmpr/workflows/CI/badge.svg)
 
 [Installation](#-installation) • [Usage](#-usage) • [Features](#-features) • [Keybindings](#-keybindings)
 
