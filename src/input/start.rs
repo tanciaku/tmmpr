@@ -1,11 +1,11 @@
 //! Start screen input handling
 
-use crate::{input::AppAction, states::{StartState, start::{FocusedInputBox, SelectedStartButton}}};
+use crate::{input::AppAction, states::{StartState, start::{FocusedInputBox, SelectedStartButton}}, utils::FileSystem};
 use crossterm::event::{KeyCode, KeyEvent};
 
 
 /// Key handling for the Start Screen
-pub fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
+pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSystem) -> AppAction {
     // Take all input if in the Input Menu screen
     // (Entering a path for the map file)
     if start_state.input_path {
@@ -58,7 +58,7 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
                         }
                         KeyCode::Enter => {
                             start_state.clear_and_redraw();
-                            return start_state.submit_path(None)
+                            return start_state.submit_path_with_fs(None, fs)
                         }
                         _ => {}
                     }
@@ -103,17 +103,17 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent) -> AppAction {
                 match start_state.selected_button {
                     SelectedStartButton::Recent1 => {
                         if let Some(path) = &recent_paths.recent_path_1 {
-                            return start_state.submit_path(Some(path.to_path_buf()))
+                            return start_state.submit_path_with_fs(Some(path.to_path_buf()), fs)
                         }
                     }
                     SelectedStartButton::Recent2 => {
                         if let Some(path) = &recent_paths.recent_path_2 {
-                            return start_state.submit_path(Some(path.to_path_buf()))
+                            return start_state.submit_path_with_fs(Some(path.to_path_buf()), fs)
                         }
                     }
                     SelectedStartButton::Recent3 => {
                         if let Some(path) = &recent_paths.recent_path_3 {
-                            return start_state.submit_path(Some(path.to_path_buf()))
+                            return start_state.submit_path_with_fs(Some(path.to_path_buf()), fs)
                         }
                     }
                     _ => {}

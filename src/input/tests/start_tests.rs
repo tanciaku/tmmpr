@@ -6,6 +6,7 @@ mod tests {
     use crate::states::{
         start::{FocusedInputBox, SelectedStartButton, StartState, RecentPaths},
     };
+    use crate::utils::test_utils::MockFileSystem;
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
     use std::path::PathBuf;
 
@@ -28,7 +29,8 @@ mod tests {
     fn test_quit_on_q() {
         let mut state = create_test_start_state();
         let key = create_key_event(KeyCode::Char('q'));
-        let result = start_kh(&mut state, key);
+        let mock_fs = MockFileSystem::new();
+        let result = start_kh(&mut state, key, &mock_fs);
         assert_eq!(result, AppAction::Quit);
     }
 
@@ -39,13 +41,15 @@ mod tests {
 
         // Test 'k' key
         let key = create_key_event(KeyCode::Char('k'));
-        start_kh(&mut state, key);
+        let mock_fs = MockFileSystem::new();
+        start_kh(&mut state, key, &mock_fs);
         assert_eq!(state.selected_button, SelectedStartButton::CreateSelect);
 
         // Test Up arrow
         state.selected_button = SelectedStartButton::Recent2;
         let key = create_key_event(KeyCode::Up);
-        start_kh(&mut state, key);
+        let mock_fs = MockFileSystem::new();
+        start_kh(&mut state, key, &mock_fs);
         assert_eq!(state.selected_button, SelectedStartButton::Recent1);
     }
 
@@ -55,12 +59,14 @@ mod tests {
         
         // Test 'j' key
         let key = create_key_event(KeyCode::Char('j'));
-        start_kh(&mut state, key);
+        let mock_fs = MockFileSystem::new();
+        start_kh(&mut state, key, &mock_fs);
         assert_eq!(state.selected_button, SelectedStartButton::Recent1);
 
         // Test Down arrow
         let key = create_key_event(KeyCode::Down);
-        start_kh(&mut state, key);
+        let mock_fs = MockFileSystem::new();
+        start_kh(&mut state, key, &mock_fs);
         assert_eq!(state.selected_button, SelectedStartButton::Recent2);
     }
 
@@ -71,13 +77,15 @@ mod tests {
         // Test that we can't go up from CreateSelect
         assert_eq!(state.selected_button, SelectedStartButton::CreateSelect);
         let key = create_key_event(KeyCode::Char('k'));
-        start_kh(&mut state, key);
+        let mock_fs = MockFileSystem::new();
+        start_kh(&mut state, key, &mock_fs);
         assert_eq!(state.selected_button, SelectedStartButton::CreateSelect);
 
         // Test that we can't go down from Recent3
         state.selected_button = SelectedStartButton::Recent3;
         let key = create_key_event(KeyCode::Char('j'));
-        start_kh(&mut state, key);
+        let mock_fs = MockFileSystem::new();
+        start_kh(&mut state, key, &mock_fs);
         assert_eq!(state.selected_button, SelectedStartButton::Recent3);
     }
 
@@ -87,7 +95,8 @@ mod tests {
         state.selected_button = SelectedStartButton::CreateSelect;
         
         let key = create_key_event(KeyCode::Enter);
-        let result = start_kh(&mut state, key);
+        let mock_fs = MockFileSystem::new();
+        let result = start_kh(&mut state, key, &mock_fs);
         
         assert_eq!(result, AppAction::Continue);
         assert!(state.input_path);
@@ -105,6 +114,7 @@ mod tests {
         // Here we just verify that non-existent files are handled correctly.
         
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         // Use paths that don't exist
         state.recent_paths = Ok(RecentPaths {
             recent_path_1: Some(PathBuf::from("/nonexistent/path1.json")),
@@ -115,7 +125,7 @@ mod tests {
         // Test Recent1 - should return Continue since file doesn't exist
         state.selected_button = SelectedStartButton::Recent1;
         let key = create_key_event(KeyCode::Enter);
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
         assert_eq!(result, AppAction::Continue);
         assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
 
@@ -124,7 +134,7 @@ mod tests {
 
         // Test Recent2
         state.selected_button = SelectedStartButton::Recent2;
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
         assert_eq!(result, AppAction::Continue);
         assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
 
@@ -133,7 +143,7 @@ mod tests {
 
         // Test Recent3
         state.selected_button = SelectedStartButton::Recent3;
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
         assert_eq!(result, AppAction::Continue);
         assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
     }
@@ -141,13 +151,14 @@ mod tests {
     #[test]
     fn test_input_mode_escape_exits() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = Some("test_path".to_string());
         state.input_path_name = Some("test_name".to_string());
         state.focused_input_box = FocusedInputBox::InputBox2;
 
         let key = create_key_event(KeyCode::Esc);
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         assert_eq!(result, AppAction::Continue);
         assert!(!state.input_path);
@@ -159,13 +170,14 @@ mod tests {
     #[test]
     fn test_input_mode_char_input_in_input_box1() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = Some(String::new());
         state.input_path_name = Some(String::new());
         state.focused_input_box = FocusedInputBox::InputBox1;
 
         let key = create_key_event(KeyCode::Char('t'));
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         assert_eq!(result, AppAction::Continue);
         assert_eq!(state.input_path_string, Some("t".to_string()));
@@ -174,13 +186,14 @@ mod tests {
     #[test]
     fn test_input_mode_char_input_in_input_box2() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = Some("path".to_string());
         state.input_path_name = Some(String::new());
         state.focused_input_box = FocusedInputBox::InputBox2;
 
         let key = create_key_event(KeyCode::Char('n'));
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         assert_eq!(result, AppAction::Continue);
         assert_eq!(state.input_path_name, Some("n".to_string()));
@@ -189,13 +202,14 @@ mod tests {
     #[test]
     fn test_input_mode_char_input_length_limit() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = Some("a".repeat(46)); // Already at max length
         state.input_path_name = Some(String::new());
         state.focused_input_box = FocusedInputBox::InputBox1;
 
         let key = create_key_event(KeyCode::Char('x'));
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         assert_eq!(result, AppAction::Continue);
         // Should still be 46 characters, no new character added
@@ -206,13 +220,14 @@ mod tests {
     #[test]
     fn test_input_mode_backspace_in_input_box1() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = Some("test".to_string());
         state.input_path_name = Some(String::new());
         state.focused_input_box = FocusedInputBox::InputBox1;
 
         let key = create_key_event(KeyCode::Backspace);
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         assert_eq!(result, AppAction::Continue);
         assert_eq!(state.input_path_string, Some("tes".to_string()));
@@ -221,13 +236,14 @@ mod tests {
     #[test]
     fn test_input_mode_backspace_in_input_box2() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = Some("path".to_string());
         state.input_path_name = Some("name".to_string());
         state.focused_input_box = FocusedInputBox::InputBox2;
 
         let key = create_key_event(KeyCode::Backspace);
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         assert_eq!(result, AppAction::Continue);
         assert_eq!(state.input_path_name, Some("nam".to_string()));
@@ -236,13 +252,14 @@ mod tests {
     #[test]
     fn test_input_mode_backspace_on_empty_string() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = Some(String::new());
         state.input_path_name = Some(String::new());
         state.focused_input_box = FocusedInputBox::InputBox1;
 
         let key = create_key_event(KeyCode::Backspace);
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         assert_eq!(result, AppAction::Continue);
         assert_eq!(state.input_path_string, Some(String::new()));
@@ -251,13 +268,14 @@ mod tests {
     #[test]
     fn test_input_mode_enter_switches_focus() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = Some("test_path".to_string());
         state.input_path_name = Some(String::new());
         state.focused_input_box = FocusedInputBox::InputBox1;
 
         let key = create_key_event(KeyCode::Enter);
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         assert_eq!(result, AppAction::Continue);
         assert_eq!(state.focused_input_box, FocusedInputBox::InputBox2);
@@ -271,29 +289,30 @@ mod tests {
         // correctly triggers the submission, without creating real directories.
         
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = Some("/nonexistent/test_path/".to_string());
         state.input_path_name = Some("test_name".to_string());
         state.focused_input_box = FocusedInputBox::InputBox2;
 
         let key = create_key_event(KeyCode::Enter);
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
-        // Since we're using a nonexistent absolute path that won't be created,
-        // submit_path will fail to create the directory and return Continue
-        // with an error message set
-        assert_eq!(result, AppAction::Continue);
+        // Mock filesystem returns ok for operations in submit_path_with_fs in default state
+        // (If not set otherwise by constructors)
+        assert_eq!(result, AppAction::CreateMapFile(PathBuf::from("/nonexistent/test_path/test_name.json")));
         assert!(state.needs_clear_and_redraw);
         // Should have an error message (either DirCreate or DirFind)
-        assert!(state.display_err_msg.is_some());
+        assert!(state.display_err_msg.is_none());
     }
 
     #[test]
     fn test_unknown_key_returns_continue() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         
         let key = create_key_event(KeyCode::Char('x')); // Random key not handled
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
         
         assert_eq!(result, AppAction::Continue);
     }
@@ -301,13 +320,14 @@ mod tests {
     #[test]
     fn test_input_mode_with_none_strings() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = None; // This shouldn't happen in practice
         state.input_path_name = None;   // but we test defensive behavior
         state.focused_input_box = FocusedInputBox::InputBox1;
 
         let key = create_key_event(KeyCode::Char('t'));
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         // Should still return Continue and not panic
         assert_eq!(result, AppAction::Continue);
@@ -316,6 +336,7 @@ mod tests {
     #[test]
     fn test_recent_paths_with_none_values() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         // Set recent paths with None values
         state.recent_paths = Ok(RecentPaths {
             recent_path_1: None,
@@ -325,7 +346,7 @@ mod tests {
         state.selected_button = SelectedStartButton::Recent1;
 
         let key = create_key_event(KeyCode::Enter);
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
 
         // Should return Continue since the path is None
         assert_eq!(result, AppAction::Continue);
@@ -334,12 +355,13 @@ mod tests {
     #[test]
     fn test_enter_on_recent_paths_nonexistent_file() {
         let mut state = create_test_start_state();
+        let mock_fs = MockFileSystem::new();
         // Keep the default test paths (which don't exist)
         
         // Test Recent1 with non-existent file
         state.selected_button = SelectedStartButton::Recent1;
         let key = create_key_event(KeyCode::Enter);
-        let result = start_kh(&mut state, key);
+        let result = start_kh(&mut state, key, &mock_fs);
         
         // Should return Continue since the file doesn't exist
         assert_eq!(result, AppAction::Continue);

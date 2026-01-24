@@ -5,7 +5,7 @@ use crate::{
     app::{App, Screen},
     input::{map::{map_delete_kh, map_edit_kh, map_normal_kh, map_visual_kh}, settings_kh, start_kh},
     states::{MapState, map::Mode},
-    utils::{create_map_file, load_map_file, save_map_file},
+    utils::{RealFileSystem, create_map_file, load_map_file, save_map_file},
 };
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
@@ -37,7 +37,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
             Event::Key(key) if key.kind == KeyEventKind::Press => {
                 // Dispatch it to the appropriate handler.
                 let app_action = match &mut app.screen {
-                    Screen::Start(start_state) => start_kh(start_state, key),
+                    Screen::Start(start_state) => start_kh(start_state, key, &RealFileSystem),
                     Screen::Settings(settings_state) => settings_kh(settings_state, key),
                     Screen::Map(map_state) => map_kh(map_state, key),
                 };

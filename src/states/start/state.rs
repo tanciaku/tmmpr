@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use crate::{
     input::AppAction,
-    states::start::{ErrMsg, FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths}, utils::{FileSystem, RealFileSystem},
+    states::start::{ErrMsg, FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths}, utils::FileSystem,
 };
 
 #[derive(PartialEq, Debug)]
@@ -61,10 +61,6 @@ impl StartState {
             SelectedStartButton::Recent2 => SelectedStartButton::Recent3,
             SelectedStartButton::Recent3 => SelectedStartButton::Recent3,
         }
-    }
-
-    pub fn submit_path(&mut self, recent_path: Option<PathBuf>) -> AppAction {
-        self.submit_path_with_fs(recent_path, &RealFileSystem)
     }
 
     /// Submit a path with a custom filesystem implementation (for testing)
