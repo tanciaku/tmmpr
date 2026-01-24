@@ -13,7 +13,9 @@ _A simple, lightweight mind mapping application that runs in your terminal_
 ![CI](https://github.com/tanciaku/tmmpr/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/tanciaku/tmmpr/branch/main/graph/badge.svg)](https://codecov.io/gh/tanciaku/tmmpr)
 
-[Installation](#-installation) • [Usage](#-usage) • [Features](#-features) • [Keybindings](#-keybindings)
+> ⚠️ **Work in Progress** — This project is functional and usable, but actively being improved. Expect rough edges, incomplete features, and ongoing refactoring. Feedback and contributions are welcome!
+
+[Installation](#-installation) • [Usage](#-usage) • [Features](#-features) • [Keybindings](#-keybindings) • [Status & Roadmap](#-project-status--roadmap)
 
 </div>
 
@@ -24,6 +26,8 @@ _A simple, lightweight mind mapping application that runs in your terminal_
 **tmmpr** is a Linux terminal application that lets you create, organize, and connect notes on an infinite canvas. Think of it as a digital whiteboard in your terminal where you can freely place notes anywhere and draw connections between them.
 
 The application is entirely keyboard-driven, offering efficient navigation and control through vim-inspired keybindings. Perfect for brainstorming, project planning, or organizing complex ideas.
+
+**Current State:** The core functionality works well—you can create maps, add notes, draw connections, and save your work. However, this is an active work in progress with planned improvements to code quality, feature completeness, and test coverage. See [Project Status & Roadmap](#-project-status--roadmap) below.
 
 ## ✨ Features
 
@@ -48,6 +52,8 @@ You can find extensive test suites throughout the codebase:
 - State management tests: `/src/states/*/tests/`
 - Input handling tests: `/src/input/map/tests/`
 - Utility function tests: `/src/utils/tests/`
+
+**⚠️ Known Testing Issue:** Some tests currently modify the actual configuration file (`~/.config/tmmpr/settings.json`), resetting it to defaults during test execution. This is a known issue that needs to be resolved by properly isolating test environments. Be aware of this if you run the test suite while actively using the application.
 
 ## 📸 Previews
 
@@ -194,6 +200,43 @@ You'll be greeted with a start screen where you can:
 
 </details>
 
+## 📊 Project Status & Roadmap
+
+### Current State
+
+The application is fully functional for its core purpose - creating, organizing, and managing mind maps in the terminal. Most features work as intended.
+
+### 🚧 Known Limitations
+
+**Edit Mode (Vim-style):**
+- Normal mode is very limited compared to vim
+- No Visual mode within the text editor
+- Block cursor placement issues in Normal mode
+
+**Code Quality:**
+- Code structure and approaches need refactoring throughout the application
+- Missing or incomplete inline and documentation comments
+- Some logic is not easily testable due to hardcoded paths
+- Some test suites modifies actual config files (`~/.config/tmmpr/settings.json`) during execution
+
+### 🗺️ Roadmap
+
+**Short-term (Before Major Feature Work):**
+- [ ] Refactor code structure and improve modularity
+- [ ] Fix test suite to avoid modifying real configuration files
+- [ ] Decouple hardcoded paths to make logic more testable
+- [ ] Add comprehensive inline and doc comments
+- [ ] Fix block cursor placement in Edit Normal mode
+- [ ] Improve Edit Mode functionality:
+  - [ ] Add Visual Mode for text selection within the editor
+  - [ ] Expand Normal mode commands (vim motions and operators)
+  - [ ] Better text editing operations (copy, paste, undo/redo)
+
+**Long-term (Future Features):**
+- [ ] Adding images functionality (planned after addressing above issues)
+
+**Your feedback on priorities is welcome!** Open an issue or discussion to share suggestions.
+
 ## ⚙️ Settings
 
 Access settings by pressing `o` from the map screen. Configurable options include:
@@ -202,7 +245,7 @@ Access settings by pressing `o` from the map screen. Configurable options includ
 - **Backups Interval** - How often to create backups when opening files
 - **Runtime Backups Interval** - Create backups during long editing sessions
 - **Default Connection Sides** - Default start/end sides for connections
-- **Modal Edit Mode** - Enable vim-inspired modal editing
+- **Modal Edit Mode** - Enable vim-inspired modal editing (note: currently limited)
 
 ## 🛠️ Troubleshooting
 
@@ -220,10 +263,22 @@ Access settings by pressing `o` from the map screen. Configurable options includ
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to:
-- Report bugs by opening an issue
-- Suggest new features
-- Submit pull requests
+Contributions, feedback, and suggestions are **highly welcome!** This project is actively being improved, and your input can help shape its direction.
+
+**Ways to contribute:**
+- 🐛 **Report bugs** - Open an issue with details about what you encountered
+- 💡 **Suggest features** - Share ideas for new functionality or improvements
+- 🔧 **Submit pull requests** - Code improvements, bug fixes, or documentation updates
+- 📝 **Improve documentation** - Help clarify usage, add examples, or improve comments
+- 🧪 **Testing feedback** - Report issues with specific terminals, edge cases, or workflows
+
+**Areas needing help:**
+- Code refactoring and structural improvements
+- Expanding test coverage with proper isolation
+- Documentation and inline comments
+- Vim mode improvements in the text editor
+
+No contribution is too small—whether it's fixing a typo or tackling a major refactor!
 
 ## 📝 License
 
