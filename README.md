@@ -10,6 +10,8 @@
 
 _A simple, lightweight mind mapping application that runs in your terminal_
 
+[![GitHub](https://img.shields.io/badge/github-tanciaku/tmmpr-blue?logo=github)](https://github.com/tanciaku/tmmpr)
+[![Crates.io](https://img.shields.io/crates/v/tmmpr.svg)](https://crates.io/crates/tmmpr)
 ![CI](https://github.com/tanciaku/tmmpr/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/tanciaku/tmmpr/branch/main/graph/badge.svg)](https://codecov.io/gh/tanciaku/tmmpr)
 
