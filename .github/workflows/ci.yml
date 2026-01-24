@@ -15,8 +15,20 @@ jobs:
           toolchain: stable
           override: true
       
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      
       - name: Build
         run: cargo build --verbose
       
       - name: Run tests
         run: cargo test --verbose
+      
+      - name: Generate coverage
+        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: lcov.info
+          fail_ci_if_error: false

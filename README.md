@@ -11,6 +11,7 @@
 _A simple, lightweight mind mapping application that runs in your terminal_
 
 ![CI](https://github.com/tanciaku/tmmpr/workflows/CI/badge.svg)
+[![codecov](https://codecov.io/gh/tanciaku/tmmpr/branch/main/graph/badge.svg)](https://codecov.io/gh/tanciaku/tmmpr)
 
 [Installation](#-installation) • [Usage](#-usage) • [Features](#-features) • [Keybindings](#-keybindings)
 
@@ -38,6 +39,15 @@ The application is entirely keyboard-driven, offering efficient navigation and c
 - 💾 **Auto-Save** - Configurable auto-save intervals to prevent data loss
 - 🔄 **Backup System** - Automatic backups with customizable intervals (daily, weekly, etc.)
 - 🎨 **Customizable** - Color-coded notes and connections, adjustable settings
+
+## 🧪 Testing
+
+This project maintains **~54% test coverage**, focusing on business logic, state management, and input handling. The terminal UI layer (`/src/ui/`) is validated through manual testing and real-world usage rather than automated tests, as UI testing in terminal applications often provides limited value relative to the maintenance cost.
+
+You can find extensive test suites throughout the codebase:
+- State management tests: `/src/states/*/tests/`
+- Input handling tests: `/src/input/map/tests/`
+- Utility function tests: `/src/utils/tests/`
 
 ## 📸 Previews
 
