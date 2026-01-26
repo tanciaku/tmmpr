@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use crate::{
     input::AppAction,
-    states::start::{ErrMsg, FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths}, utils::FileSystem,
+    states::start::{ErrMsg, FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths_with_fs}, utils::{FileSystem, RealFileSystem},
 };
 
 #[derive(PartialEq, Debug)]
@@ -20,7 +20,11 @@ pub struct StartState {
 }
 
 impl StartState {
-    pub fn new() -> StartState {
+    pub fn new() -> Self {
+        Self::new_with_fs(&RealFileSystem)
+    }
+
+    pub fn new_with_fs(fs: &dyn FileSystem) -> StartState {
         StartState {
             needs_clear_and_redraw: true,
             selected_button: SelectedStartButton::CreateSelect,
@@ -29,7 +33,7 @@ impl StartState {
             input_path_string: None,
             input_path_name: None,
             display_err_msg: None,
-            recent_paths: get_recent_paths(),
+            recent_paths: get_recent_paths_with_fs(fs),
         }
     }
     

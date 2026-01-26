@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::{
     states::start::ErrMsg, 
-    utils::{read_json_data, write_json_data, filesystem::{FileSystem, RealFileSystem}},
+    utils::{read_json_data, write_json_data, filesystem::FileSystem},
 };
 
 // PathBuf because the state needs to own it's fields.
@@ -63,7 +63,7 @@ impl RecentPaths {
 /// Or creates an empty one if it doesn't exist
 /// If there is an error somewhere along the way - returns an error message
 ///   (can't use recent_paths functionality in that case)
-pub fn get_recent_paths_with_fs(fs: &impl FileSystem) -> Result<RecentPaths, ErrMsg> {
+pub fn get_recent_paths_with_fs(fs: &dyn FileSystem) -> Result<RecentPaths, ErrMsg> {
     // Get the user's home directory path
     let home_path = match fs.get_home_dir() {
         Some(path) => path,
@@ -94,10 +94,4 @@ pub fn get_recent_paths_with_fs(fs: &impl FileSystem) -> Result<RecentPaths, Err
             Err(_) => Err(ErrMsg::FileWrite),
         }
     }
-}
-
-/// Gets the recent paths from the ~/.config/tmmpr/recent_paths.json file (production version).
-/// Calls get_recent_paths_with_fs with RealFileSystem.
-pub fn get_recent_paths() -> Result<RecentPaths, ErrMsg> {
-    get_recent_paths_with_fs(&RealFileSystem)
 }

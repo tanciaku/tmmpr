@@ -15,7 +15,8 @@ mod tests {
     }
 
     fn create_test_start_state() -> StartState {
-        let mut state = StartState::new();
+        let mock_fs = MockFileSystem::new();
+        let mut state = StartState::new_with_fs(&mock_fs);
         // Override recent_paths with test data to avoid filesystem interactions
         state.recent_paths = Ok(RecentPaths {
             recent_path_1: Some(PathBuf::from("/test/path1.json")),

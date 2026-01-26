@@ -6,13 +6,12 @@ use crate::{
     app::{App, Screen},
     states::{
         MapState, 
-        map::{Note, Connection, Side, Notification, BackupResult},
-        start::{StartState, ErrMsg}
+        map::{BackupResult, Connection, Note, Notification, Side},
+        start::{ErrMsg, StartState}
     },
     utils::{
-        create_map_file_with_fs, save_map_file, load_map_file_with_fs, 
-        MapData, read_json_data, 
-        filesystem::test_utils::TempFileSystem
+        MapData, create_map_file_with_fs, filesystem::test_utils::TempFileSystem, load_map_file_with_fs,
+        read_json_data, save_map_file,
     },
 };
 
@@ -22,9 +21,11 @@ use crate::{
 
 /// Creates a test App with StartState screen
 fn create_test_app_with_start_state() -> App {
+    let temp_dir = tempdir().unwrap();
+    let temp_fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     App {
         running: true,
-        screen: Screen::Start(StartState::new()),
+        screen: Screen::Start(StartState::new_with_fs(&temp_fs)),
     }
 }
 

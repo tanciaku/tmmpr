@@ -12,7 +12,8 @@ use crate::{
 
 #[test]
 fn test_navigate_start_buttons_up() {
-    let mut start_state = StartState::new();
+    let mock_fs = MockFileSystem::new();
+    let mut start_state = StartState::new_with_fs(&mock_fs);
     
     // Test k key
     start_state.selected_button = SelectedStartButton::Recent2;
@@ -32,7 +33,8 @@ fn test_navigate_start_buttons_up() {
 
 #[test]
 fn test_navigate_start_buttons_down() {
-    let mut start_state = StartState::new();
+    let mock_fs = MockFileSystem::new();
+    let mut start_state = StartState::new_with_fs(&mock_fs);
     
     // Test j key
     start_state.selected_button = SelectedStartButton::CreateSelect;
@@ -52,7 +54,8 @@ fn test_navigate_start_buttons_down() {
 
 #[test]
 fn test_navigate_start_buttons_other_keys() {
-    let mut start_state = StartState::new();
+    let mock_fs = MockFileSystem::new();
+    let mut start_state = StartState::new_with_fs(&mock_fs);
     start_state.selected_button = SelectedStartButton::Recent1;
     
     start_state.navigate_start_buttons("a");
@@ -67,10 +70,9 @@ fn test_navigate_start_buttons_other_keys() {
 
 #[test]
 fn test_submit_path_with_existing_recent_path() {
-    let mut start_state = StartState::new();
-    
     let test_file = PathBuf::from("/test/path.json");
     let mock_fs = MockFileSystem::new().with_existing_path(test_file.clone());
+    let mut start_state = StartState::new_with_fs(&mock_fs); 
     
     let result = start_state.submit_path_with_fs(Some(test_file.clone()), &mock_fs);
     
@@ -80,10 +82,9 @@ fn test_submit_path_with_existing_recent_path() {
 
 #[test]
 fn test_submit_path_with_nonexistent_recent_path() {
-    let mut start_state = StartState::new();
-    
     let nonexistent_path = PathBuf::from("/nonexistent/path/file.json");
     let mock_fs = MockFileSystem::new();
+    let mut start_state = StartState::new_with_fs(&mock_fs); 
     
     let result = start_state.submit_path_with_fs(Some(nonexistent_path), &mock_fs);
     
@@ -94,12 +95,12 @@ fn test_submit_path_with_nonexistent_recent_path() {
 
 #[test]
 fn test_submit_path_create_new_file() {
-    let mut start_state = StartState::new();
+    let mock_fs = MockFileSystem::new();
+    let mut start_state = StartState::new_with_fs(&mock_fs);
     
     start_state.input_path_string = Some("test_maps_temp/".to_string());
     start_state.input_path_name = Some("new_map".to_string());
     
-    let mock_fs = MockFileSystem::new();
     let result = start_state.submit_path_with_fs(None, &mock_fs);
     
     // Should create a new file since it doesn't exist
@@ -115,13 +116,12 @@ fn test_submit_path_create_new_file() {
 
 #[test]
 fn test_submit_path_load_existing_file() {
-    let mut start_state = StartState::new();
-    
-    start_state.input_path_string = Some("test_maps_temp2/".to_string());
-    start_state.input_path_name = Some("existing_map".to_string());
-    
     let expected_path = PathBuf::from("/mock/home/test_maps_temp2/existing_map.json");
     let mock_fs = MockFileSystem::new().with_existing_path(expected_path.clone());
+    let mut start_state = StartState::new_with_fs(&mock_fs);
+    
+    start_state.input_path_string = Some("test_maps_temp2/".to_string());
+    start_state.input_path_name = Some("existing_map".to_string()); 
     
     let result = start_state.submit_path_with_fs(None, &mock_fs);
     
@@ -136,12 +136,12 @@ fn test_submit_path_load_existing_file() {
 
 #[test]
 fn test_submit_path_no_home_dir() {
-    let mut start_state = StartState::new();
+    let mock_fs = MockFileSystem::new().with_home_dir(None);
+    let mut start_state = StartState::new_with_fs(&mock_fs);
     
     start_state.input_path_string = Some("maps/".to_string());
     start_state.input_path_name = Some("my_map".to_string());
     
-    let mock_fs = MockFileSystem::new().with_home_dir(None);
     let result = start_state.submit_path_with_fs(None, &mock_fs);
     
     assert_eq!(result, AppAction::Continue);
@@ -154,12 +154,12 @@ fn test_submit_path_no_home_dir() {
 
 #[test]
 fn test_submit_path_dir_create_failure() {
-    let mut start_state = StartState::new();
+    let mock_fs = MockFileSystem::new().with_dir_create_failure();
+    let mut start_state = StartState::new_with_fs(&mock_fs);
     
     start_state.input_path_string = Some("maps/".to_string());
     start_state.input_path_name = Some("my_map".to_string());
     
-    let mock_fs = MockFileSystem::new().with_dir_create_failure();
     let result = start_state.submit_path_with_fs(None, &mock_fs);
     
     assert_eq!(result, AppAction::Continue);
@@ -172,7 +172,8 @@ fn test_submit_path_dir_create_failure() {
 
 #[test]
 fn test_handle_submit_error() {
-    let mut start_state = StartState::new();
+    let mock_fs = MockFileSystem::new();
+    let mut start_state = StartState::new_with_fs(&mock_fs);
     start_state.input_path_string = Some("some_path".to_string());
     start_state.input_path_name = Some("some_name".to_string());
     start_state.focused_input_box = FocusedInputBox::InputBox2;
