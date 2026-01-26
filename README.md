@@ -65,6 +65,22 @@ You can find extensive test suites throughout the codebase:
 
 ## 🚀 Installation
 
+### Pre-built Binary (Quick Start)
+
+Download the latest release from the [Releases page](https://github.com/tanciaku/tmmpr/releases):
+
+```shell
+# Download the latest release
+wget https://github.com/tanciaku/tmmpr/releases/latest/download/tmmpr-linux-x86_64.tar.gz
+
+# Extract and run
+tar -xzf tmmpr-linux-x86_64.tar.gz
+./tmmpr
+
+# Optional: move to your PATH
+sudo mv tmmpr /usr/local/bin/
+```
+
 ### From Crates.io (Recommended)
 
 ```shell
