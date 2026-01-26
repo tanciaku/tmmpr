@@ -87,6 +87,12 @@ sudo mv tmmpr /usr/local/bin/
 cargo install tmmpr
 ```
 
+### From the AUR (for Arch Linux)
+
+```shell
+paru -S tmmpr
+```
+
 ### From Source
 
 ```shell
