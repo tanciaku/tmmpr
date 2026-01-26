@@ -71,6 +71,12 @@ You can find extensive test suites throughout the codebase:
 cargo install tmmpr
 ```
 
+### From the AUR (for Arch Linux)
+
+```shell
+paru -S tmmpr
+```
+
 ### From Source
 
 ```shell
