@@ -2,12 +2,13 @@ use std::path::PathBuf;
 use ratatui::style::Color;
 
 use crate::{
-    input::map::helpers::{help_next_page, help_previous_page, move_viewport, move_note, switch_notes_focus, cycle_side, cycle_color},
-    states::{MapState, map::{Note, Side, Connection}},
+    input::map::helpers::{cycle_color, cycle_side, help_next_page, help_previous_page, move_note, move_viewport, switch_notes_focus},
+    states::{MapState, map::{Connection, Note, Side}}, utils::test_utils::MockFileSystem,
 };
 
 fn create_test_map_state() -> MapState {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mock_fs = MockFileSystem::new();
+    let mut map_state = MapState::new_with_fs(PathBuf::from("/test/path"), &mock_fs);
     map_state.settings.edit_modal = false;
     map_state.viewport.screen_width = 100;
     map_state.viewport.screen_height = 50;

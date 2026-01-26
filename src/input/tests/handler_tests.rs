@@ -3,12 +3,17 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, KeyEventKind};
 
 use crate::{
     input::handler::{AppAction, map_kh},
-    states::{MapState, map::{Mode, ModalEditMode}},
+    states::{MapState, map::{ModalEditMode, Mode}}, utils::test_utils::MockFileSystem,
 };
+
+fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
+    let mock_fs = MockFileSystem::new();
+    MapState::new_with_fs(path, &mock_fs)
+}
 
 #[test]
 fn test_map_kh_normal_mode() {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.current_mode = Mode::Normal;
     
     // Create a test key event (we're testing the dispatch, not the actual handler)
@@ -37,7 +42,7 @@ fn test_map_kh_normal_mode() {
 
 #[test]
 fn test_map_kh_visual_mode() {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.current_mode = Mode::Visual;
     
     let key_event = KeyEvent {
@@ -61,7 +66,7 @@ fn test_map_kh_visual_mode() {
 
 #[test]
 fn test_map_kh_edit_mode_non_modal() {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.current_mode = Mode::Edit(None);
 
     let key_event = KeyEvent {
@@ -85,7 +90,7 @@ fn test_map_kh_edit_mode_non_modal() {
 
 #[test]
 fn test_map_kh_edit_mode_modal_normal() {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
 
     let key_event = KeyEvent {
@@ -108,7 +113,7 @@ fn test_map_kh_edit_mode_modal_normal() {
 
 #[test]
 fn test_map_kh_edit_mode_modal_insert() {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Insert));
 
     let key_event = KeyEvent {
@@ -131,7 +136,7 @@ fn test_map_kh_edit_mode_modal_insert() {
 
 #[test]
 fn test_map_kh_delete_mode() {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.current_mode = Mode::Delete;
 
     let key_event = KeyEvent {
@@ -154,7 +159,7 @@ fn test_map_kh_delete_mode() {
 
 #[test]
 fn test_map_kh_various_key_codes() {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.current_mode = Mode::Normal;
 
     let test_keys = vec![
@@ -185,7 +190,7 @@ fn test_map_kh_various_key_codes() {
 
 #[test]
 fn test_map_kh_with_modifiers() {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.current_mode = Mode::Normal;
 
     let modifiers = vec![
@@ -221,7 +226,7 @@ fn test_mode_switching_behavior() {
     ];
 
     for mode in modes {
-        let mut map_state = MapState::new(PathBuf::from("/test/path"));
+        let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
         map_state.current_mode = mode;
 
         let key_event = KeyEvent {
@@ -239,7 +244,7 @@ fn test_mode_switching_behavior() {
 #[test]
 fn test_map_kh_maintains_state_integrity() {
     // Test that map_kh doesn't corrupt the MapState
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     let original_mode = Mode::Normal;
     map_state.current_mode = original_mode;
 

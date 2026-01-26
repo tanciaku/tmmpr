@@ -12,7 +12,12 @@ pub fn get_settings() -> SettingsType {
 }
 
 /// Get settings using a custom FileSystem (for testing or production).
-pub fn get_settings_with_fs(fs: &impl FileSystem) -> SettingsType {
+/// 
+/// Scenarios:
+/// 1. Using default because settings file doesn't exist (first boot)
+/// 2. Using default because there was an error (notify the user about it)
+/// 3. Using "custom" - settings file exists
+pub fn get_settings_with_fs(fs: &dyn FileSystem) -> SettingsType {
     // Get the user's home directory path
     let home_path = match fs.get_home_dir() {
         Some(path) => path,

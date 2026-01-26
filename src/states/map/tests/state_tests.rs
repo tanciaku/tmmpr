@@ -1,12 +1,16 @@
 use std::{collections::HashMap, path::PathBuf, time::{Duration, Instant}};
 use ratatui::style::Color;
 
-use crate::states::{MapState, map::{Mode, Note, Connection, Side, ModalEditMode}};
+use crate::{states::{MapState, map::{Connection, ModalEditMode, Mode, Note, Side}, start::ErrMsg}, utils::test_utils::MockFileSystem};
 
+fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
+    let mock_fs = MockFileSystem::new();
+    MapState::new_with_fs(path, &mock_fs)
+}
 
 fn create_test_map_state(view_pos_x: usize, view_pos_y: usize, width: usize, height: usize) -> MapState {
     // Create a new MapState and set some simple test values
-    let mut map_state = MapState::new(PathBuf::from("/home/user/"));
+    let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.settings.edit_modal = false;
 
     // Set fields for testing
@@ -69,7 +73,7 @@ fn test_add_note_diff_viewpos() {
 #[test]
 fn test_new() {
     let path = PathBuf::from("/test/path");
-    let map_state = MapState::new(path.clone());
+    let map_state = create_map_state_using_mock_filesystem(path.clone());
 
     // Test initial values
     assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
@@ -95,7 +99,9 @@ fn test_new() {
     assert_eq!(map_state.persistence.can_exit, true);
     assert_eq!(map_state.ui_state.confirm_discard_menu, None);
     assert_eq!(map_state.ui_state.help_screen, None);
-    assert_eq!(map_state.settings_err_msg, None);
+    // Since get_setting_with_fs from map_state creation will
+    // fail writing to mock directory - assume write error
+    assert_eq!(map_state.settings_err_msg, Some(ErrMsg::FileWrite));
     assert_eq!(map_state.persistence.backup_res, None);
 }
 

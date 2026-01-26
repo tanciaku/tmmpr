@@ -5,10 +5,10 @@ use ratatui::style::Color;
 use crate::{
     states::{
         map::{ConnectionsState, ModalEditMode, Mode, NotesState, PersistenceState, UIState, ViewportState, VisualModeState},
-        settings::{Settings, SettingsType, get_settings},
+        settings::{Settings, SettingsType, get_settings_with_fs},
         start::ErrMsg
     },
-    utils::{handle_runtime_backup, save_map_file}
+    utils::{FileSystem, RealFileSystem, handle_runtime_backup, save_map_file}
 };
 
 
@@ -32,21 +32,13 @@ pub struct MapState {
 
 impl MapState {
     pub fn new(file_write_path: PathBuf) -> MapState {
+        Self::new_with_fs(file_write_path, &RealFileSystem)
+    }
 
-        // Set the settings, scenarios:
-        // 1. Using default because settings file doesn't exist (first boot)
-        // 2. Using default because there was an error (notify the user about it)
-        // 3. Using custom - settings file exists
-        let (settings, settings_err_msg) = match get_settings() {
+    pub fn new_with_fs(file_write_path: PathBuf, fs: &dyn FileSystem) -> MapState {
+        let (settings, settings_err_msg) = match get_settings_with_fs(fs) {
             SettingsType::Default(settings, err_opt) => (settings, err_opt),
             SettingsType::Custom(settings) => (settings, None),
-        };
-
-        // Whether to notify the user that something went wrong with
-        // using the settings functionality
-        let settings_err_msg = match settings_err_msg {
-            Some(err_msg) => Some(err_msg),
-            None => None,
         };
 
         MapState {

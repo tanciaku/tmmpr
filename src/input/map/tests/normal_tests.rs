@@ -3,13 +3,12 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::Color;
 
 use crate::{
-    input::{map::normal::map_normal_kh, AppAction},
-    states::{MapState, map::{Mode, Note, DiscardMenuType}},
-    app::Screen,
+    app::Screen, input::{AppAction, map::normal::map_normal_kh}, states::{MapState, map::{DiscardMenuType, Mode, Note}}, utils::test_utils::MockFileSystem
 };
 
 fn create_test_map_state() -> MapState {
-    let mut map_state = MapState::new(PathBuf::from("/test/path"));
+    let mock_fs = MockFileSystem::new();
+    let mut map_state = MapState::new_with_fs(PathBuf::from("/test/path"), &mock_fs);
     map_state.settings.edit_modal = false;
     map_state.viewport.screen_width = 100;
     map_state.viewport.screen_height = 50;

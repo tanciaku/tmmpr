@@ -11,13 +11,18 @@ use crate::{
     },
     utils::{
         MapData, create_map_file_with_fs, filesystem::test_utils::TempFileSystem, load_map_file_with_fs,
-        read_json_data, save_map_file,
+        read_json_data, save_map_file, test_utils::MockFileSystem,
     },
 };
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
+    let mock_fs = MockFileSystem::new();
+    MapState::new_with_fs(path, &mock_fs)
+}
 
 /// Creates a test App with StartState screen
 fn create_test_app_with_start_state() -> App {
@@ -31,7 +36,7 @@ fn create_test_app_with_start_state() -> App {
 
 /// Creates a MapState with some sample data for testing
 fn create_populated_map_state(path: PathBuf) -> MapState {
-    let mut map_state = MapState::new(path);
+    let mut map_state = create_map_state_using_mock_filesystem(path);
     
     // Add some notes
     let note1 = Note::new(10, 20, String::from("Test Note 1"), true, Color::White);
@@ -329,7 +334,7 @@ fn test_save_map_file_overwrites_existing_file() {
     let file_path = temp_dir.path().join("overwrite_test.json");
     
     // Create initial map state and save
-    let mut map_state1 = MapState::new(file_path.clone());
+    let mut map_state1 = create_map_state_using_mock_filesystem(file_path.clone());
     save_map_file(&mut map_state1, &file_path, false, false);
     
     // Read the initial data
@@ -352,7 +357,7 @@ fn test_save_map_file_preserves_note_properties() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("test.json");
     
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     
     // Add a note with specific properties
     let note = Note::new(100, 200, String::from("Important Note"), true, Color::Cyan);
@@ -378,7 +383,7 @@ fn test_save_map_file_preserves_connections() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("test.json");
     
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     
     // Add notes
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("A"), false, Color::White));
@@ -420,7 +425,7 @@ fn test_save_map_file_empty_state() {
     let file_path = temp_dir.path().join("empty.json");
     
     // Save an empty map state
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     save_map_file(&mut map_state, &file_path, false, false);
     
     // Verify: File created with default/empty values
@@ -467,7 +472,7 @@ fn test_load_map_file_loads_note_properties() {
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with specific note properties
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     let note = Note::new(123, 456, String::from("Specific Note"), true, Color::Magenta);
     map_state.notes_state.notes.insert(7, note);
     map_state.notes_state.render_order.push(7);
@@ -497,7 +502,7 @@ fn test_load_map_file_loads_connections() {
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with connections
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("A"), false, Color::White));
     map_state.notes_state.notes.insert(1, Note::new(20, 20, String::from("B"), false, Color::White));
     
@@ -539,7 +544,7 @@ fn test_load_map_file_loads_view_position() {
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with modified view position
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     map_state.viewport.view_pos.x = 500;
     map_state.viewport.view_pos.y = 750;
     
@@ -626,7 +631,7 @@ fn test_load_map_file_empty_map() {
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Save an empty map
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     save_map_file(&mut map_state, &file_path, false, false);
     
     // Load it
@@ -649,7 +654,7 @@ fn test_load_map_file_with_many_notes() {
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with many notes
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     
     for i in 0..50 {
         let note = Note::new(i * 10, i * 20, format!("Note {}", i), false, Color::White);
@@ -688,7 +693,7 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create a map with comprehensive data
-    let mut original_state = MapState::new(file_path.clone());
+    let mut original_state = create_map_state_using_mock_filesystem(file_path.clone());
     
     // Add diverse notes
     original_state.notes_state.notes.insert(0, Note::new(10, 20, String::from("First"), true, Color::Red));
@@ -804,7 +809,7 @@ fn test_multiple_save_load_cycles() {
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create initial map
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("V1"), false, Color::White));
     map_state.notes_state.next_note_id = 1;
     save_map_file(&mut map_state, &file_path, false, false);
@@ -849,7 +854,7 @@ fn test_connection_index_roundtrip() {
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
     // Create complex connection structure
-    let mut map_state = MapState::new(file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("A"), false, Color::White));
     map_state.notes_state.notes.insert(1, Note::new(20, 20, String::from("B"), false, Color::White));

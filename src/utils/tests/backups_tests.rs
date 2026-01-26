@@ -1,8 +1,9 @@
-use std::time::Duration as StdDuration;
+use std::{path::PathBuf, time::Duration as StdDuration};
 use std::fs;
 use std::collections::HashMap;
 use chrono::{Duration as ChronoDuration, Local};
 
+use crate::utils::test_utils::MockFileSystem;
 use crate::{
     states::{
         MapState,
@@ -14,6 +15,11 @@ use crate::{
         filesystem::test_utils::TempFileSystem,
     },
 };
+
+fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
+    let mock_fs = MockFileSystem::new();
+    MapState::new_with_fs(path, &mock_fs)
+}
 
 // ============================================================================
 // Unit Tests for get_duration()
@@ -106,8 +112,7 @@ fn test_handle_on_load_backup_disabled_backups() {
     let map_file_path = temp_dir.path().join("test_map.json");
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    // Create MapState
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Explicitly disable backups for this test
     map_state.settings.backups_path = None;
@@ -131,8 +136,7 @@ fn test_handle_on_load_backup_first_backup() {
     let map_file_path = temp_dir.path().join("test_map.json");
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    // Create MapState
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Enable backups with Daily interval
     map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
@@ -179,8 +183,7 @@ fn test_handle_on_load_backup_skip_recent_backup() {
     let map_file_path = temp_dir.path().join("test_map.json");
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    // Create MapState
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Enable backups with Daily interval
     map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
@@ -215,8 +218,7 @@ fn test_handle_on_load_backup_old_backup_triggers_new() {
     let map_file_path = temp_dir.path().join("test_map.json");
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    // Create MapState
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Enable backups with Daily interval
     map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
@@ -257,7 +259,7 @@ fn test_handle_on_load_backup_different_intervals() {
     let map_file_path = temp_dir.path().join("test_map.json");
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
     map_state.settings.backups_interval = Some(BackupsInterval::Weekly);
     
@@ -304,8 +306,7 @@ fn test_handle_on_load_backup_invalid_backup_directory() {
     let map_file_path = temp_dir.path().join("test_map.json");
     let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
     
-    // Create MapState
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Enable backups with an invalid/inaccessible path
     map_state.settings.backups_path = Some("/invalid/nonexistent/path".to_string());
@@ -336,8 +337,7 @@ fn test_handle_runtime_backup_disabled_backups() {
     let temp_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
     
-    // Create MapState (may load user's actual settings from ~/.config/tmmpr/settings.json)
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Explicitly disable runtime backups for this test
     map_state.settings.backups_path = None;
@@ -357,8 +357,7 @@ fn test_handle_runtime_backup_creates_backup() {
     let backup_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
     
-    // Create MapState
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Enable runtime backups (interval value doesn't affect this function's behavior)
     map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
@@ -393,8 +392,7 @@ fn test_handle_runtime_backup_filename_format() {
     let backup_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("my_mindmap.json");
     
-    // Create MapState
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Enable runtime backups
     map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
@@ -431,8 +429,7 @@ fn test_handle_runtime_backup_does_not_update_backup_dates() {
     let backup_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
     
-    // Create MapState (will load user's actual settings from ~/.config/tmmpr/settings.json)
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Enable runtime backups
     map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
@@ -467,8 +464,7 @@ fn test_handle_runtime_backup_invalid_backup_directory() {
     let temp_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
     
-    // Create MapState
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Enable runtime backups with an invalid/inaccessible path
     map_state.settings.backups_path = Some("/invalid/nonexistent/runtime/path".to_string());
@@ -490,7 +486,7 @@ fn test_handle_runtime_backup_backups_enabled_but_no_interval() {
     let backup_dir = tempfile::tempdir().unwrap();
     let map_file_path = temp_dir.path().join("test_map.json");
     
-    let mut map_state = MapState::new(map_file_path.clone());
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
     
     // Set backups_path but not runtime_backups_interval
     map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
