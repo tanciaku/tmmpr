@@ -3,15 +3,12 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, KeyEventKind};
 
 use crate::{
     app::Screen,
-    input::{settings::settings_kh, AppAction},
+    input::{AppAction, settings::settings_kh},
     states::{
-        SettingsState,
-        settings::{
-            DiscardExitTo, SelectedToggle, SettingsType, Settings, 
-            BackupsInterval, RuntimeBackupsInterval, BackupsErr
-        },
-        start::ErrMsg, map::Side,
-    },
+        SettingsState, map::Side, settings::{
+            BackupsErr, BackupsInterval, DiscardExitTo, RuntimeBackupsInterval, SelectedToggle, Settings, SettingsType
+        }, start::ErrMsg
+    }, utils::test_utils::MockFileSystem,
 };
 
 // Helper function to create a key event
@@ -26,7 +23,8 @@ fn create_key_event(key_code: KeyCode) -> KeyEvent {
 
 // Helper function to create a settings state with default settings
 fn create_default_settings_state() -> SettingsState {
-    let mut state = SettingsState::new(PathBuf::from("/test/map.json"));
+    let mock_fs = MockFileSystem::new();
+    let mut state = SettingsState::new_with_fs(PathBuf::from("/test/map.json"), &mock_fs);
     state.settings = SettingsType::Default(Settings::new(), None);
     state.can_exit = true;
     state
@@ -34,7 +32,8 @@ fn create_default_settings_state() -> SettingsState {
 
 // Helper function to create a settings state with error
 fn create_error_settings_state() -> SettingsState {
-    let mut state = SettingsState::new(PathBuf::from("/test/map.json"));
+    let mock_fs = MockFileSystem::new();
+    let mut state = SettingsState::new_with_fs(PathBuf::from("/test/map.json"), &mock_fs);
     state.settings = SettingsType::Default(Settings::new(), Some(ErrMsg::FileRead));
     state
 }

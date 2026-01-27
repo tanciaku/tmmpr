@@ -7,10 +7,6 @@ use crate::{
     utils::{read_json_data, save_settings_to_file_with_fs, write_json_data, filesystem::{FileSystem, RealFileSystem}}
 };
 
-pub fn get_settings() -> SettingsType {
-    get_settings_with_fs(&RealFileSystem)
-}
-
 /// Get settings using a custom FileSystem (for testing or production).
 /// 
 /// Scenarios:

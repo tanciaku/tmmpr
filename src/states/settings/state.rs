@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::{
     states::settings::{
         BackupsErr, BackupsInterval, DiscardExitTo, RuntimeBackupsInterval,
-        SelectedToggle, SettingsNotification, SettingsType, get_settings
+        SelectedToggle, SettingsNotification, SettingsType, get_settings_with_fs
     },
     utils::{FileSystem, RealFileSystem}
 };
@@ -62,11 +62,15 @@ pub struct SettingsState {
 
 impl SettingsState {
     pub fn new(map_file_path: PathBuf) -> SettingsState {
+        Self::new_with_fs(map_file_path, &RealFileSystem)
+    }
+
+    pub fn new_with_fs(map_file_path: PathBuf, fs: &dyn FileSystem) -> SettingsState {
         SettingsState {
             needs_clear_and_redraw: true,
             settings_context_page: false,
             map_file_path: map_file_path,
-            settings: get_settings(),
+            settings: get_settings_with_fs(fs),
             can_exit: true,
             confirm_discard_menu: None,
             notification: None,

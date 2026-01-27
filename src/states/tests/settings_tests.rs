@@ -17,6 +17,15 @@ use crate::{
     },
 };
 
+fn create_settings_state(map_path: PathBuf) -> SettingsState {
+    let mock_fs = MockFileSystem::new();
+    SettingsState::new_with_fs(map_path, &mock_fs)
+}
+
+fn create_settings_state_with_fs(map_path: PathBuf, mock_fs: &MockFileSystem) -> SettingsState {
+    SettingsState::new_with_fs(map_path, mock_fs)
+}
+
 // ============================================================================
 // Tests for SettingsState
 // ============================================================================
@@ -24,7 +33,7 @@ use crate::{
 #[test]
 fn test_toggle_go_down_without_runtime_backups() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
+    let mut state = create_settings_state(map_path);
     
     // Ensure runtime backups are disabled
     state.settings.settings_mut().runtime_backups_interval = None;
@@ -55,7 +64,7 @@ fn test_toggle_go_down_without_runtime_backups() {
 #[test]
 fn test_toggle_go_down_with_runtime_backups() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
+    let mut state = create_settings_state(map_path);
     
     // Enable runtime backups
     state.settings.settings_mut().runtime_backups_interval = Some(RuntimeBackupsInterval::Hourly);
@@ -73,7 +82,7 @@ fn test_toggle_go_down_with_runtime_backups() {
 #[test]
 fn test_toggle_go_up_without_runtime_backups() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
+    let mut state = create_settings_state(map_path);
     
     // Ensure runtime backups are disabled
     state.settings.settings_mut().runtime_backups_interval = None;
@@ -103,7 +112,7 @@ fn test_toggle_go_up_without_runtime_backups() {
 #[test]
 fn test_toggle_go_up_with_runtime_backups() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
+    let mut state = create_settings_state(map_path);
     
     // Enable runtime backups
     state.settings.settings_mut().runtime_backups_interval = Some(RuntimeBackupsInterval::Hourly);
@@ -174,8 +183,8 @@ fn test_validate_backup_directory_write_fails() {
 #[test]
 fn test_submit_path_with_absolute_path() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
     let mock_fs = MockFileSystem::new();
+    let mut state = create_settings_state_with_fs(map_path, &mock_fs);
     
     state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
     state.input_prompt = true;
@@ -191,8 +200,8 @@ fn test_submit_path_with_absolute_path() {
 #[test]
 fn test_submit_path_with_relative_path() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
     let mock_fs = MockFileSystem::new();
+    let mut state = create_settings_state_with_fs(map_path, &mock_fs);
     
     state.settings.settings_mut().backups_path = Some("backups".to_string());
     state.input_prompt = true;
@@ -208,8 +217,8 @@ fn test_submit_path_with_relative_path() {
 #[test]
 fn test_submit_path_sets_correct_intervals() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
     let mock_fs = MockFileSystem::new();
+    let mut state = create_settings_state_with_fs(map_path, &mock_fs);
     
     state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
     
@@ -228,8 +237,8 @@ fn test_submit_path_sets_correct_intervals() {
 #[test]
 fn test_submit_path_resets_error_on_success() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
     let mock_fs = MockFileSystem::new();
+    let mut state = create_settings_state_with_fs(map_path, &mock_fs);
     
     state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
     
@@ -247,8 +256,8 @@ fn test_submit_path_resets_error_on_success() {
 #[test]
 fn test_submit_path_no_home_directory() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
     let mock_fs = MockFileSystem::new().with_home_dir(None);
+    let mut state = create_settings_state_with_fs(map_path, &mock_fs);
     
     state.settings.settings_mut().backups_path = Some("backups".to_string());
     state.input_prompt = true;
@@ -262,8 +271,8 @@ fn test_submit_path_no_home_directory() {
 #[test]
 fn test_submit_path_directory_create_fails() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
     let mock_fs = MockFileSystem::new().with_dir_create_failure();
+    let mut state = create_settings_state_with_fs(map_path, &mock_fs);
     
     state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
     state.input_prompt = true;
@@ -277,8 +286,8 @@ fn test_submit_path_directory_create_fails() {
 #[test]
 fn test_submit_path_write_test_fails() {
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
     let mock_fs = MockFileSystem::new().with_write_failure();
+    let mut state = create_settings_state_with_fs(map_path, &mock_fs);
     
     state.settings.settings_mut().backups_path = Some("/mock/backups".to_string());
     state.input_prompt = true;
@@ -645,7 +654,7 @@ fn test_save_settings_success() {
     let temp_fs = TempFileSystem { home_path: temp_path.clone() };
     
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
+    let mut state = create_settings_state(map_path);
     
     // Modify some settings to verify they get saved
     state.settings.settings_mut().save_interval = Some(30);
@@ -679,7 +688,7 @@ fn test_save_settings_no_home_dir() {
     let mock_fs = MockFileSystem::new().with_home_dir(None);
     
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
+    let mut state = create_settings_state_with_fs(map_path, &mock_fs);
     
     state.can_exit = false;
     state.notification = None;
@@ -700,7 +709,7 @@ fn test_settings_round_trip() {
     let temp_fs = TempFileSystem { home_path: temp_path.clone() };
     
     let map_path = PathBuf::from("/test/path/map.json");
-    let mut state = SettingsState::new(map_path);
+    let mut state = create_settings_state(map_path);
     
     // Modify settings
     state.settings.settings_mut().save_interval = Some(60);
