@@ -53,7 +53,7 @@ pub fn save_settings(settings_state: &mut SettingsState) {
 }
 
 /// Save settings using a custom FileSystem (for testing or production).
-pub fn save_settings_with_fs(settings_state: &mut SettingsState, fs: &impl FileSystem) {
+pub fn save_settings_with_fs(settings_state: &mut SettingsState, fs: &dyn FileSystem) {
     // Reference to Settings in the SettingsType
     let settings = &settings_state.settings.settings();
 

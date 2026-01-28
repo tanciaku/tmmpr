@@ -15,7 +15,7 @@ use crate::{
 /// - The home directory cannot be found
 /// - The directory cannot be created
 /// - The file cannot be written to
-pub fn save_settings_to_file_with_fs(settings: &Settings, fs: &impl FileSystem) -> Result<(), Box<dyn std::error::Error>> { 
+pub fn save_settings_to_file_with_fs(settings: &Settings, fs: &dyn FileSystem) -> Result<(), Box<dyn std::error::Error>> { 
     // Get the user's home directory path
     let home_path = fs.get_home_dir()
         .ok_or("Could not find home directory")?;

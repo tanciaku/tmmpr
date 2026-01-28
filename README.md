@@ -29,7 +29,7 @@ _A simple, lightweight mind mapping application that runs in your terminal_
 
 The application is entirely keyboard-driven, offering efficient navigation and control through vim-inspired keybindings. Perfect for brainstorming, project planning, or organizing complex ideas.
 
-**Current State:** The core functionality works well—you can create maps, add notes, draw connections, and save your work. However, this is an active work in progress with planned improvements to code quality, feature completeness, and test coverage. See [Project Status & Roadmap](#-project-status--roadmap) below.
+**Current State:** The core functionality works well—you can create maps, add notes, draw connections, and save your work. However, this is an active work in progress with planned improvements to code quality and feature completeness. See [Project Status & Roadmap](#-project-status--roadmap) below.
 
 ## ✨ Features
 
@@ -54,8 +54,6 @@ You can find extensive test suites throughout the codebase:
 - State management tests: `/src/states/*/tests/`
 - Input handling tests: `/src/input/map/tests/`
 - Utility function tests: `/src/utils/tests/`
-
-**⚠️ Known Testing Issue:** Some tests currently modify the actual configuration file (`~/.config/tmmpr/settings.json`), resetting it to defaults during test execution. This is a known issue that needs to be resolved by properly isolating test environments. Be aware of this if you run the test suite while actively using the application.
 
 ## 📸 Previews
 
@@ -240,24 +238,20 @@ The application is fully functional for its core purpose - creating, organizing,
 **Code Quality:**
 - Code structure and approaches need refactoring throughout the application
 - Missing or incomplete inline and documentation comments
-- Some logic is not easily testable due to hardcoded paths
-- Some test suites modifies actual config files (`~/.config/tmmpr/settings.json`) during execution
 
 ### 🗺️ Roadmap
 
 **Short-term (Before Major Feature Work):**
-- [ ] Refactor code structure and improve modularity
-- [ ] Fix test suite to avoid modifying real configuration files
-- [ ] Decouple hardcoded paths to make logic more testable
-- [ ] Add comprehensive inline and doc comments
-- [ ] Fix block cursor placement in Edit Normal mode
-- [ ] Improve Edit Mode functionality:
-  - [ ] Add Visual Mode for text selection within the editor
-  - [ ] Expand Normal mode commands (vim motions and operators)
-  - [ ] Better text editing operations (copy, paste, undo/redo)
+- Refactor code structure and improve modularity
+- Add comprehensive inline and doc comments
+- Fix block cursor placement in Edit Normal mode
+- Improve Edit Mode functionality:
+  - Add Visual Mode for text selection within the editor
+  - Expand Normal mode commands (vim motions and operators)
+  - Better text editing operations (copy, paste, undo/redo)
 
 **Long-term (Future Features):**
-- [ ] Adding images functionality (planned after addressing above issues)
+- Adding images functionality (planned after addressing above issues)
 
 **Your feedback on priorities is welcome!** Open an issue or discussion to share suggestions.
 

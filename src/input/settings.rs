@@ -1,9 +1,8 @@
 //! Settings screen input handling
 
-use crate::{app::Screen, states::{SettingsState, StartState, settings::{DiscardExitTo, SelectedToggle, SettingsType, save_settings}}, utils::FileSystem};
+use crate::{app::Screen, states::{SettingsState, StartState, settings::{DiscardExitTo, SelectedToggle, SettingsType, save_settings_with_fs}}, utils::FileSystem};
 use super::AppAction;
 use crossterm::event::{KeyCode, KeyEvent};
-
 
 /// Key handling for the Settings Screen
 pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn FileSystem) -> AppAction {
@@ -115,7 +114,7 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn F
         KeyCode::Char('?') | KeyCode::F(1) => settings_state.context_page = true,
 
         // Save settings
-        KeyCode::Char('s') => save_settings(settings_state),
+        KeyCode::Char('s') => save_settings_with_fs(settings_state, fs),
 
         // Go down a toggle
         KeyCode::Char('j') | KeyCode::Down => settings_state.toggle_go_down(),

@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, KeyEventKind};
+use tempfile::TempDir;
 
 use crate::{
     app::Screen,
@@ -8,7 +9,8 @@ use crate::{
         SettingsState, map::Side, settings::{
             BackupsErr, BackupsInterval, DiscardExitTo, RuntimeBackupsInterval, SelectedToggle, Settings, SettingsType
         }, start::ErrMsg
-    }, utils::test_utils::MockFileSystem,
+    },
+    utils::test_utils::{MockFileSystem, TempFileSystem},
 };
 
 // Helper function to create a key event
@@ -72,7 +74,7 @@ fn test_settings_error_state_o_key() {
 fn test_settings_error_state_other_keys() {
     let mock_fs = MockFileSystem::new();
     let mut state = create_error_settings_state();
-    let key_event = create_key_event(KeyCode::Char('s'));
+    let key_event = create_key_event(KeyCode::Char('b'));
     
     let result = settings_kh(&mut state, key_event, &mock_fs);
     
@@ -373,14 +375,14 @@ fn test_normal_mode_f1_key() {
 
 #[test]
 fn test_normal_mode_save_key() {
-    let mock_fs = MockFileSystem::new();
+    let temp_dir = TempDir::new().unwrap();
+    let temp_path = temp_dir.path().to_path_buf(); 
+    let temp_fs = TempFileSystem { home_path: temp_path.clone() };
+
     let mut state = create_default_settings_state();
     
     let key_event = create_key_event(KeyCode::Char('s'));
-    let _result = settings_kh(&mut state, key_event, &mock_fs);
-    
-    // Note: save_settings will likely fail in tests due to filesystem operations
-    // This test mainly ensures the function doesn't panic
+    let _result = settings_kh(&mut state, key_event, &temp_fs);
 }
 
 #[test]
