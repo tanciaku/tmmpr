@@ -51,7 +51,7 @@ pub fn create_map_file(app: &mut App, path: &Path) {
 /// Handles file write error by displaying appropriate error message to the user.
 pub fn create_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {
     // Create a new Map State for creating a new map file
-    let map_state = MapState::new(path.to_path_buf()); // Only clone when storing
+    let map_state = MapState::new_with_fs(path.to_path_buf(), fs);
     // Take the default values from that to write to the file
     let map_data = MapData {
         view_pos: map_state.viewport.view_pos,
@@ -87,7 +87,7 @@ pub fn create_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem)
 
     // If successful in the previous step -
     // switch to the Map Screen, with the newly created Map State
-    app.screen = Screen::Map(MapState::new(path.to_path_buf())); // Only clone when storing
+    app.screen = Screen::Map(MapState::new_with_fs(path.to_path_buf(), fs));
 }
 
 /// Saves map data to a file.
@@ -169,7 +169,7 @@ pub fn load_map_file(app: &mut App, path: &Path) {
 pub fn load_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {
     // Initialize a default MapState that will be populated with loaded data.
     // This ensures we have valid defaults for any fields not present in the file.
-    let mut map_state = MapState::new(path.to_path_buf()); // Only clone when storing
+    let mut map_state = MapState::new_with_fs(path.to_path_buf(), fs);
 
     match read_json_data::<MapData>(path) {
         Ok(map_data) => {

@@ -4,11 +4,14 @@ use ratatui::style::Color;
 
 use crate::{
     states::{
-        map::{ConnectionsState, ModalEditMode, Mode, NotesState, PersistenceState, UIState, ViewportState, VisualModeState},
+        map::{
+            ConnectionsState, ModalEditMode, Mode, NotesState, PersistenceState,
+            UIState, ViewportState, VisualModeState
+        },
         settings::{Settings, SettingsType, get_settings_with_fs},
         start::ErrMsg
     },
-    utils::{FileSystem, RealFileSystem, handle_runtime_backup, save_map_file}
+    utils::{FileSystem, handle_runtime_backup, save_map_file}
 };
 
 
@@ -31,10 +34,6 @@ pub struct MapState {
 }
 
 impl MapState {
-    pub fn new(file_write_path: PathBuf) -> MapState {
-        Self::new_with_fs(file_write_path, &RealFileSystem)
-    }
-
     pub fn new_with_fs(file_write_path: PathBuf, fs: &dyn FileSystem) -> MapState {
         let (settings, settings_err_msg) = match get_settings_with_fs(fs) {
             SettingsType::Default(settings, err_opt) => (settings, err_opt),
