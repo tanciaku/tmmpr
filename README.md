@@ -237,23 +237,24 @@ The application is fully functional for its core purpose - creating, organizing,
 
 **Code Quality:**
 - Code structure and approaches need refactoring throughout the application
-- Missing or incomplete inline and documentation comments
+- Improving inline and documentation comments
 
 ### 🗺️ Roadmap
 
-**Short-term (Before Major Feature Work):**
-- Refactor code structure and improve modularity
-- Add comprehensive inline and doc comments
-- Fix block cursor placement in Edit Normal mode
-- Improve Edit Mode functionality:
-  - Add Visual Mode for text selection within the editor
-  - Expand Normal mode commands (vim motions and operators)
-  - Better text editing operations (copy, paste, undo/redo)
+**Current Focus:**
+- Improving codebase quality and structure (testing, documentation, modularity)
+- These foundational improvements will enable cleaner feature development
 
-**Long-term (Future Features):**
-- Adding images functionality (planned after addressing above issues)
+**Upcoming Features:**
+- Library API for node graph functionality (programmatic usage)
+- Enhanced Edit Mode (fixing block cursor issue, expanded vim commands, visual selection, better text operations)
+- Export functionality (convert maps to other formats like markdown)
+- Import functionality (templates and config files for recurring structures)
+- Image support
 
-**Your feedback on priorities is welcome!** Open an issue or discussion to share suggestions.
+**Note:** New feature proposals are welcome, but work on them will be deferred until after the current quality improvements are complete.
+
+**Feedback on priorities is welcome!** Open an issue or discussion to share suggestions.
 
 ## ⚙️ Settings
 
@@ -292,9 +293,7 @@ Contributions, feedback, and suggestions are **highly welcome!** This project is
 
 **Areas needing help:**
 - Code refactoring and structural improvements
-- Expanding test coverage with proper isolation
 - Documentation and inline comments
-- Vim mode improvements in the text editor
 
 No contribution is too small—whether it's fixing a typo or tackling a major refactor!
 
