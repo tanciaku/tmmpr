@@ -61,10 +61,6 @@ pub struct SettingsState {
 }
 
 impl SettingsState {
-    pub fn new(map_file_path: PathBuf) -> SettingsState {
-        Self::new_with_fs(map_file_path, &RealFileSystem)
-    }
-
     pub fn new_with_fs(map_file_path: PathBuf, fs: &dyn FileSystem) -> SettingsState {
         SettingsState {
             needs_clear_and_redraw: true,

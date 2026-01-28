@@ -41,9 +41,8 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSyste
                     }
                     DiscardMenuType::Settings => {
                         return AppAction::Switch(
-                            Screen::Settings(SettingsState::new(
-                                // Pass in the file path that was opened to return to it after closing settings
-                                map_state.persistence.file_write_path.clone())))
+                            // Pass in the file path that was opened to return to it after closing settings
+                            Screen::Settings(SettingsState::new_with_fs(map_state.persistence.file_write_path.clone(), fs)))
                     }
                 }
             }
@@ -78,9 +77,8 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSyste
             // Can exit to settings if saved the changes
             if map_state.persistence.can_exit {
                 return AppAction::Switch(
-                    Screen::Settings(SettingsState::new(
-                        // Pass in the file path that was opened to return to it after closing settings
-                        map_state.persistence.file_write_path.clone())))
+                    // Pass in the file path that was opened to return to it after closing settings
+                    Screen::Settings(SettingsState::new_with_fs(map_state.persistence.file_write_path.clone(), fs)))
             } else { // Otherwise show the confirmation to discard unsaved changes menu
                 map_state.ui_state.show_discard_menu(DiscardMenuType::Settings);
                 map_state.clear_and_redraw();
