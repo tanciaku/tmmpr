@@ -38,7 +38,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                 // Dispatch it to the appropriate handler.
                 let app_action = match &mut app.screen {
                     Screen::Start(start_state) => start_kh(start_state, key, &RealFileSystem),
-                    Screen::Settings(settings_state) => settings_kh(settings_state, key),
+                    Screen::Settings(settings_state) => settings_kh(settings_state, key, &RealFileSystem),
                     Screen::Map(map_state) => map_kh(map_state, key),
                 };
 

@@ -1,18 +1,18 @@
 //! Settings screen input handling
 
-use crate::{app::Screen, states::{SettingsState, StartState, settings::{DiscardExitTo, SelectedToggle, SettingsType, save_settings}}};
+use crate::{app::Screen, states::{SettingsState, StartState, settings::{DiscardExitTo, SelectedToggle, SettingsType, save_settings}}, utils::FileSystem};
 use super::AppAction;
 use crossterm::event::{KeyCode, KeyEvent};
 
 
 /// Key handling for the Settings Screen
-pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppAction {
+pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn FileSystem) -> AppAction {
 
     // If there was an error with using settings functionality - take only this input
     if let SettingsType::Default(_, error_message) = &settings_state.settings {
         if let Some(_) = error_message {
             match key.code {
-                KeyCode::Char('q') => return AppAction::Switch(Screen::Start(StartState::new())),
+                KeyCode::Char('q') => return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs))),
                 KeyCode::Char('o') => return AppAction::LoadMapFile(settings_state.map_file_path.clone()),
                 _ => {}
             }
@@ -29,7 +29,7 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppActi
             // Confirm exiting and discarding unsaved changes
             KeyCode::Char('q') => {
                 match exit_to {
-                    DiscardExitTo::StartScreen => return AppAction::Switch(Screen::Start(StartState::new())),
+                    DiscardExitTo::StartScreen => return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs))),
                     DiscardExitTo::MapScreen => return AppAction::LoadMapFile(settings_state.map_file_path.clone()),
                 }
             }
@@ -97,7 +97,7 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent) -> AppActi
         // Go to the start screen
         KeyCode::Char('q') => {
             if settings_state.can_exit {
-                return AppAction::Switch(Screen::Start(StartState::new()))
+                return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)))
             } else {
                 settings_state.confirm_discard_menu = Some(DiscardExitTo::StartScreen);
             }            
