@@ -5,25 +5,143 @@ use crate::{
 };
 
 
+/// A 2D point in the coordinate space.
+///
+/// Uses signed integers where X increases rightward and Y increases downward,
+/// following standard coordinate conventions.
+///
+/// This type is `Copy`, making it efficient for geometry calculations.
+///
+/// # Fields
+///
+/// * `x` - Horizontal position (positive = right, negative = left)
+/// * `y` - Vertical position (positive = down, negative = up)
+///
+/// # Examples
+///
+/// ```
+/// # use tmmpr::utils::geometry::Point;
+/// let origin = Point { x: 0, y: 0 };
+/// let bottom_right = Point { x: 100, y: 50 };
+/// ```
 #[derive(Clone, Copy)]
 pub struct Point {
     pub x: isize,
     pub y: isize,
 }
 
-// Where the end point is, in relation to the start point
+/// Where the end point is, in relation to the start point horizontally
 pub enum HPlacement {
     Right,
     Left,
     Level,
 }
 
+/// Where the end point is, in relation to the start point vertically
 pub enum VPlacement {
     Above,
     Below,
     Level,
 }
 
+/// Calculates a visual connection path between two notes.
+///
+/// This function computes a series of points that form an aesthetically pleasing
+/// connection line between two notes, taking into account their relative positions
+/// and which sides of each note are being connected. The algorithm automatically
+/// determines the appropriate path shape (C-shape, S-shape, U-shape, corner, etc.)
+/// based on the spatial relationship between the notes.
+///
+/// # Parameters
+///
+/// * `start_note` - A reference to the note where the connection begins
+/// * `start_side` - The side of the start note where the connection originates
+///   (Right, Left, Top, or Bottom)
+/// * `end_note` - A reference to the note where the connection terminates
+/// * `end_side` - The side of the end note where the connection ends
+///   (Right, Left, Top, or Bottom)
+///
+/// # Returns
+///
+/// Returns a `Vec<Point>` containing the ordered sequence of points that define
+/// the connection path. The first point is at the edge of the start note, and the
+/// last point is at the edge of the end note. Intermediate points define the curves
+/// and bends of the connection line.
+///
+/// An empty vector is returned if no valid path can be computed (though this should
+/// be rare in normal operation).
+///
+/// # Algorithm
+///
+/// The function operates in several stages:
+///
+/// 1. **Extract connection points**: Gets the actual coordinate points on each note's
+///    edge where the connection should attach, based on the specified sides.
+///
+/// 2. **Calculate offset points**: Computes points slightly away from each note
+///    (by an offset of 2 units) to ensure the connection line clears the note
+///    boundaries and looks visually appropriate.
+///
+/// 3. **Determine spatial relationship**: Analyzes the available space between notes
+///    in both X and Y dimensions to determine the relative placement:
+///    - Horizontal: Right (4+ units), Left (-4+ units), or Level (within ±3 units)
+///    - Vertical: Below (4+ units), Above (-4+ units), or Level (within ±3 units)
+///
+/// 4. **Select path shape**: Based on the combination of:
+///    - Start side (4 options)
+///    - End side (4 options)
+///    - Horizontal placement (3 options)
+///    - Vertical placement (3 options)
+///    
+///    The function selects one of several path shape generators:
+///    - `c_shape` / `reverse_c_shape`: C-shaped paths, useful when connecting to
+///      the same side or wrapping around notes
+///    - `s_shapes` / `sideways_s_shapes_x` / `sideways_s_shapes_y`: S-shaped paths
+///      for connections that need to change both horizontal and vertical direction
+///    - `corner_shapes_1` / `corner_shapes_2`: Simple L-shaped corner connections
+///    - `u_shapes` / `upside_down_u_shapes`: U-shaped paths for connecting notes
+///      stacked vertically with same-side connections
+///
+/// 5. **Generate path points**: The selected shape function generates the specific
+///    sequence of points that form the connection path.
+///
+/// # Coordinate System
+///
+/// The function uses `isize` coordinates where:
+/// - X increases to the right
+/// - Y increases downward
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use tmmpr::graph::{Note, Side, calculate_path};
+///
+/// // Create two notes
+/// let start_note = Note::new(10, 10, "Start".to_string());
+/// let end_note = Note::new(50, 20, "End".to_string());
+///
+/// // Calculate path from right side of start to left side of end
+/// let path = calculate_path(&start_note, Side::Right, &end_note, Side::Left);
+///
+/// // The path vector contains all points to draw the connection
+/// for point in path {
+///     // Draw line segment to this point
+///     println!("Point: ({}, {})", point.x, point.y);
+/// }
+/// ```
+///
+/// # Performance
+///
+/// This function performs simple arithmetic operations and allocates a small vector
+/// (typically 4-6 points). It is designed to be called frequently during rendering
+/// without significant performance impact.
+///
+/// # Visual Quality
+///
+/// The function prioritizes visual aesthetics:
+/// - Lines clear note boundaries by using offset points
+/// - The "Level" threshold of ±3 units provides a tolerance zone to avoid
+///   excessive path complexity when notes are nearly aligned
 pub fn calculate_path(
     start_note: &Note,
     start_side: Side,

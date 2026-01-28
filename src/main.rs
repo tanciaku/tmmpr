@@ -1,12 +1,6 @@
-mod app;
-mod input;
-mod ui;
-mod states;
-mod utils;
-
 use color_eyre::Result;
 use ratatui::DefaultTerminal;
-use crate::{
+use tmmpr::{
     app::{App, Screen},
     input::handle_events,
     ui::{render_map, render_settings, render_start} 

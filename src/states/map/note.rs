@@ -2,16 +2,23 @@ use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
 use super::enums::Side;
 
-/// Represents a single note on the canvas.
+/// Represents a single note (node) on the plain.
+///
+/// Notes are the fundamental building blocks of the mind map, each positioned at
+/// specific coordinates on the canvas. They can contain text content, be visually
+/// styled with colors, and can be selected for editing or manipulation.
+///
+/// # Fields
+///
+/// * `x`, `y` - The absolute position of the note's top-left corner on the canvas
+/// * `content` - The text content displayed within the note
+/// * `selected` - Whether this note is currently selected by the user
+/// * `color` - The border color of the note when rendered in the TUI
 #[derive(PartialEq, Serialize, Deserialize, Clone, Debug)]
 pub struct Note {
-    /// The absolute x-coordinate of the note's top-left corner on the canvas.
     pub x: usize,
-    /// The absolute y-coordinate of the note's top-left corner on the canvas.
     pub y: usize,
-    /// The text content of the note.
     pub content: String,
-    /// A flag indicating whether this note is currently selected.
     pub selected: bool,
     #[serde(with = "crate::utils")]
     pub color: Color,
