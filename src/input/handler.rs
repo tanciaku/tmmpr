@@ -76,7 +76,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
 pub fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
     match &map_state.current_mode {
         // Normal mode is for navigation and high-level commands.
-        Mode::Normal => map_normal_kh(map_state, key),
+        Mode::Normal => map_normal_kh(map_state, key, &RealFileSystem),
 
         // Visual mode for selections.
         Mode::Visual => map_visual_kh(map_state, key),

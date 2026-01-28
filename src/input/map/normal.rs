@@ -1,10 +1,10 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::{app::Screen, input::{AppAction, map::{help_next_page, help_previous_page, move_viewport}}, states::{MapState, SettingsState, StartState, map::DiscardMenuType}};
+use crate::{app::Screen, input::{AppAction, map::{help_next_page, help_previous_page, move_viewport}}, states::{MapState, SettingsState, StartState, map::DiscardMenuType}, utils::FileSystem};
 
 
 /// Key handling for Normal Mode in the Map Screen
-pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
+pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSystem) -> AppAction {
     // Showing help page (takes all input if toggled)
     if map_state.ui_state.is_help_visible() {
         match key.code {
@@ -37,7 +37,7 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Char('q') => {
                 match discard_menu_type {
                     DiscardMenuType::Start => {
-                        return AppAction::Switch(Screen::Start(StartState::new()))
+                        return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)))
                     }
                     DiscardMenuType::Settings => {
                         return AppAction::Switch(
@@ -56,11 +56,11 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     // --- Map Screen Normal Mode Commands ---
     match key.code {
 
-        // Exiting the app
+        // Exiting to Start Screen
         KeyCode::Char('q') => {
             // Can exit to start screen if saved the changes
             if map_state.persistence.can_exit {
-                return AppAction::Switch(Screen::Start(StartState::new()))
+                return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)))
             } else { // Otherwise show the confirmation to discard unsaved changes menu
                 map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
                 map_state.clear_and_redraw();
