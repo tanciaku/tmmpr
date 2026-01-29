@@ -6,13 +6,14 @@ use crate::states::map::Connection;
 #[derive(PartialEq, Debug)]
 pub struct ConnectionsState {
     pub connections: Vec<Connection>,
-    /// Separate type for connections, to be able to properly render
-    /// connecting characters: ┴ ┬ ┤ ├
+    /// Maps note IDs to all connections touching that note (both from and to).
+    /// Used for efficient lookup when rendering junction characters: ┴ ┬ ┤ ├
     pub connection_index: HashMap<usize, Vec<Connection>>,
+    /// Connection currently being created or edited by the user.
     pub focused_connection: Option<Connection>,
+    /// Whether the user is editing an existing connection.
     pub visual_editing_a_connection: bool,
-    /// Index of the connection being edited, when it was taken out
-    /// out the connections vector.
+    /// Original position in the connections vector when a connection was removed for editing.
     pub editing_connection_index: Option<usize>,
 }
 
@@ -27,41 +28,34 @@ impl ConnectionsState {
         }
     }
 
-    /// Stashes the currently focused connection into the connections list
+    /// Finalizes the focused connection by adding it to the permanent connections list.
+    /// Incomplete connections (missing `to_id`) are discarded.
+    /// Updates the connection_index for both endpoints.
     pub fn stash_connection(&mut self) {
-        // Take the connection out, leaving None in its place.
         if let Some(connection) = self.focused_connection.take() {
-            // Now we own the connection. We can check its fields.
             if connection.to_id.is_some() {
-                // If it has a target, we finalize it.
                 self.connections.push(connection);
 
-                // Get the Vec for the key, or create a new empty Vec if it's not there
                 let indexed_connection_start = self.connection_index.entry(connection.from_id).or_default();
-                indexed_connection_start.push(connection); // Now push your item into the Vec
+                indexed_connection_start.push(connection);
 
-                // Again for the end point.
                 let indexed_connection_end = self.connection_index.entry(connection.to_id.unwrap()).or_default();
                 indexed_connection_end.push(connection);
             }
-            // If it didn't have a target, we just drop it here.
         }
     }
 
-    /// Takes out a connection from the list and makes it the focused connection
+    /// Removes a connection from permanent storage and makes it the focused connection for editing.
+    /// Updates the connection_index for both endpoints.
     pub fn take_out_connection(&mut self, index: usize) {
         let connection_removed = self.connections.remove(index);
         self.focused_connection = Some(connection_removed);
 
-        // Edit values from corresponding keys associated with the connection
-        // (removing the same connection from both indexes (from_id and to_id))
         if let Some(index_vec) = self.connection_index.get_mut(&connection_removed.from_id) {
-            // Keep only the connections that are NOT the one we just removed.
             index_vec.retain(|c| c != &connection_removed);
         }
 
         if let Some(index_vec) = self.connection_index.get_mut(&connection_removed.to_id.unwrap()) {
-            // Keep only the connections that are NOT the one we just removed.
             index_vec.retain(|c| c != &connection_removed);
         }
     }

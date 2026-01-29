@@ -11,31 +11,20 @@ pub struct SignedRect {
 }
 
 impl SignedRect {
-    /// Calculates the intersection of two `SignedRect`s.
-    ///
-    /// This method is the core of the clipping logic. It determines the overlapping
-    /// area between two rectangles (typically a note and the viewport).
-    ///
-    /// Returns `Some(SignedRect)` representing the overlapping area, or `None` if
-    /// the rectangles do not overlap at all.
+    /// Core clipping logic for determining the visible portion of a rectangle (typically
+    /// a note) within the viewport bounds.
     pub fn intersection(&self, view: &SignedRect) -> Option<SignedRect> {
-        // if the no part of the note rectangle is within the view rectangle
-        // no part of the note will be drawn
         if self.x >= view.x + view.width || self.x + self.width <= view.x || self.y >= view.y + view.height || self.y + self.height <= view.y {
             return None
-        // otherwise calculate the area of the note rectangle to draw
         } else { 
-            // intersection area for x axis            
             let x_start = self.x.max(view.x);
             let x_end = (self.x + self.width).min(view.x + view.width);
             let x_width = x_end - x_start;
 
-            // intersection area for y axis
             let y_start = self.y.max(view.y);
             let y_end = (self.y + self.height).min(view.y + view.height);
             let y_height = y_end - y_start;
 
-            // return the visible area of the rectangle
             Some(SignedRect {
                 x: x_start,
                 y: y_start,

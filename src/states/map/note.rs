@@ -2,30 +2,22 @@ use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
 use super::enums::Side;
 
-/// Represents a single note (node) on the plain.
+/// A node on the mind map canvas with position, content, and visual styling.
 ///
-/// Notes are the fundamental building blocks of the mind map, each positioned at
-/// specific coordinates on the canvas. They can contain text content, be visually
-/// styled with colors, and can be selected for editing or manipulation.
-///
-/// # Fields
-///
-/// * `x`, `y` - The absolute position of the note's top-left corner on the canvas
-/// * `content` - The text content displayed within the note
-/// * `selected` - Whether this note is currently selected by the user
-/// * `color` - The border color of the note when rendered in the TUI
+/// Notes are the fundamental building blocks of the mind map. Each note occupies
+/// a position on an infinite 2D plane and can be connected to other notes.
 #[derive(PartialEq, Serialize, Deserialize, Clone, Debug)]
 pub struct Note {
     pub x: usize,
     pub y: usize,
     pub content: String,
     pub selected: bool,
+    /// Custom serialization needed to convert between ratatui's Color and a persistable format
     #[serde(with = "crate::utils")]
     pub color: Color,
 }
 
 impl Note {
-    /// Creates a new `Note` at a given position with initial content.
     pub fn new(x: usize, y: usize, content: String, selected: bool, color: Color) -> Note {
         Note {
             x,
@@ -36,34 +28,36 @@ impl Note {
         }
     }
 
-    /// Calculates the width and height of the note's bounding box for rendering.
+    /// Returns the rendered dimensions (width, height) including 2-cell border padding.
     ///
-    /// The dimensions include a 2-cell padding for the borders.
-    /// The height is calculated by counting newline characters to correctly handle
-    /// trailing empty lines, which the `lines()` iterator would otherwise ignore.
+    /// Height is calculated by counting newlines rather than using `lines()` to
+    /// preserve trailing empty lines that would otherwise be ignored.
     pub fn get_dimensions(&self) -> (u16, u16) {
-        // Height is 1 (for the first line) + number of newline characters.
         let height = (1 + self.content.matches('\n').count()) as u16;
         
-        // Width is the character count of the longest line.
         let width = self.content
             .lines()
             .map(|line| line.chars().count())
             .max()
             .unwrap_or(0) as u16;
         
-        // Add 2 to each dimension for a 1-cell border on all sides.
         (width + 2, height + 2)
     }
 
+    /// Returns the canvas coordinates where a connection line should attach to this note.
+    ///
+    /// The point is centered on the specified side.
+    ///
+    /// FIXME: Repetition, mixing concerns - enforcing minimum dimensions should be handled
+    /// within get_dimensions(), this also occurs in other places
     pub fn get_connection_point(&self, side: Side) -> (usize, usize) {
         let (mut note_width, mut note_height) = self.get_dimensions();
 
-        // Enforce a minimum size
+        // Enforce minimum dimensions
         if note_width < 20 { note_width = 20; }
         if note_height < 4 { note_height = 4; } 
-        // Add space for cursor
-        note_width+=1;
+        // Account for cursor
+        note_width += 1;
 
         match side {
             Side::Right => {

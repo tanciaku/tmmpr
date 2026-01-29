@@ -4,15 +4,12 @@ use super::note::Note;
 
 #[derive(PartialEq, Debug)]
 pub struct NotesState {
-    /// A collection of all notes in the mind map, keyed by their unique ID.
     pub notes: HashMap<usize, Note>,
-    /// A counter to ensure each new note gets a unique ID.
+    /// Used to generate unique IDs for new notes
     pub next_note_id: usize,
-    /// The unique ID of the currently selected note.
     pub selected_note: Option<usize>,
-    /// Order in which to render the notes ("z index"). Ordered back to front.
+    /// Z-index ordering for note rendering (back to front)
     pub render_order: Vec<usize>,
-    /// Cursor position within the currently selected note's text
     pub cursor_pos: usize,
 }
 
@@ -27,8 +24,7 @@ impl NotesState {
         }
     }
 
-    /// Create a new note at the given position
-    /// Returns the ID of the newly created note
+    /// Creates a new note and returns its ID
     pub fn create_note(&mut self, x: usize, y: usize, text: String, selected: bool, color: Color) -> usize {
         let id = self.next_note_id;
         self.notes.insert(id, Note::new(x, y, text, selected, color));
@@ -37,41 +33,25 @@ impl NotesState {
         id
     }
 
-    /// Select a note by ID
-    /// Updates render order to bring the note to front
-    /// Sets the note's selected flag to true
+    /// Selects a note by ID and brings it to the front of render order
     pub fn select_note_by_id(&mut self, id: usize) {
         self.selected_note = Some(id);
 
-        // Update the render order (bring to front)
+        // Bring to front of render order
         if let Some(pos) = self.render_order.iter().position(|&x| x == id) {
             let item = self.render_order.remove(pos);
             self.render_order.push(item);
         }
 
-        // Mark as selected
         if let Some(note) = self.notes.get_mut(&id) {
             note.selected = true;
         }
     }
 
-    // Deselect the currently selected note
-    //pub fn deselect(&mut self) {
-    //    if let Some(id) = self.selected_note {
-    //        if let Some(note) = self.notes.get_mut(&id) {
-    //            note.selected = false;
-    //        }
-    //    }
-    //    self.selected_note = None;
-    //    self.cursor_pos = 0;
-    //}
-
-    /// Find the note closest to the given coordinates
-    /// Returns the ID of the closest note, or None if there are no notes
+    /// Finds the note closest to the given coordinates using Manhattan distance
     pub fn find_closest_note(&self, x: usize, y: usize) -> Option<usize> {
         self.notes.iter()
             .min_by_key(|(_, note)| {
-                // Calculate Manhattan distance: |x1 - x2| + |y1 - y2|
                 let distance = (note.x as isize - x as isize).abs()
                            + (note.y as isize - y as isize).abs();
                 distance as usize
