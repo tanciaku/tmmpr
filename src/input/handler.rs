@@ -1,6 +1,3 @@
-//! This module handles terminal events, focusing on keyboard input
-//! to control the application's state and behavior.
-
 use crate::{
     app::{App, Screen},
     input::{map::{map_delete_kh, map_edit_kh, map_normal_kh, map_visual_kh}, settings_kh, start_kh},
@@ -21,7 +18,7 @@ pub enum AppAction {
     LoadMapFile(PathBuf),
 }
 
-/// Reads the terminal events.
+/// Main event loop handler that polls terminal events and dispatches them to screen-specific handlers.
 ///
 /// This function is intentionally not tested because:
 /// 1. It's a thin orchestrator over fully-tested components
@@ -29,13 +26,10 @@ pub enum AppAction {
 /// 3. The integration points for crossterm are better tested via manual testing
 /// 4. Adding mocks would add complexity without significant value
 pub fn handle_events(app: &mut App) -> Result<()> {
-    // Poll for an event with a timeout of 50ms. This is the main "tick" rate.
+    // 50ms timeout balances responsiveness with CPU usage
     if event::poll(std::time::Duration::from_millis(50))? {
-        // Read the event
         match event::read()? {
-            // Handle keyboard input
             Event::Key(key) if key.kind == KeyEventKind::Press => {
-                // Dispatch it to the appropriate handler.
                 let app_action = match &mut app.screen {
                     Screen::Start(start_state) => start_kh(start_state, key, &RealFileSystem),
                     Screen::Settings(settings_state) => settings_kh(settings_state, key, &RealFileSystem),
@@ -48,8 +42,8 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                     AppAction::Switch(screen) => app.screen = screen,
                     AppAction::CreateMapFile(path) => create_map_file(app, &path),
                     AppAction::SaveMapFile(path) => {
-                        // This match arm can only be reached from user input in map screen
-                        if let Screen::Map(map_state) = &mut app.screen { // get the map state - guaranteed.
+                        // SaveMapFile can only be triggered from map screen, so this is guaranteed to succeed
+                        if let Screen::Map(map_state) = &mut app.screen {
                             save_map_file(map_state, &path, true, false);
                         }
                     }
@@ -57,7 +51,6 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                 }
             }
 
-            // Redraw the UI if terminal window resized
             Event::Resize(_, _) => {
                 match &mut app.screen {
                     Screen::Start(start_state) => start_state.needs_clear_and_redraw = true,
@@ -72,19 +65,13 @@ pub fn handle_events(app: &mut App) -> Result<()> {
     Ok(())
 }
 
-/// Key handling depending on Map Screen Mode
+/// Dispatches key events to mode-specific handlers in the map screen.
 pub fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
     match &map_state.current_mode {
-        // Normal mode is for navigation and high-level commands.
         Mode::Normal => map_normal_kh(map_state, key, &RealFileSystem),
-
-        // Visual mode for selections.
         Mode::Visual => map_visual_kh(map_state, key),
-
-        // Edit mode is for editing the content of a note.
         Mode::Edit(modal) => map_edit_kh(map_state, key, *modal),
-    
-        // Delete mode is a confirmation to delete a note
+        // Delete mode requires user confirmation before actually deleting
         Mode::Delete => map_delete_kh(map_state, key),
     }
 }

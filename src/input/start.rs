@@ -4,37 +4,32 @@ use crate::{input::AppAction, states::{StartState, start::{FocusedInputBox, Sele
 use crossterm::event::{KeyCode, KeyEvent};
 
 
-/// Key handling for the Start Screen
 pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSystem) -> AppAction {
-    // Take all input if in the Input Menu screen
-    // (Entering a path for the map file)
+    // Input mode has different keybindings - handle separately from start menu navigation
     if start_state.input_path {
 
-        // Keys independent of which input box is in focus
         match key.code {
             KeyCode::Esc => {
                 start_state.input_path = false;
-                start_state.focused_input_box = FocusedInputBox::InputBox1; // if already isn't
-                start_state.input_path_string = None; // reset input fields
-                start_state.input_path_name = None; // reset input fields
+                start_state.focused_input_box = FocusedInputBox::InputBox1;
+                start_state.input_path_string = None;
+                start_state.input_path_name = None;
             }
             _ => {}
         }
 
-        // Which input box is in focus?
         match start_state.focused_input_box {
             FocusedInputBox::InputBox1 => {
                 if let Some(path) = &mut start_state.input_path_string {
                     match key.code {
                         KeyCode::Char(c) => {
+                            // Limit to 46 chars to fit UI display width
                             if path.len() < 46 {
                                 path.push(c);
                             }
                         }
                         KeyCode::Backspace => {
-                            if path.len() > 0 {
-                                path.pop();
-                            }
+                            path.pop();
                         }
                         KeyCode::Enter => {
                             start_state.focused_input_box = FocusedInputBox::InputBox2;
@@ -47,14 +42,13 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
                 if let Some(map_name) = &mut start_state.input_path_name {
                     match key.code {
                         KeyCode::Char(c) => {
+                            // Limit to 46 chars to fit UI display width
                             if map_name.len() < 46 {
                                 map_name.push(c);
                             }
                         }
                         KeyCode::Backspace => {
-                            if map_name.len() > 0 {
-                                map_name.pop();
-                            }
+                            map_name.pop();
                         }
                         KeyCode::Enter => {
                             start_state.clear_and_redraw();
@@ -70,7 +64,6 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
         return AppAction::Continue
     }
 
-    // If in the start menu
     match key.code {
 
         KeyCode::Char('q') => return AppAction::Quit,
@@ -85,7 +78,7 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
             match start_state.selected_button {
                 SelectedStartButton::CreateSelect => {
                     start_state.input_path = true;
-                    start_state.display_err_msg = None; // if already isn't
+                    start_state.display_err_msg = None;
                     start_state.input_path_string = Some(String::new());
                     start_state.input_path_name = Some(String::new());
                 }
@@ -96,7 +89,7 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
         _ => {}
     }
 
-    // If able to use the "recent paths" functionality (no errors)
+    // Recent paths may not be available if there were errors loading them
     if let Ok(recent_paths) = &start_state.recent_paths {
         match key.code {
             KeyCode::Enter => {
