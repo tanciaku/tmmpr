@@ -6,7 +6,8 @@ use crate::{
     utils::{read_json_data, write_json_data, filesystem::FileSystem},
 };
 
-// PathBuf because the state needs to own it's fields.
+/// Stores up to 3 most recently opened map files.
+/// Uses PathBuf for owned data that persists across the application lifecycle.
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct RecentPaths {
     pub recent_path_1: Option<PathBuf>,
@@ -23,71 +24,62 @@ impl RecentPaths {
         }
     }
 
-    /// Adds a new recent_path and moves the other down by 1, discarding the last one
+    /// Adds a path to the top of the recent list (position 1).
+    /// Shifts existing paths down, discarding the oldest if list is full.
     pub fn add(&mut self, path: PathBuf) {
-        // "Move" the other two "down by 1", discarding the one in 3 (if any)
         self.recent_path_3 = self.recent_path_2.clone();
         self.recent_path_2 = self.recent_path_1.clone();
-
-        // Add the new one
         self.recent_path_1 = Some(path);
     }
 
-    /// Returns true if the given path exists in any of the recent paths
     pub fn contains_path(&self, path: &Path) -> bool {
         self.recent_path_1.as_deref() == Some(path) ||
         self.recent_path_2.as_deref() == Some(path) ||
         self.recent_path_3.as_deref() == Some(path)
     }
 
-    /// Save recent paths using a filesystem abstraction (testable version).
-    /// There cannot be an error here since - if the user cannot use the
-    /// recent_paths functionality - this will never be called.
-    /// If the directories didn't exist before - they would at this point.
+    /// Persists recent paths to `~/.config/tmmpr/recent_paths.json`.
+    /// 
+    /// Errors are silently ignored: this function is only called after successful
+    /// initialization by `get_recent_paths_with_fs`, which ensures the config directory
+    /// exists and is writable. If saving fails, recent paths simply won't persist.
     pub fn save_with_fs(&self, fs: &impl FileSystem) {
-        // Get the user's home directory path
         let home_path = match fs.get_home_dir() {
             Some(path) => path,
             None => return,
         };
 
-        // Make the full path to the file (/home/user/.config/tmmpr/recent_paths.json)
         let recent_paths_file_path = home_path.join(".config/tmmpr/recent_paths").with_extension("json");
 
-        // Write the data (guaranteed at this point)
         let _ = write_json_data(&recent_paths_file_path, &self);
     }
 }
 
-/// Gets the recent paths from the filesystem using a filesystem abstraction (testable version).
-/// Or creates an empty one if it doesn't exist
-/// If there is an error somewhere along the way - returns an error message
-///   (can't use recent_paths functionality in that case)
+/// Loads recent paths from `~/.config/tmmpr/recent_paths.json`, creating an empty file
+/// if it doesn't exist.
+/// 
+/// Returns an error if the config directory cannot be created or accessed, which disables
+/// recent paths functionality for the session. Uses FileSystem abstraction for testability.
 pub fn get_recent_paths_with_fs(fs: &dyn FileSystem) -> Result<RecentPaths, ErrMsg> {
-    // Get the user's home directory path
     let home_path = match fs.get_home_dir() {
         Some(path) => path,
         None => return Err(ErrMsg::DirFind),
     };
 
-    // Make the path to the config directory (e.g. /home/user/.config/tmmpr/)
     let config_dir_path = home_path.join(".config/tmmpr/");
 
-    // Create the directory if it doesn't exist
     if let Err(_) = fs.create_dir_all(&config_dir_path) {
         return Err(ErrMsg::DirCreate)
     };
 
-    // Make the full path to the file (e.g. /home/user/.config/tmmpr/recent_paths.json)
     let recent_paths_file_path = config_dir_path.join("recent_paths").with_extension("json");
 
-    // Load the file if it exits:
     if fs.path_exists(&recent_paths_file_path) {
         match read_json_data(&recent_paths_file_path) {
             Ok(recent_paths) => Ok(recent_paths),
             Err(_) => Err(ErrMsg::FileRead),
         }
-    } else { // Otherwise create it
+    } else {
         let new_recent_paths = RecentPaths::new();
         match write_json_data(&recent_paths_file_path, &new_recent_paths) {
             Ok(_) => Ok(new_recent_paths),

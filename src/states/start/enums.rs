@@ -3,6 +3,8 @@ use ratatui::{
     widgets::{Block, BorderType},
 };
 
+/// Buttons available in the start screen.
+/// Limited to 3 recent files to keep the UI compact and focused.
 #[derive(PartialEq, Debug)]
 pub enum SelectedStartButton {
     CreateSelect,
@@ -12,35 +14,31 @@ pub enum SelectedStartButton {
 }
 
 impl SelectedStartButton {
-    /// Determines the style based on if the button is selected
     pub fn get_style(&self, selected_button: &SelectedStartButton) -> Style {
         if self == selected_button {
-            // Selected button
             Style::new().bg(Color::White).fg(Color::Black)
         } else {
-            // Default
             Style::new()
         }
     }
 }
 
+/// Tracks which input box has focus when creating or selecting a file.
 #[derive(PartialEq, Debug)]
 pub enum FocusedInputBox {
     InputBox1,
     InputBox2,
 }
 
+// FIXME: Unclear why this attribute is needed - investigate and remove if possible
 #[allow(mismatched_lifetime_syntaxes)]
 impl FocusedInputBox {
-    /// Determines the block style based on if the input box is in focus
     pub fn get_style(&self, focused_input_box: &FocusedInputBox) -> Block {
         if self == focused_input_box {
-            // Input box is in focus
             Block::bordered()
                 .border_style(Color::Blue)
                 .border_type(BorderType::Double)
         } else {
-            // Default
             Block::bordered()
                 .border_style(Color::White)
                 .border_type(BorderType::Plain)
@@ -48,7 +46,7 @@ impl FocusedInputBox {
     }
 }
 
-/// Which error message to display
+/// Error conditions that can occur during start screen operations.
 #[derive(PartialEq, Debug)]
 pub enum ErrMsg {
     DirFind,

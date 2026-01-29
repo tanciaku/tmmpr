@@ -8,22 +8,21 @@ use crate::{
 pub struct StartState {
     pub needs_clear_and_redraw: bool,
     pub selected_button: SelectedStartButton,
-    /// Is user entering a path for the map?
     pub input_path: bool,
     pub focused_input_box: FocusedInputBox,
     pub input_path_string: Option<String>,
     pub input_path_name: Option<String>,
-    /// Which error message to display in case handling
-    /// the map file fails
     pub display_err_msg: Option<ErrMsg>,
     pub recent_paths: Result<RecentPaths, ErrMsg>,
 }
 
 impl StartState {
+    /// Creates a new start screen state with the real filesystem
     pub fn new() -> Self {
         Self::new_with_fs(&RealFileSystem)
     }
 
+    /// Creates a new start screen state with a custom filesystem implementation (for testing)
     pub fn new_with_fs(fs: &dyn FileSystem) -> StartState {
         StartState {
             needs_clear_and_redraw: true,
@@ -67,14 +66,17 @@ impl StartState {
         }
     }
 
-    /// Submit a path with a custom filesystem implementation (for testing)
+    /// Handles path submission from either recent files or manual input.
+    /// 
+    /// For recent paths: validates existence before loading.
+    /// For manual input: constructs full path from home dir + user input (e.g. maps/map_0),
+    /// creates necessary directories, then loads or creates the map file.
     pub fn submit_path_with_fs(
         &mut self,
         recent_path: Option<PathBuf>,
         fs: &dyn FileSystem,
     ) -> AppAction {
         match recent_path {
-            // Submitted a path from the "Recents" section
             Some(path) => {
                 if fs.path_exists(&path) {
                     AppAction::LoadMapFile(path)
@@ -84,15 +86,11 @@ impl StartState {
                     AppAction::Continue
                 }
             }
-            // Entered a new path
             None => {
-                // Get the provided path and name
-                // Both fields will always be Some in this scenario, so it's safe.
-                let path = &self.input_path_string.as_ref().unwrap(); // provided path (relative to home path, e.g. maps/)
-                let name = &self.input_path_name.as_ref().unwrap(); // provided map file name
+                // Both fields are guaranteed to be Some when submitting manual input
+                let path = &self.input_path_string.as_ref().unwrap();
+                let name = &self.input_path_name.as_ref().unwrap();
 
-                // Get the user's home directory path 
-                //  or display an error and stop there
                 let home_path = match fs.get_home_dir() {
                     Some(path) => path,
                     None => {
@@ -101,35 +99,29 @@ impl StartState {
                     }
                 };
 
-                // Make the path to the file's directory (e.g. /home/user/maps/)
                 let map_path = home_path.join(path);
 
-                // Create the directory if it doesn't exist
-                //  or display an error and stop there
                 if let Err(_) = fs.create_dir_all(&map_path) {
                     self.handle_submit_error(ErrMsg::DirCreate);
                     return AppAction::Continue
                 };
 
-                // Make the full path to the file (e.g. /home/user/maps/map_0.json)
                 let map_file_path = map_path.join(name).with_extension("json");
 
-                // Load the file if it exits:
                 if fs.path_exists(&map_file_path) {
                     AppAction::LoadMapFile(map_file_path)
-                } else { // Otherwise create it
+                } else {
                     AppAction::CreateMapFile(map_file_path)
                 }
             }
         }
     }
     
-    /// Helper function for clearing input fields and displaying error messages
-    /// for the input menu
+    /// Resets input fields and displays an error message when path submission fails
     pub fn handle_submit_error(&mut self, err_msg: ErrMsg) {
-        self.input_path_string = Some(String::new()); // Reset fields
-        self.input_path_name = Some(String::new()); // Reset fields
-        self.focused_input_box = FocusedInputBox::InputBox1; // Switch back to the first input box 
-        self.display_err_msg = Some(err_msg); // Show corresponding error message
+        self.input_path_string = Some(String::new());
+        self.input_path_name = Some(String::new());
+        self.focused_input_box = FocusedInputBox::InputBox1;
+        self.display_err_msg = Some(err_msg);
     }
 }

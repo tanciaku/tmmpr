@@ -9,27 +9,21 @@ use crate::states::{
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct Settings {
-    /// Interval at which to auto-save changes to a map file
+    /// Interval (in seconds) at which to auto-save changes
     pub save_interval: Option<usize>,
-    /// Interval at which to backup map file on loading it
+    /// How often to create backups when loading a map file
     pub backups_interval: Option<BackupsInterval>,
-    /// Path to a directory in which to save backups
     pub backups_path: Option<String>, 
-    /// Last backup date for each map file opened
+    /// Tracks last backup timestamp per map file path
     pub backup_dates: HashMap<String, DateTime<Local>>,
-    /// Interval at which to backup map file while the application
-    /// is running.
+    /// How often to create backups during an active editing session
     pub runtime_backups_interval: Option<RuntimeBackupsInterval>,
-    /// Default start side for creating connections
     pub default_start_side: Side,
-    /// Default end side for creating connections
     pub default_end_side: Side,
-    /// Whether modal editing for Edit Mode is enabled
     pub edit_modal: bool,
 }
 
 impl Settings {
-    // Get default setttings
     pub fn new() -> Settings {
         Settings {
             save_interval: Some(20),
@@ -43,7 +37,7 @@ impl Settings {
         }
     }
 
-    /// Cycles through the available saving intervals, for changes made to the map
+    /// Cycles through available save intervals: 10s -> 20s -> 30s -> 60s -> off
     pub fn cycle_save_intervals(&mut self) {
         self.save_interval = match self.save_interval {
             None => Some(10),
@@ -55,16 +49,18 @@ impl Settings {
         }; 
     }
 
+    /// Cycles through backup intervals for map loading backups
     pub fn cycle_backup_interval(&mut self) {
         self.backups_interval = match self.backups_interval {
             Some(BackupsInterval::Daily) => Some(BackupsInterval::Every3Days),
             Some(BackupsInterval::Every3Days) => Some(BackupsInterval::Weekly),
             Some(BackupsInterval::Weekly) => Some(BackupsInterval::Every2Weeks),
             Some(BackupsInterval::Every2Weeks) => Some(BackupsInterval::Daily),
-            None => unreachable!(), // cannot cycle backup interval if backups are not enabled
+            None => unreachable!(), // cannot cycle if backups are disabled
         };
     }
 
+    /// Cycles through runtime backup intervals during active sessions
     pub fn cycle_runtime_backup_interval(&mut self) {
         self.runtime_backups_interval = match self.runtime_backups_interval {
             Some(RuntimeBackupsInterval::Hourly) => Some(RuntimeBackupsInterval::Every2Hours),
@@ -72,10 +68,11 @@ impl Settings {
             Some(RuntimeBackupsInterval::Every4Hours) => Some(RuntimeBackupsInterval::Every6Hours),
             Some(RuntimeBackupsInterval::Every6Hours) => Some(RuntimeBackupsInterval::Every12Hours), 
             Some(RuntimeBackupsInterval::Every12Hours) => Some(RuntimeBackupsInterval::Hourly), 
-            None => unreachable!(), // cannot cycle runtime backup interval if backups are not enabled
+            None => unreachable!(), // cannot cycle if runtime backups are disabled
         }
     }
 
+    /// Cycles default connection side. If `start_side` is true, cycles start side; otherwise cycles end side.
     pub fn cycle_default_sides(&mut self, start_side: bool) {
         if start_side {
             self.default_start_side = cycle_side(self.default_start_side);

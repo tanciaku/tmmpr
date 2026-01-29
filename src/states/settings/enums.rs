@@ -2,8 +2,8 @@ use ratatui::style::{Color, Style};
 use serde::{Deserialize, Serialize};
 use crate::states::{settings::Settings, start::ErrMsg};
 
-/// Type to distinguish between whether successfully loaded the
-/// settings file and to know to notify the user if didn't.
+/// Tracks whether settings were loaded from a custom file or fell back to defaults.
+/// Carries an optional error message with defaults to notify the user of load failures.
 #[derive(PartialEq, Debug)]
 pub enum SettingsType {
     Default(Settings, Option<ErrMsg>),
@@ -11,7 +11,6 @@ pub enum SettingsType {
 }
 
 impl SettingsType {
-    /// Get a reference to the Settings regardless of variant
     pub fn settings(&self) -> &Settings {
         match self {
             SettingsType::Default(settings, _) => settings,
@@ -19,7 +18,6 @@ impl SettingsType {
         }
     }
 
-    /// Get a mutable reference to the Settings regardless of variant
     pub fn settings_mut(&mut self) -> &mut Settings {
         match self {
             SettingsType::Default(settings, _) => settings,
@@ -28,21 +26,19 @@ impl SettingsType {
     }
 }
 
-/// If exiting from the confirm discard menu - where to exit to.
+/// Destination when user confirms discarding unsaved settings changes.
 #[derive(PartialEq, Debug)]
 pub enum DiscardExitTo {
     StartScreen,
     MapScreen,
 }
 
-/// Which notification to show in the settings menu.
 #[derive(PartialEq, Debug)]
 pub enum SettingsNotification {
     SaveSuccess,
     SaveFail,
 }
 
-/// Which toggle is selected in the settings menu.
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum SelectedToggle {
     /// Save map interval
@@ -60,13 +56,11 @@ pub enum SelectedToggle {
 }
 
 impl SelectedToggle {
-    /// Determines the style based on if the toggle is selected
+    /// Returns highlighted style if this toggle is currently selected.
     pub fn get_style(&self, selected_button: &SelectedToggle) -> Style {
         if self == selected_button {
-            // Selected button
             Style::new().bg(Color::White).fg(Color::Black)
         } else {
-            // Default
             Style::new()
         }
     }
