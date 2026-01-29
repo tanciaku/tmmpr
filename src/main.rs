@@ -15,31 +15,27 @@ fn main() -> color_eyre::Result<()> {
     result
 }
 
+/// Main event loop using on-demand rendering to reduce CPU usage.
+/// Each screen state tracks whether it needs redrawing instead of rendering every frame.
 fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
-    // Main application loop
     while app.running {
-        // Which screen is app in?
         match &mut app.screen {
             Screen::Start(start_state) => {
-                // Clear and redraw the screen if need to
                 if start_state.needs_clear_and_redraw {
                     terminal.draw(|frame| render_start(frame, start_state))?;
                     start_state.needs_clear_and_redraw = false;
                 }
             }
             Screen::Settings(settings_state) => {
-                // Clear and redraw the screen if need to
                 if settings_state.needs_clear_and_redraw {
                     terminal.draw(|frame| render_settings(frame, settings_state))?;
                     settings_state.needs_clear_and_redraw = false;
                 }
             }
             Screen::Map(map_state) => { 
-                // (If enabled)
-                // Saving changes to map file, Making runtime backup files
+                // Periodic auto-save and backup creation (respects user settings)
                 map_state.on_tick_save_changes();
 
-                // Clear and redraw the screen if need to
                 if map_state.ui_state.needs_clear_and_redraw {
                     terminal.draw(|frame| render_map(frame, map_state))?;
                     map_state.ui_state.mark_redrawn();
@@ -47,7 +43,6 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
             }
         };
          
-        // Read terminal events
         handle_events(app)?;
     }
 
