@@ -1,4 +1,3 @@
-
 use ratatui::{
     Frame,
     style::Color,
@@ -13,7 +12,6 @@ use crate::{
     utils::{Point, calculate_path}
 };
 
-
 pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
 
     for connection in &map_state.connections_state.connections {
@@ -24,22 +22,16 @@ pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
                         start_note, 
                         connection.from_side, 
                         end_note, 
-                        connection.to_side.unwrap(), // unwrap here, since if there is an
-                                                     // end note - there is an end side
+                        connection.to_side.unwrap(), // Safe: to_side guaranteed present when to_id is Some
                     );
 
-                    // For optimization, quickly check if the connection is visible before attempting
-                    // to draw it. This avoids iterating over every cell of connections that are
-                    // completely off-screen.
-                    // The `.any()` iterator is efficient, stopping as soon as the first visible
-                    // point is found.
+                    // Optimization: skip off-screen connections to avoid expensive per-cell iteration.
+                    // `.any()` short-circuits on first visible point.
                     let is_visible = path.iter().any(|point| {
                         let (p_x, p_y) = map_state.viewport.to_screen_coords(point.x, point.y);
                         p_x >= 0 && p_x < frame.area().width as isize && p_y >= 0 && p_y < frame.area().height as isize
                     });
 
-                    // If no points in the path are within the visible screen area, skip
-                    // the expensive drawing logic and move to the next connection.
                     if !is_visible {
                         continue
                     }
@@ -50,7 +42,7 @@ pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
         }
     }
         
-    // Render the "in progress" connection, if any
+    // Render focused connection being created/edited
     if let Some(focused_connection) = &map_state.connections_state.focused_connection {
 
         if let Some(start_note) = map_state.notes_state.notes.get(&focused_connection.from_id){
@@ -61,8 +53,7 @@ pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
                         start_note, 
                         focused_connection.from_side, 
                         end_note, 
-                        focused_connection.to_side.unwrap(), // unwrap here, since if there is an
-                                                             // end note - there is an end side
+                        focused_connection.to_side.unwrap(), // Safe: to_side guaranteed present when to_id is Some
                     );
 
                     draw_connection(path, true, Color::Yellow, frame, map_state);
@@ -72,8 +63,8 @@ pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
     }
 }
 
-// `in_progess` is a bool argument for whether it is the "in progress" (of making/editing)
-// connection being drawn.
+/// Draws a connection path on the screen.
+/// `in_progress`: if true, uses special charset to indicate connection being created/edited
 pub fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame: &mut Frame, map_state: &MapState) {
     let connection_charset = if in_progress {
         &IN_PROGRESS_CHARSET
@@ -81,23 +72,18 @@ pub fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame:
         &NORMAL_CHARSET
     };
 
-    // Draw the horizontal and vertical line segments that make
-    // up a connection (.windows(2) - 2 points that make up a line)
+    // Draw horizontal and vertical line segments (path split into pairs of points)
     for points in path.windows(2) {
-        // Translate first point absolute coordinates to screen coordinates
         let (p1_x, p1_y) = map_state.viewport.to_screen_coords(points[0].x, points[0].y);
-
-        // -- Determine line characters and draw them --
         
-        // If the difference is in x coordinates - draw horizontal segment characters
         if points[0].x != points[1].x {
-            let x_diff = (points[1].x - points[0].x).abs(); // difference in point 1 to point 2
+            let x_diff = (points[1].x - points[0].x).abs();
             let mut x_coor: isize;
             
             for offset in 0..x_diff {
-                if points[1].x > points[0].x { // +difference (going right)
+                if points[1].x > points[0].x {
                     x_coor = p1_x + offset;
-                } else { // -difference (going left)
+                } else {
                     x_coor = p1_x - offset;
                 }
 
@@ -108,14 +94,14 @@ pub fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame:
                     }
                 }
             }
-        } else { // If the difference is in y coordinates - draw vertical segment characters                        
-            let y_diff = (points[1].y - points[0].y).abs(); // difference in point 1 to point 2
+        } else {
+            let y_diff = (points[1].y - points[0].y).abs();
             let mut y_coor: isize;
 
             for offset in 0..y_diff {
-                if points[1].y > points[0].y { // +difference (going down)
+                if points[1].y > points[0].y {
                     y_coor = p1_y + offset;
-                } else { // -difference (going up)
+                } else {
                     y_coor = p1_y - offset;
                 }
                 
@@ -129,35 +115,33 @@ pub fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame:
         }
     }
 
-    // -- Determine segment directions --
-    // (p1->p2, p2->p3, ...)
-    // Used later to determine corner characters (┌ ┐ └ ┘)
+    // Calculate segment directions for each pair of points.
+    // Used to determine which corner character (┌ ┐ └ ┘) to draw at path bends.
     let mut segment_directions: Vec<SegDir> = vec![];
 
     for points in path.windows(2) {
-        if points[0].x != points[1].x { // horizontal difference
-            if points[1].x > points[0].x { // +difference (going right)
+        if points[0].x != points[1].x {
+            if points[1].x > points[0].x {
                 segment_directions.push(SegDir::Right);
-            } else { // -difference (going left)
+            } else {
                 segment_directions.push(SegDir::Left);
             }
-        } else if points[0].y != points[1].y { // vertical difference
-            if points[1].y > points[0].y { // +difference (going down)
+        } else if points[0].y != points[1].y {
+            if points[1].y > points[0].y {
                 segment_directions.push(SegDir::Down);
-            } else { // -difference (going up)
+            } else {
                 segment_directions.push(SegDir::Up);
             } 
-        } else { // no difference, difference on the same axis
+        } else {
+            // Points are identical; continue in same direction to avoid corner artifacts
             if let Some(last_direction) = segment_directions.last() {
                 segment_directions.push(*last_direction); 
             }
         }
     }
 
-    // -- Draw the corner characters for segments --
+    // Draw corner characters at path bends (skip first and last points)
     for (i, points) in path.windows(3).enumerate() {
-        // Translate points absolute coordinates to screen coordinates
-        // points[1] - to draw every 2nd point, so all besides the first and last [1, 0, 0, 0, 1]
         let (p_x, p_y) = map_state.viewport.to_screen_coords(points[1].x, points[1].y);
 
         let incoming = segment_directions[i];
@@ -197,18 +181,17 @@ pub fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame:
     }
 }
 
-// `is_editing` argument is to determine whether the function is called from the
-// block that is responosible for drawing the "in progress" connection (being made or edited)
+/// Draws the connection point character at the specified side of a note.
+/// `is_editing`: true when drawing connection being created/edited
 pub fn draw_connecting_character(note: &Note, side: Side, is_editing: bool, color: Color, frame: &mut Frame, map_state: &MapState) {
-    // Set of connection characters for the selected note (depends on the current_mode)
+    // Visual style varies based on mode: thick for Visual, double for Edit, plain otherwise
     let connection_charset = if note.selected || is_editing {
         match map_state.current_mode {
             Mode::Visual => &THICK_JUNCTIONS,
             Mode::Edit(_) => &DOUBLE_JUNCTIONS,
-            // For Normal and Delete, we use the plain set
             _ => &PLAIN_JUNCTIONS,
         }
-    } else { // Default set of connection characters (if note or the connection is not selected)
+    } else {
         &PLAIN_JUNCTIONS
     };
 

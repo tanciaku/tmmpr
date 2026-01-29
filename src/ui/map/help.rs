@@ -1,4 +1,3 @@
-
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Margin},
@@ -7,32 +6,27 @@ use ratatui::{
     text::{Span, Line},
 };
 
+/// Renders the help page UI with navigation controls and page-specific content.
 pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
-        // Assign the area for page number, page area and control text's
         let help_screen_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(1), // Page number
-                Constraint::Fill(1), // Page area itself
-                Constraint::Length(1), // Controls
+                Constraint::Length(1),
+                Constraint::Fill(1),
+                Constraint::Length(1),
             ])
             .split(frame.area());
 
-        // Render the controls text (same for all pages)
         let help_screen_controls_text = Line::from("? / F1 - toggle help page        l / Right / Tab - go forward a page        h / Left - go back a page").alignment(Alignment::Center);
         frame.render_widget(help_screen_controls_text, help_screen_layout[2]);
 
-        // Render the page number _
         match page_number {
             1 => {
-                // Render the bordered block (borders)
                 frame.render_widget(Block::bordered().border_style(Color::White), help_screen_layout[1]);
                 
-                // Render the page number
                 let page_ind_1_text = Line::from("  Page 1/5: General");
                 frame.render_widget(page_ind_1_text, help_screen_layout[0]);
 
-                // Page content lines
                 let page_1_content = vec![
                     Line::from(""),
                     Line::from("Page contents:"),
@@ -79,25 +73,20 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("automatically saved - you will be prompted to either cancel exiting or discard those changes."),
                 ];
 
-                // Create a list widget to render
                 let page_1_content: Vec<ListItem> = page_1_content
                     .into_iter()
                     .map(ListItem::new)
                     .collect();
                 let page_1_content = List::new(page_1_content);
 
-                // Render the page content
                 frame.render_widget(page_1_content, help_screen_layout[1].inner(Margin::new(3, 1)));
             }
             2 => {
-                // Render the bordered block (borders)
                 frame.render_widget(Block::bordered().border_style(Color::White), help_screen_layout[1]);
                 
-                // Render the page number
                 let page_ind_2_text = Line::from("  Page 2/5: Normal Mode");
                 frame.render_widget(page_ind_2_text, help_screen_layout[0]);
                 
-                // Page content lines
                 let page_2_content = vec![
                     Line::from(""),
                     Line::from("General Commands"),
@@ -134,25 +123,20 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("     and switch to Visual Mode"),
                 ];
 
-                // Create a list widget to render
                 let page_2_content: Vec<ListItem> = page_2_content
                     .into_iter()
                     .map(ListItem::new)
                     .collect();
                 let page_2_content = List::new(page_2_content);
 
-                // Render the page content
                 frame.render_widget(page_2_content, help_screen_layout[1].inner(Margin::new(3, 1)));
             }
             3 => {
-                // Render the bordered block (borders)
                 frame.render_widget(Block::bordered().border_style(Color::Yellow), help_screen_layout[1]);
                 
-                // Render the page number
                 let page_ind_3_text = Line::from(vec![Span::raw("  Page 3/5: "), Span::styled("Visual Mode", Style::new().fg(Color::Yellow))]);
                 frame.render_widget(page_ind_3_text, help_screen_layout[0]);
 
-                // Page content lines
                 let page_3_content = vec![
                     Line::from(""),
                     Line::from("General Commands"),
@@ -189,18 +173,16 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("focus from it again."),
                 ];
 
-                // Create a list widget to render
                 let page_3_content: Vec<ListItem> = page_3_content
                     .into_iter()
                     .map(ListItem::new)
                     .collect();
                 let page_3_content = List::new(page_3_content);
 
-                // Render the page content
                 frame.render_widget(page_3_content, help_screen_layout[1].inner(Margin::new(3, 1)));
             }
             4 => {
-                // Split the page area in two
+                // Split horizontally to show Move and Connection sub-modes side by side
                 let help_page_4_layout = Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints([
@@ -208,15 +190,12 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                         Constraint::Percentage(50),
                     ])
                     .split(help_screen_layout[1]);
-                // Render the two bordered blocks (borders)
                 frame.render_widget(Block::bordered().border_style(Color::Yellow), help_page_4_layout[0]);
                 frame.render_widget(Block::bordered().border_style(Color::Yellow), help_page_4_layout[1]);
                 
-                // Render the page number
                 let page_ind_4_text = Line::from(vec![Span::raw("  Page 4/5: "), Span::styled("Visual (Move), Visual (Connection)", Style::new().fg(Color::Yellow))]);
                 frame.render_widget(page_ind_4_text, help_screen_layout[0]);
 
-                // Left page content lines
                 let page_4_content_left = vec![
                     Line::from(""),
                     Line::from("Visual (Move)"),
@@ -240,18 +219,14 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("L / Shift+Right Arrow: Move note right by 5"),
                 ];
 
-                // Create a list widget to render
                 let page_4_content_left: Vec<ListItem> = page_4_content_left
                     .into_iter()
                     .map(ListItem::new)
                     .collect();
                 let page_4_content_left = List::new(page_4_content_left);
 
-                // Render left page content
                 frame.render_widget(page_4_content_left, help_page_4_layout[0].inner(Margin::new(3, 1)));
 
-
-                // Right page content lines
                 let page_4_content_right = vec![
                     Line::from(""),
                     Line::from("Visual (Connection)"),
@@ -273,25 +248,20 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("l / Right Arrow: Switch focus to note on the right"),
                 ];
 
-                // Create a list widget to render
                 let page_4_content_right: Vec<ListItem> = page_4_content_right
                     .into_iter()
                     .map(ListItem::new)
                     .collect();
                 let page_4_content_right = List::new(page_4_content_right);
 
-                // Render right page content
                 frame.render_widget(page_4_content_right, help_page_4_layout[1].inner(Margin::new(3, 1)));
             }
             5 => {
-                // Render the bordered block (borders)
                 frame.render_widget(Block::bordered().border_style(Color::Blue), help_screen_layout[1]);
                 
-                // Render the page number
                 let page_ind_5_text = Line::from(vec![Span::raw("  Page 5/5: "), Span::styled("Edit Mode", Style::new().fg(Color::Blue))]);
                 frame.render_widget(page_ind_5_text, help_screen_layout[0]);
 
-                // Page content lines
                 let page_5_content = vec![
                     Line::from(""),
                     Line::from("Edit Mode (text editing)"),
@@ -334,14 +304,12 @@ pub fn render_map_help_page(frame: &mut Frame, page_number: usize) {
                     Line::from("ESC - switches to Edit Normal Mode"),
                 ];
 
-                // Create a list widget to render
                 let page_5_content: Vec<ListItem> = page_5_content
                     .into_iter()
                     .map(ListItem::new)
                     .collect();
                 let page_5_content = List::new(page_5_content);
 
-                // Render page content
                 frame.render_widget(page_5_content, help_screen_layout[1].inner(Margin::new(3, 1)));
             }
             _ => {}
