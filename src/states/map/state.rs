@@ -15,10 +15,12 @@ use crate::{
 };
 
 
+/// Core state for the map view where users create and edit notes and connections.
+///
+/// This is the main working state of the application, handling note creation/editing,
+/// viewport navigation, visual selection, and auto-save/backup functionality.
 #[derive(PartialEq, Debug)]
 pub struct MapState {
-    /// A flag indicating that the screen needs to be cleared and redrawn on the next frame.
-    /// The current input mode of the application, similar to Vim modes.
     pub current_mode: Mode,
     pub viewport: ViewportState,
     pub notes_state: NotesState,
@@ -26,10 +28,7 @@ pub struct MapState {
     pub connections_state: ConnectionsState,
     pub persistence: PersistenceState,
     pub ui_state: UIState,
-    /// Settings
     pub settings: Settings,
-    /// Whether to notify the user that something went wrong with
-    /// using the settings functionality
     pub settings_err_msg: Option<ErrMsg>,
 }
 
@@ -53,16 +52,11 @@ impl MapState {
         }
     }
 
-    /// Sets the flag to clear and redraw the screen on the next frame.
     pub fn clear_and_redraw(&mut self) {
         self.ui_state.request_redraw();
     }
 
-    /// Adds a new, empty note to the canvas.
-    ///
-    /// The note is created at the center of the current viewport. It is immediately
-    /// selected, and the application switches to `Mode::Edit` to allow for
-    /// immediate text entry.
+    /// Adds a new, empty note at the center of the viewport and enters edit mode.
     pub fn add_note(&mut self) {
         self.persistence.mark_dirty();
 
@@ -71,17 +65,15 @@ impl MapState {
         let note_id = self.notes_state.create_note(note_x, note_y, String::from(""), true, Color::White);
         self.notes_state.selected_note = Some(note_id);
         
-        // Switch to edit mode
         self.switch_to_edit_mode();
     }
 
-    /// Switches the map state to Edit Mode for editing note content.
+    /// Switches to Edit mode, using modal editing if enabled in settings.
     ///
-    /// Use modal editing for Edit Mode if it is enabled.
+    /// Block cursor provides visual feedback that modal editing is active (vim-style).
     pub fn switch_to_edit_mode(&mut self) {
         self.current_mode = Mode::Edit(
             if self.settings.edit_modal {
-                // Set a block cursor
                 let _ = execute!(stdout(), SetCursorStyle::SteadyBlock);
 
                 Some(ModalEditMode::Normal)
@@ -91,57 +83,33 @@ impl MapState {
         );
     }
 
-    /// Finds and selects the note closest to the center of the viewport.
+    /// Selects the note closest to the viewport center and enters Visual mode.
     ///
-    /// This method calculates the "Manhattan distance" from the center of the screen
-    /// to the top-left corner of each note and sets the `selected_note` field to the
-    /// ID of the note with the smallest distance.
+    /// Uses Manhattan distance from viewport center to note top-left corner.
     pub fn select_note(&mut self) {
         let (screen_center_x, screen_center_y) = self.viewport.center();
         
-        // Use the new helper methods
         if let Some(id) = self.notes_state.find_closest_note(screen_center_x, screen_center_y) {
-            // When/If found the closest note - select it and switch to Visual Mode
             self.notes_state.select_note_by_id(id);
             self.current_mode = Mode::Visual;
         }
     }
 
-    /// Make a runtime map backup file every set interval (if enabled)
-    /// 
-    /// Save changes to the map file every set interval (if enabled)
+    /// Handles periodic auto-save and backup operations based on configured intervals.
     pub fn on_tick_save_changes(&mut self) {
-        // Saving changes to map file (every 20s by default)
-        match self.settings.save_interval {
-            // If it is disabled - don't periodically save changes.
-            None => {}
-            // Save changes every _ seconds
-            Some(interval) => {
-                // If there were changes made to the map and _ seconds have passed
-                if self.persistence.should_save(interval) { 
-                    // Copy the write path for use here
-                    let map_file_path = self.persistence.file_write_path.clone();
-                    // Attempt to save changes to the map file
-                    // Notifications handled by save_map_file itself
-                    save_map_file(self, &map_file_path, false, false);
-                    self.persistence.reset_save_timer();
-                }
+        if let Some(interval) = self.settings.save_interval {
+            if self.persistence.should_save(interval) { 
+                let map_file_path = self.persistence.file_write_path.clone();
+                save_map_file(self, &map_file_path, false, false);
+                self.persistence.reset_save_timer();
             }
         }
 
-        // Making a runtime backup file (every 2h by default)
-        match &self.settings.runtime_backups_interval {
-            // If it is disabled - don't make periodic runtime backups.
-            None => {}
-            // Make a backup every set interval
-            Some(interval) => {
-                // If a set duration has passed since opening the map file or last runtime backup:
-                if self.persistence.should_backup(interval) {
-                    // NOTE: if there is a runtime backups interval - there is a backups path.
-                    // Notifications handled by save_map_file, which is within handle_runtime_backup.
-                    handle_runtime_backup(self);
-                    self.persistence.reset_backup_timer();
-                }
+        if let Some(interval) = &self.settings.runtime_backups_interval {
+            if self.persistence.should_backup(interval) {
+                // Runtime backups interval implies backups path exists in settings
+                handle_runtime_backup(self);
+                self.persistence.reset_backup_timer();
             }
         }
     }

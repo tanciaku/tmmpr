@@ -8,7 +8,6 @@ pub struct ViewPos {
 }
 
 impl ViewPos {
-    /// Default viewport position.
     pub fn new() -> ViewPos {
         ViewPos {
             x: 0,
@@ -37,7 +36,6 @@ impl ViewportState {
         }
     }
     
-    /// Get the center coordinates of the viewport
     pub fn center(&self) -> (usize, usize) {
         (
             self.view_pos.x + self.screen_width / 2,
@@ -45,7 +43,8 @@ impl ViewportState {
         )
     }
 
-    /// Convert world to screen coordinates
+    /// Transforms world coordinates to screen-relative coordinates by subtracting viewport offset.
+    /// Returns negative values if the point is off-screen to the left or top.
     pub fn to_screen_coords(&self, p_x: isize , p_y: isize) -> (isize, isize) {
         let p_x = p_x - self.view_pos.x as isize;
         let p_y = p_y - self.view_pos.y as isize;

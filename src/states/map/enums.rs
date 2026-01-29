@@ -3,17 +3,16 @@ use serde::{Serialize, Deserialize};
 /// Represents the application's current input mode, similar to Vim.
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Mode {
-    /// Default mode for navigation and commands.
     Normal,
-    /// Mode for selecting or manipulating notes (not yet implemented).
     Visual,
-    /// Mode for editing the text content of a note.
-    /// Option<> - represents whether Modal Editing is enabled for Edit Mode.
+    /// Supports both modal (Vim-style) and non-modal editing.
+    /// `None` indicates non-modal editing, `Some` indicates modal with the current sub-mode.
     Edit(Option<ModalEditMode>),
     Delete,
 }
 
-/// Represents the two possible Modal Editing modes for Edit Mode
+/// Modal editing sub-modes within Edit mode.
+/// Allows Vim-style navigation (Normal) and text insertion (Insert) while editing a note.
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum ModalEditMode {
     Normal,
@@ -31,7 +30,7 @@ pub enum Side {
     Right,
 }
 
-/// Which notification to display at the bottom of the screen
+/// Notifications displayed in the status bar.
 #[derive(PartialEq, Debug)]
 pub enum Notification {
     SaveSuccess,
@@ -41,16 +40,14 @@ pub enum Notification {
     BackupRecordFail,
 }
 
-/// A type to determine where the user is trying to exit to
-/// without saving changes to the map file.
+/// Tracks the user's intended destination when discarding unsaved changes.
+/// Used to route correctly after the discard confirmation.
 #[derive(PartialEq, Debug)]
 pub enum DiscardMenuType {
     Start,
     Settings
 }
 
-/// A type to represent the outcome of attempting to write
-/// a backup file
 #[derive(PartialEq, Debug)]
 pub enum BackupResult {
     BackupSuccess,

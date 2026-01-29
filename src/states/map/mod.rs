@@ -9,10 +9,8 @@ mod connections_state;
 mod visual_mode;
 mod persistence;
 mod ui_state;
-
 #[cfg(test)]
 mod tests;
-
 
 pub use state::*;
 pub use note::*;
