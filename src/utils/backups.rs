@@ -12,7 +12,11 @@ use crate::{
 
 /// Handles creating backups when loading a map file, if backups are enabled.
 /// With a custom filesystem.
-pub fn handle_on_load_backup_with_fs(map_state: &mut MapState, fs: &impl FileSystem) {
+pub fn handle_on_load_backup_with_fs(
+    map_state: &mut MapState, 
+    fs: &impl FileSystem,
+    current_date: chrono::DateTime<Local>
+) {
     // Extract backup configuration and file info
     // This function is structured like so - to prevent multiple borrow conflicts.
     // If backups are enabled - backups_path and backups_interval will be Some,
@@ -26,8 +30,8 @@ pub fn handle_on_load_backup_with_fs(map_state: &mut MapState, fs: &impl FileSys
         let filename = map_state.persistence.file_write_path.file_stem()
             .and_then(|name| name.to_str())
             .unwrap_or("unknown");
-        // Get the current date
-        let date = Local::now();
+        // Use the provided date
+        let date = current_date;
         
         // Backups functionality enabled -
         // return the data into a variable for use in this function.
@@ -42,7 +46,6 @@ pub fn handle_on_load_backup_with_fs(map_state: &mut MapState, fs: &impl FileSys
         // Backups functionality disabled.
         None
     };
-
 
     // If backups enabled (configuration data exists)
     if let Some((backups_path, backups_interval, filename, date, last_backup_date)) = backup_config {

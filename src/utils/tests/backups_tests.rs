@@ -119,7 +119,7 @@ fn test_handle_on_load_backup_disabled_backups() {
     map_state.settings.backups_interval = None;
     
     // Call the function
-    handle_on_load_backup_with_fs(&mut map_state, &fs);
+    handle_on_load_backup_with_fs(&mut map_state, &fs, Local::now());
     
     // Verify no backup was created (backup_res should remain None)
     assert_eq!(map_state.persistence.backup_res, None);
@@ -146,7 +146,7 @@ fn test_handle_on_load_backup_first_backup() {
     map_state.settings.backup_dates.clear();
     
     // Call the function
-    handle_on_load_backup_with_fs(&mut map_state, &fs);
+    handle_on_load_backup_with_fs(&mut map_state, &fs, Local::now());
      
     // Verify notification was set to BackupSuccess
     assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
@@ -195,7 +195,7 @@ fn test_handle_on_load_backup_skip_recent_backup() {
     map_state.settings.backup_dates = backup_dates;
     
     // Call the function
-    handle_on_load_backup_with_fs(&mut map_state, &fs);
+    handle_on_load_backup_with_fs(&mut map_state, &fs, Local::now());
     
     // Verify no new backup was created
     assert_eq!(map_state.ui_state.show_notification, None);
@@ -231,7 +231,7 @@ fn test_handle_on_load_backup_old_backup_triggers_new() {
     map_state.settings.backup_dates = backup_dates;
     
     // Call the function
-    handle_on_load_backup_with_fs(&mut map_state, &fs);
+    handle_on_load_backup_with_fs(&mut map_state, &fs, Local::now());
     
     // Verify backup was created successfully
     assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
@@ -269,7 +269,7 @@ fn test_handle_on_load_backup_different_intervals() {
     backup_dates.insert("test_map".to_string(), six_days_ago);
     map_state.settings.backup_dates = backup_dates;
     
-    handle_on_load_backup_with_fs(&mut map_state, &fs);
+    handle_on_load_backup_with_fs(&mut map_state, &fs, Local::now());
     
     // Verify no backup was created (not enough time passed)
     let backup_files: Vec<_> = fs::read_dir(backup_dir.path())
@@ -288,7 +288,7 @@ fn test_handle_on_load_backup_different_intervals() {
     backup_dates.insert("test_map".to_string(), eight_days_ago);
     map_state.settings.backup_dates = backup_dates;
     
-    handle_on_load_backup_with_fs(&mut map_state, &fs);
+    handle_on_load_backup_with_fs(&mut map_state, &fs, Local::now());
     
     // Verify backup was created
     let backup_files2: Vec<_> = fs::read_dir(backup_dir2.path())
@@ -316,10 +316,57 @@ fn test_handle_on_load_backup_invalid_backup_directory() {
     map_state.settings.backup_dates.clear();
     
     // Call the function
-    handle_on_load_backup_with_fs(&mut map_state, &fs);
+    handle_on_load_backup_with_fs(&mut map_state, &fs, Local::now());
     
     // Verify backup failed
     assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupFail));
+}
+
+#[test]
+fn test_handle_on_load_backup_multiple_calls_with_time_passing() {
+    // This test simulates multiple calls over time to test the time-based backup functionality
+    let temp_dir = tempfile::tempdir().unwrap();
+    let backup_dir = tempfile::tempdir().unwrap();
+    let map_file_path = temp_dir.path().join("test_map.json");
+    let fs = TempFileSystem { home_path: temp_dir.path().to_path_buf() };
+    
+    let mut map_state = create_map_state_using_mock_filesystem(map_file_path.clone());
+    
+    // Enable backups with Every3Days interval
+    map_state.settings.backups_path = Some(backup_dir.path().to_string_lossy().to_string());
+    map_state.settings.backups_interval = Some(BackupsInterval::Every3Days);
+    map_state.settings.backup_dates.clear();
+    
+    let day_0 = Local::now();
+    
+    // First call - should create backup (no previous backup)
+    handle_on_load_backup_with_fs(&mut map_state, &fs, day_0);
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
+    assert_eq!(map_state.settings.backup_dates.get("test_map").unwrap().date_naive(), day_0.date_naive());
+    
+    let backup_count = fs::read_dir(backup_dir.path()).unwrap()
+        .filter_map(|e| e.ok()).filter(|e| e.path().is_file()).count();
+    assert_eq!(backup_count, 1);
+    
+    // Second call (2 days later) - should NOT create backup
+    map_state.ui_state.show_notification = None;
+    let day_2 = day_0 + ChronoDuration::days(2);
+    handle_on_load_backup_with_fs(&mut map_state, &fs, day_2);
+    assert_eq!(map_state.ui_state.show_notification, None);
+    
+    let backup_count = fs::read_dir(backup_dir.path()).unwrap()
+        .filter_map(|e| e.ok()).filter(|e| e.path().is_file()).count();
+    assert_eq!(backup_count, 1);
+    
+    // Third call (3 days later) - SHOULD create backup
+    let day_3 = day_0 + ChronoDuration::days(3);
+    handle_on_load_backup_with_fs(&mut map_state, &fs, day_3);
+    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
+    assert_eq!(map_state.settings.backup_dates.get("test_map").unwrap().date_naive(), day_3.date_naive());
+    
+    let backup_count = fs::read_dir(backup_dir.path()).unwrap()
+        .filter_map(|e| e.ok()).filter(|e| e.path().is_file()).count();
+    assert_eq!(backup_count, 2);
 }
 
 // ============================================================================

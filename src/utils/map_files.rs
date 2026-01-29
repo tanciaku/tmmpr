@@ -1,4 +1,5 @@
 use std::{path::Path, collections::HashMap};
+use chrono::Local;
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 use ratatui::style::Color;
 
@@ -216,6 +217,6 @@ pub fn load_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {
 
     // If backups enabled - determine whether to create a load backup file.
     if let Screen::Map(map_state) = &mut app.screen {
-        handle_on_load_backup_with_fs(map_state, fs);
+        handle_on_load_backup_with_fs(map_state, fs, Local::now());
     }
 }
