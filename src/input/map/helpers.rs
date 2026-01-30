@@ -64,15 +64,11 @@ pub fn move_viewport(map_state: &mut MapState, axis: &str, amount: isize) {
 /// smooth panning effect. Uses saturating subtraction to prevent coordinate underflow.
 pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {    
     if let Some(selected_note) = map_state.notes_state.selected_note {
-        let (mut note_width, mut note_height) = if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) { 
+        let (note_width, note_height) = if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) { 
                 note.get_dimensions()
         } else {
             unreachable!()
         };
-        // Enforce minimum size for readability
-        if note_width < 20 { note_width = 20; }
-        if note_height < 4 { note_height = 4; }
-        note_width += 1; // Reserve space for cursor
 
         if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
             match axis {

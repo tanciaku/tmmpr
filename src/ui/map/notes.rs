@@ -22,14 +22,7 @@ use crate::{
 pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
     for &note_id in &map_state.notes_state.render_order {
         if let Some(note) = map_state.notes_state.notes.get(&note_id) {
-            let (mut note_width, mut note_height) = note.get_dimensions();
-
-            // FIXME:
-            // Enforce minimum size for readability
-            if note_width < 20 { note_width = 20; }
-            if note_height < 4 { note_height = 4; }
-            // Extra column needed to prevent cursor from overlapping border
-            note_width += 1;
+            let (note_width, note_height) = note.get_dimensions();
 
             // Convert canvas coordinates to screen space (can be negative if off-screen)
             let (p_x, p_y) = map_state.viewport.to_screen_coords(note.x as isize, note.y as isize);

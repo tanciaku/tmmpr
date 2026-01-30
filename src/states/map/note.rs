@@ -41,7 +41,7 @@ impl Note {
             .max()
             .unwrap_or(0) as u16;
         
-        (width + 2, height + 2)
+        enforce_note_dimensions(width, height)
     }
 
     /// Returns the canvas coordinates where a connection line should attach to this note.
@@ -51,13 +51,7 @@ impl Note {
     /// FIXME: Repetition, mixing concerns - enforcing minimum dimensions should be handled
     /// within get_dimensions(), this also occurs in other places
     pub fn get_connection_point(&self, side: Side) -> (usize, usize) {
-        let (mut note_width, mut note_height) = self.get_dimensions();
-
-        // Enforce minimum dimensions
-        if note_width < 20 { note_width = 20; }
-        if note_height < 4 { note_height = 4; } 
-        // Account for cursor
-        note_width += 1;
+        let (note_width, note_height) = self.get_dimensions();
 
         match side {
             Side::Right => {
@@ -74,4 +68,11 @@ impl Note {
             }
         }
     }
+}
+
+fn enforce_note_dimensions(width: u16, height: u16) -> (u16, u16) {
+    let width = (width + 2).max(20) + 1;  // borders, min, cursor
+    let height = (height + 2).max(4);     // borders, min
+
+    (width, height)
 }
