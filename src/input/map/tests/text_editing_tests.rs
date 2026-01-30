@@ -311,7 +311,7 @@ fn test_insert_at_beginning() {
     
     assert_eq!(map_state.notes_state.notes.get(&0).unwrap().content, "XHello");
     assert_eq!(map_state.notes_state.cursor_pos, 1);
-    assert_eq!(map_state.persistence.can_exit, false); // Should set can_exit to false
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -413,7 +413,7 @@ fn test_insert_nonexistent_note() {
     
     // Should not panic, just do nothing
     assert_eq!(map_state.notes_state.cursor_pos, 0);
-    assert_eq!(map_state.persistence.can_exit, false); // Still sets can_exit to false
+    assert_eq!(map_state.persistence.has_unsaved_changes, true); // Still sets to true
 }
 
 #[test]
@@ -428,7 +428,7 @@ fn test_insert_can_exit_flag() {
     insert_char(&mut map_state, 0, 'X');
     
     // Should always set can_exit to false on edit
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]

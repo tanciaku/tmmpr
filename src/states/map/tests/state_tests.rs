@@ -28,12 +28,12 @@ fn test_add_note() {
 
     map_state.add_note();
 
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
     assert_eq!(map_state.notes_state.notes, HashMap::from([(0, Note::new(50, 25, String::from(""), true, Color::White))]));
     assert_eq!(map_state.notes_state.render_order, vec![0]);
     assert_eq!(map_state.notes_state.selected_note, Some(0));
     assert_eq!(map_state.current_mode, Mode::Edit(None));
-    assert_eq!(map_state.notes_state.next_note_id, 1);
+    assert_eq!(map_state.notes_state.next_note_id_counter, 1);
 }
 
 #[test]
@@ -44,7 +44,7 @@ fn test_add_several_notes() {
     map_state.add_note();
     map_state.add_note();
 
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
     assert_eq!(map_state.notes_state.notes, HashMap::from([
         (0, Note::new(50, 25, String::from(""), true, Color::White)),
         (1, Note::new(50, 25, String::from(""), true, Color::White)),
@@ -53,7 +53,7 @@ fn test_add_several_notes() {
     assert_eq!(map_state.notes_state.render_order, vec![0, 1, 2]);
     assert_eq!(map_state.notes_state.selected_note, Some(2));
     assert_eq!(map_state.current_mode, Mode::Edit(None));
-    assert_eq!(map_state.notes_state.next_note_id, 3);
+    assert_eq!(map_state.notes_state.next_note_id_counter, 3);
 }
 
 #[test]
@@ -62,12 +62,12 @@ fn test_add_note_diff_viewpos() {
 
     map_state.add_note();
 
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
     assert_eq!(map_state.notes_state.notes, HashMap::from([(0, Note::new(145, 120, String::from(""), true, Color::White))]));
     assert_eq!(map_state.notes_state.render_order, vec![0]);
     assert_eq!(map_state.notes_state.selected_note, Some(0));
     assert_eq!(map_state.current_mode, Mode::Edit(None));
-    assert_eq!(map_state.notes_state.next_note_id, 1);
+    assert_eq!(map_state.notes_state.next_note_id_counter, 1);
 }
 
 #[test]
@@ -82,7 +82,7 @@ fn test_new() {
     assert_eq!(map_state.viewport.view_pos.y, 0);
     assert_eq!(map_state.viewport.screen_width, 0);
     assert_eq!(map_state.viewport.screen_height, 0);
-    assert_eq!(map_state.notes_state.next_note_id, 0);
+    assert_eq!(map_state.notes_state.next_note_id_counter, 0);
     assert!(map_state.notes_state.notes.is_empty());
     assert!(map_state.notes_state.render_order.is_empty());
     assert_eq!(map_state.notes_state.selected_note, None);
@@ -96,7 +96,7 @@ fn test_new() {
     assert_eq!(map_state.connections_state.editing_connection_index, None);
     assert_eq!(map_state.persistence.file_write_path, path);
     assert_eq!(map_state.ui_state.show_notification, None);
-    assert_eq!(map_state.persistence.can_exit, true);
+    assert_eq!(map_state.persistence.has_unsaved_changes, false);
     assert_eq!(map_state.ui_state.confirm_discard_menu, None);
     assert_eq!(map_state.ui_state.help_screen, None);
     // Since get_setting_with_fs from map_state creation will
@@ -153,7 +153,7 @@ fn test_select_note_single_note() {
     // Add a note at position (40, 20) - close to screen center (50, 25)
     map_state.notes_state.notes.insert(0, Note::new(40, 20, String::from("test"), false, Color::White));
     map_state.notes_state.render_order.push(0);
-    map_state.notes_state.next_note_id = 1;
+    map_state.notes_state.next_note_id_counter = 1;
 
     map_state.select_note();
 
@@ -175,7 +175,7 @@ fn test_select_note_multiple_notes() {
     map_state.notes_state.notes.insert(2, Note::new(80, 40, String::from("medium"), false, Color::White));   // Distance: 30 + 15 = 45
     
     map_state.notes_state.render_order = vec![0, 1, 2];
-    map_state.notes_state.next_note_id = 3;
+    map_state.notes_state.next_note_id_counter = 3;
 
     map_state.select_note();
 

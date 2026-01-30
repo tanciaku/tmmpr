@@ -45,7 +45,7 @@ fn create_populated_map_state(path: PathBuf) -> MapState {
     map_state.notes_state.notes.insert(0, note1);
     map_state.notes_state.notes.insert(1, note2);
     map_state.notes_state.render_order = vec![0, 1];
-    map_state.notes_state.next_note_id = 2;
+    map_state.notes_state.next_note_id_counter = 2;
     
     // Add a connection
     let connection = Connection {
@@ -65,7 +65,7 @@ fn create_populated_map_state(path: PathBuf) -> MapState {
 
 /// Verifies that a MapData file has the expected default values
 fn assert_default_map_data(data: &MapData) {
-    assert_eq!(data.next_note_id, 0);
+    assert_eq!(data.next_note_id_counter, 0);
     assert!(data.notes.is_empty());
     assert!(data.render_order.is_empty());
     assert!(data.connections.is_empty());
@@ -217,7 +217,7 @@ fn test_save_map_file_writes_data_correctly() {
     // Verify: File contains the correct data
     let loaded_data: MapData = read_json_data(&file_path).unwrap();
     
-    assert_eq!(loaded_data.next_note_id, 2);
+    assert_eq!(loaded_data.next_note_id_counter, 2);
     assert_eq!(loaded_data.notes.len(), 2);
     assert_eq!(loaded_data.render_order, vec![0, 1]);
     assert_eq!(loaded_data.connections.len(), 1);
@@ -235,7 +235,7 @@ fn test_save_map_file_sets_can_exit_flag() {
     save_map_file(&mut map_state, &file_path, false, false);
     
     // After successful save, can_exit should be true
-    assert!(map_state.persistence.can_exit);
+    assert!(!map_state.persistence.has_unsaved_changes);
 }
 
 #[test]
@@ -339,16 +339,16 @@ fn test_save_map_file_overwrites_existing_file() {
     
     // Read the initial data
     let initial_data: MapData = read_json_data(&file_path).unwrap();
-    assert_eq!(initial_data.next_note_id, 0);
+    assert_eq!(initial_data.next_note_id_counter, 0);
     
     // Create a new map state with different data and save to same file
     let mut map_state2 = create_populated_map_state(file_path.clone());
-    map_state2.notes_state.next_note_id = 5;
+    map_state2.notes_state.next_note_id_counter = 5;
     save_map_file(&mut map_state2, &file_path, false, false);
     
     // Verify: File was overwritten with new data
     let updated_data: MapData = read_json_data(&file_path).unwrap();
-    assert_eq!(updated_data.next_note_id, 5);
+    assert_eq!(updated_data.next_note_id_counter, 5);
     assert_eq!(updated_data.notes.len(), 2);
 }
 
@@ -363,7 +363,7 @@ fn test_save_map_file_preserves_note_properties() {
     let note = Note::new(100, 200, String::from("Important Note"), true, Color::Cyan);
     map_state.notes_state.notes.insert(42, note);
     map_state.notes_state.render_order.push(42);
-    map_state.notes_state.next_note_id = 43;
+    map_state.notes_state.next_note_id_counter = 43;
     
     save_map_file(&mut map_state, &file_path, false, false);
     
@@ -457,7 +457,7 @@ fn test_load_map_file_loads_valid_file() {
     
     // Verify: Data was loaded correctly
     if let Screen::Map(loaded_state) = &app.screen {
-        assert_eq!(loaded_state.notes_state.next_note_id, 2);
+        assert_eq!(loaded_state.notes_state.next_note_id_counter, 2);
         assert_eq!(loaded_state.notes_state.notes.len(), 2);
         assert_eq!(loaded_state.notes_state.render_order, vec![0, 1]);
         assert_eq!(loaded_state.connections_state.connections.len(), 1);
@@ -476,7 +476,7 @@ fn test_load_map_file_loads_note_properties() {
     let note = Note::new(123, 456, String::from("Specific Note"), true, Color::Magenta);
     map_state.notes_state.notes.insert(7, note);
     map_state.notes_state.render_order.push(7);
-    map_state.notes_state.next_note_id = 8;
+    map_state.notes_state.next_note_id_counter = 8;
     
     save_map_file(&mut map_state, &file_path, false, false);
     
@@ -640,7 +640,7 @@ fn test_load_map_file_empty_map() {
     
     // Verify: Loaded successfully with empty data
     if let Screen::Map(loaded_state) = &app.screen {
-        assert_eq!(loaded_state.notes_state.next_note_id, 0);
+        assert_eq!(loaded_state.notes_state.next_note_id_counter, 0);
         assert!(loaded_state.notes_state.notes.is_empty());
         assert!(loaded_state.notes_state.render_order.is_empty());
         assert!(loaded_state.connections_state.connections.is_empty());
@@ -661,7 +661,7 @@ fn test_load_map_file_with_many_notes() {
         map_state.notes_state.notes.insert(i, note);
         map_state.notes_state.render_order.push(i);
     }
-    map_state.notes_state.next_note_id = 50;
+    map_state.notes_state.next_note_id_counter = 50;
     
     save_map_file(&mut map_state, &file_path, false, false);
     
@@ -673,7 +673,7 @@ fn test_load_map_file_with_many_notes() {
     if let Screen::Map(loaded_state) = &app.screen {
         assert_eq!(loaded_state.notes_state.notes.len(), 50);
         assert_eq!(loaded_state.notes_state.render_order.len(), 50);
-        assert_eq!(loaded_state.notes_state.next_note_id, 50);
+        assert_eq!(loaded_state.notes_state.next_note_id_counter, 50);
         
         // Spot check a few notes
         assert_eq!(loaded_state.notes_state.notes.get(&0).unwrap().content, "Note 0");
@@ -701,7 +701,7 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     original_state.notes_state.notes.insert(5, Note::new(50, 60, String::from("Third"), false, Color::Blue));
     
     original_state.notes_state.render_order = vec![0, 5, 1]; // Non-sequential order
-    original_state.notes_state.next_note_id = 6;
+    original_state.notes_state.next_note_id_counter = 6;
     
     // Add connections
     let conn1 = Connection {
@@ -741,7 +741,7 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     // Verify: Everything matches
     if let Screen::Map(loaded_state) = &app.screen {
         // Check basic state
-        assert_eq!(loaded_state.notes_state.next_note_id, 6);
+        assert_eq!(loaded_state.notes_state.next_note_id_counter, 6);
         assert_eq!(loaded_state.viewport.view_pos.x, 100);
         assert_eq!(loaded_state.viewport.view_pos.y, 200);
         
@@ -782,7 +782,7 @@ fn test_roundtrip_create_save_load() {
         let note = Note::new(100, 200, String::from("Created Note"), false, Color::Magenta);
         map_state.notes_state.notes.insert(0, note);
         map_state.notes_state.render_order.push(0);
-        map_state.notes_state.next_note_id = 1;
+        map_state.notes_state.next_note_id_counter = 1;
         map_state.viewport.view_pos.x = 50;
         
         // Save the changes
@@ -795,7 +795,7 @@ fn test_roundtrip_create_save_load() {
     
     // Step 4: Verify the modifications persisted
     if let Screen::Map(loaded_state) = &fresh_app.screen {
-        assert_eq!(loaded_state.notes_state.next_note_id, 1);
+        assert_eq!(loaded_state.notes_state.next_note_id_counter, 1);
         assert_eq!(loaded_state.notes_state.notes.len(), 1);
         assert_eq!(loaded_state.notes_state.notes.get(&0).unwrap().content, "Created Note");
         assert_eq!(loaded_state.viewport.view_pos.x, 50);
@@ -811,7 +811,7 @@ fn test_multiple_save_load_cycles() {
     // Create initial map
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("V1"), false, Color::White));
-    map_state.notes_state.next_note_id = 1;
+    map_state.notes_state.next_note_id_counter = 1;
     save_map_file(&mut map_state, &file_path, false, false);
     
     // Load and modify (cycle 1)
@@ -820,7 +820,7 @@ fn test_multiple_save_load_cycles() {
     
     if let Screen::Map(state) = &mut app.screen {
         state.notes_state.notes.insert(1, Note::new(20, 20, String::from("V2"), false, Color::White));
-        state.notes_state.next_note_id = 2;
+        state.notes_state.next_note_id_counter = 2;
         save_map_file(state, &file_path, false, false);
     }
     
@@ -830,7 +830,7 @@ fn test_multiple_save_load_cycles() {
     
     if let Screen::Map(state) = &mut app2.screen {
         state.notes_state.notes.insert(2, Note::new(30, 30, String::from("V3"), false, Color::White));
-        state.notes_state.next_note_id = 3;
+        state.notes_state.next_note_id_counter = 3;
         save_map_file(state, &file_path, false, false);
     }
     
@@ -840,7 +840,7 @@ fn test_multiple_save_load_cycles() {
     
     if let Screen::Map(final_state) = &final_app.screen {
         assert_eq!(final_state.notes_state.notes.len(), 3);
-        assert_eq!(final_state.notes_state.next_note_id, 3);
+        assert_eq!(final_state.notes_state.next_note_id_counter, 3);
         assert!(final_state.notes_state.notes.contains_key(&0));
         assert!(final_state.notes_state.notes.contains_key(&1));
         assert!(final_state.notes_state.notes.contains_key(&2));

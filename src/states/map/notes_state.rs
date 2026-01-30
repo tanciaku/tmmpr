@@ -6,7 +6,7 @@ use super::note::Note;
 pub struct NotesState {
     pub notes: HashMap<usize, Note>,
     /// Used to generate unique IDs for new notes
-    pub next_note_id: usize,
+    pub next_note_id_counter: usize,
     pub selected_note: Option<usize>,
     /// Z-index ordering for note rendering (back to front)
     pub render_order: Vec<usize>,
@@ -17,7 +17,7 @@ impl NotesState {
     pub fn new() -> Self {
         Self {
             notes: HashMap::new(),
-            next_note_id: 0,
+            next_note_id_counter: 0,
             selected_note: None,
             render_order: vec![],
             cursor_pos: 0,
@@ -26,10 +26,10 @@ impl NotesState {
 
     /// Creates a new note and returns its ID
     pub fn create_note(&mut self, x: usize, y: usize, text: String, selected: bool, color: Color) -> usize {
-        let id = self.next_note_id;
+        let id = self.next_note_id_counter;
         self.notes.insert(id, Note::new(x, y, text, selected, color));
         self.render_order.push(id);
-        self.next_note_id += 1;
+        self.next_note_id_counter += 1;
         id
     }
 

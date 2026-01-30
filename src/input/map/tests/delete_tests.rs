@@ -33,7 +33,7 @@ fn test_delete_kh_no_selected_note() {
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.current_mode, Mode::Delete);
     assert_eq!(map_state.notes_state.selected_note, None);
-    assert_eq!(map_state.persistence.can_exit, true); // Should remain unchanged
+    assert_eq!(map_state.persistence.has_unsaved_changes, false); // Should remain unchanged
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn test_delete_single_note() {
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.persistence.can_exit, false); // Should be set to false
+    assert_eq!(map_state.persistence.has_unsaved_changes, true); // Should be set to true
     assert!(map_state.notes_state.notes.is_empty()); // Note should be removed
     assert!(map_state.notes_state.render_order.is_empty()); // Render order should be empty
     assert_eq!(map_state.notes_state.selected_note, None); // No selected note
@@ -86,7 +86,7 @@ fn test_delete_note_with_multiple_notes() {
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
     
     // Check that only note 1 was removed
     assert_eq!(map_state.notes_state.notes.len(), 2);
@@ -314,7 +314,7 @@ fn test_delete_kh_other_keys_ignored() {
         assert_eq!(map_state.current_mode, Mode::Delete);
         assert_eq!(map_state.notes_state.selected_note, Some(0));
         assert_eq!(map_state.notes_state.notes.len(), 1); // Note should still be there
-        assert_eq!(map_state.persistence.can_exit, true); // Should remain unchanged
+        assert_eq!(map_state.persistence.has_unsaved_changes, false); // Should remain unchanged
     }
 }
 

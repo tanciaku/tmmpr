@@ -387,7 +387,7 @@ fn test_move_viewport_left_with_h() {
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 9);
     assert_eq!(map_state.viewport.view_pos.y, 10);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
     assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
@@ -403,7 +403,7 @@ fn test_move_viewport_left_with_arrow() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 9);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -431,7 +431,7 @@ fn test_move_viewport_left_by_5_with_shift_h() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 15);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -446,7 +446,7 @@ fn test_move_viewport_left_by_5_with_shift_arrow() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 15);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -463,7 +463,7 @@ fn test_move_viewport_down_with_j() {
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 11);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -478,7 +478,7 @@ fn test_move_viewport_down_with_arrow() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 11);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -493,7 +493,7 @@ fn test_move_viewport_down_by_5_with_shift_j() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 25);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -508,7 +508,7 @@ fn test_move_viewport_down_by_5_with_shift_arrow() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 25);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -525,7 +525,7 @@ fn test_move_viewport_up_with_k() {
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 9);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -540,7 +540,7 @@ fn test_move_viewport_up_with_arrow() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 9);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -568,7 +568,7 @@ fn test_move_viewport_up_by_5_with_shift_k() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 15);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -583,7 +583,7 @@ fn test_move_viewport_up_by_5_with_shift_arrow() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 15);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -600,7 +600,7 @@ fn test_move_viewport_right_with_l() {
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 11);
     assert_eq!(map_state.viewport.view_pos.y, 10);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -615,7 +615,7 @@ fn test_move_viewport_right_with_arrow() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 11);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -630,7 +630,7 @@ fn test_move_viewport_right_by_5_with_shift_l() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 25);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 #[test]
@@ -645,7 +645,7 @@ fn test_move_viewport_right_by_5_with_shift_arrow() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 25);
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
 
 // ==================== NOTE MANIPULATION TESTS ====================
@@ -687,10 +687,10 @@ fn test_add_note() {
     assert!(matches!(map_state.current_mode, Mode::Edit(_)));
     
     // Check can_exit is false
-    assert_eq!(map_state.persistence.can_exit, false);
+    assert_eq!(map_state.persistence.has_unsaved_changes, true);
     
     // Check next_note_id incremented
-    assert_eq!(map_state.notes_state.next_note_id, 1);
+    assert_eq!(map_state.notes_state.next_note_id_counter, 1);
 }
 
 #[test]
@@ -716,7 +716,7 @@ fn test_add_multiple_notes() {
     assert!(map_state.notes_state.notes.contains_key(&2));
     assert_eq!(map_state.notes_state.render_order, vec![0, 1, 2]);
     assert_eq!(map_state.notes_state.selected_note, Some(2)); // Last added note is selected
-    assert_eq!(map_state.notes_state.next_note_id, 3);
+    assert_eq!(map_state.notes_state.next_note_id_counter, 3);
 }
 
 #[test]

@@ -49,7 +49,7 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSyste
     match key.code {
         KeyCode::Char('q') => {
             // Require saving or explicit confirmation before exiting
-            if map_state.persistence.can_exit {
+            if !map_state.persistence.has_unsaved_changes {
                 return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)))
             } else {
                 map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
@@ -63,7 +63,7 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSyste
 
         KeyCode::Char('o') => {
             // Require saving or explicit confirmation before opening settings
-            if map_state.persistence.can_exit {
+            if !map_state.persistence.has_unsaved_changes {
                 // Preserve file path to return to after closing settings
                 return AppAction::Switch(
                     Screen::Settings(SettingsState::new_with_fs(map_state.persistence.file_write_path.clone(), fs)))
