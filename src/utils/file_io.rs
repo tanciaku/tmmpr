@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-/// Writes the relevant data to a file
+/// Writes data as pretty-printed JSON, overwriting if file exists.
 pub fn write_json_data<T>(path: &Path, data: &T) -> Result<(), Box<dyn std::error::Error>>
 where
     T: serde::Serialize,
@@ -10,7 +10,7 @@ where
     Ok(())
 }
 
-/// Reads the relevant data from a file
+/// Reads and deserializes JSON data from file.
 pub fn read_json_data<T>(path: &Path) -> Result<T, Box<dyn std::error::Error>>
 where
     T: serde::de::DeserializeOwned,

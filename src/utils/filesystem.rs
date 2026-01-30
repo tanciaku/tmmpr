@@ -3,16 +3,14 @@ use tempfile::NamedTempFile;
 
 /// Trait for filesystem operations to enable testing with mocks
 pub trait FileSystem {
-    /// Get the user's home directory
     fn get_home_dir(&self) -> Option<PathBuf>;
 
     /// Create directory and all parent directories
     fn create_dir_all(&self, path: &PathBuf) -> Result<(), std::io::Error>;
 
-    /// Check if a path exists
     fn path_exists(&self, path: &PathBuf) -> bool;
 
-    /// Test if we can write to a directory by creating a temp file
+    /// Tests write permissions without leaving artifacts (temp file is auto-deleted)
     fn test_write_to_dir(&self, path: &PathBuf) -> Result<(), std::io::Error>;
 }
 
@@ -46,7 +44,8 @@ pub mod test_utils {
     use std::collections::HashSet;
     use std::io;
 
-    /// Mock filesystem for testing
+    /// In-memory mock for unit tests. Use when you need to simulate errors
+    /// or control exactly which paths exist without touching the real filesystem.
     pub struct MockFileSystem {
         pub existing_paths: HashSet<PathBuf>,
         pub home_dir: Option<PathBuf>,
@@ -71,19 +70,17 @@ pub mod test_utils {
             self
         }
 
-        /// Builder: Set the home directory (None simulates missing home)
+        /// Builder: Set the home directory (use None to simulate missing home)
         pub fn with_home_dir(mut self, home: Option<PathBuf>) -> Self {
             self.home_dir = home;
             self
         }
 
-        /// Builder: Make directory creation fail
         pub fn with_dir_create_failure(mut self) -> Self {
             self.fail_dir_create = true;
             self
         }
 
-        /// Builder: Make write test fail
         pub fn with_write_failure(mut self) -> Self {
             self.fail_write_test = true;
             self
@@ -116,7 +113,8 @@ pub mod test_utils {
         }
     }
 
-    /// Temporary filesystem for testing. Uses TempDir as home_path in tests.
+    /// Real filesystem wrapper for integration tests. Unlike MockFileSystem,
+    /// this performs actual I/O but isolated to a temp directory.
     pub struct TempFileSystem {
         pub home_path: PathBuf,
     }
