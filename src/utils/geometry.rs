@@ -4,7 +4,6 @@ use crate::{
     },
 };
 
-
 /// A 2D point in the coordinate space.
 ///
 /// Uses signed integers where X increases rightward and Y increases downward,
@@ -148,19 +147,16 @@ pub fn calculate_path(
     end_note: &Note,
     end_side: Side,
 ) -> Vec<Point> {
-    // Get start and end points for the path
     let start_tuple = start_note.get_connection_point(start_side);
     let end_tuple = end_note.get_connection_point(end_side);
 
-    // Convert them to Point type for easier usage
     let start = Point { x: start_tuple.0 as isize, y: start_tuple.1 as isize, };
     let end = Point { x: end_tuple.0 as isize, y: end_tuple.1 as isize, };
-    // Get the offset points (to clear note boundaries, makes it look appropriate)
-    // NOTE: offset points are not used for all cases
+    
+    // Offset points extend 2 units away from note edges for visual clearance
     let start_off = get_offset_point(start, start_side);
     let end_off = get_offset_point(end, end_side);
     
-    // Calculate available space for the connection path.
     let available_space_x = end.x - start.x;
     let available_space_y = end.y - start.y;
 
@@ -542,9 +538,6 @@ pub fn calculate_path(
 }
 
 
-/// Get an offset point in relation to the side.
-/// Used to clear the boundaries of notes for both start and end points.
-/// NOTE: offset points are not used for all cases
 pub fn get_offset_point(p: Point, side: Side) -> Point {
     let offset = 2;
     let p_off = match side {
@@ -557,7 +550,6 @@ pub fn get_offset_point(p: Point, side: Side) -> Point {
 }
 
 
-// --- Path shapes ---
 fn c_shape(start: Point, start_off: Point, end: Point, end_off: Point) -> Vec<Point> { 
     let furthest_point_x = start_off.x.min(end_off.x); // furthest point to the left
     vec![

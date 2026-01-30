@@ -230,20 +230,19 @@ The application is fully functional for its core purpose - creating, organizing,
 
 ### 🚧 Known Limitations
 
+**Code Quality:**
+- Code structure and approaches need refactoring throughout the application
+
 **Edit Mode (Vim-style):**
 - Normal mode is very limited compared to vim
 - No Visual mode within the text editor
 - Block cursor placement issues in Normal mode
 
-**Code Quality:**
-- Code structure and approaches need refactoring throughout the application
-- Improving inline and documentation comments
-
 ### 🗺️ Roadmap
 
 **Current Focus:**
-- Improving codebase quality and structure (testing, documentation, modularity)
-- These foundational improvements will enable cleaner feature development
+- Improving codebase quality and structure
+- Foundational improvements will enable cleaner feature development
 
 **Upcoming Features:**
 - Library API for node graph functionality (programmatic usage)
@@ -293,7 +292,6 @@ Contributions, feedback, and suggestions are **highly welcome!** This project is
 
 **Areas needing help:**
 - Code refactoring and structural improvements
-- Documentation and inline comments
 
 No contribution is too small—whether it's fixing a typo or tackling a major refactor!
 

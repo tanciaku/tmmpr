@@ -1,6 +1,8 @@
 use ratatui::style::Color;
 
-/// Helper function for displaying the color currently set for the selected note/connection
+/// Converts a `Color` to its string representation.
+///
+/// Returns an empty string for unsupported colors.
 pub fn get_color_name_in_string(color: Color) -> String {
     String::from(match color {
         Color::Red => "Red",
@@ -15,6 +17,9 @@ pub fn get_color_name_in_string(color: Color) -> String {
     })
 }
 
+/// Parses a color name string into a `Color`.
+///
+/// Defaults to `White` for unrecognized color names.
 pub fn get_color_from_string(color_name_str: &str) -> Color {
     match color_name_str {
         "Red" => Color::Red,

@@ -16,24 +16,23 @@ use crate::{
 /// - The directory cannot be created
 /// - The file cannot be written to
 pub fn save_settings_to_file_with_fs(settings: &Settings, fs: &dyn FileSystem) -> Result<(), Box<dyn std::error::Error>> { 
-    // Get the user's home directory path
     let home_path = fs.get_home_dir()
         .ok_or("Could not find home directory")?;
 
-    // Make the path to the settings directory (e.g. /home/user/.config/tmmpr/)
+    // Using XDG Base Directory specification for config files
     let config_dir_path = home_path.join(".config/tmmpr/");
 
-    // Create the directory if it doesn't exist
     fs.create_dir_all(&config_dir_path)?;
 
-    // Make the full path to the file (/home/user/.config/tmmpr/settings.json)
     let settings_file_path = config_dir_path.join("settings").with_extension("json");
 
-    // Write the data
     save_settings_to_path(settings, &settings_file_path)
 }
 
-// Add a more testable version that accepts a path
+/// Lower-level function for saving settings to an arbitrary path.
+///
+/// Separated from `save_settings_to_file_with_fs` to allow testing without
+/// filesystem abstraction and to enable custom save locations if needed.
 pub fn save_settings_to_path(settings: &Settings, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     write_json_data(path, settings)
 }
