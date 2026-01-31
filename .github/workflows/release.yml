@@ -29,10 +29,16 @@ jobs:
           tar czf tmmpr-linux-x86_64.tar.gz tmmpr
           mv tmmpr-linux-x86_64.tar.gz ../../
 
+      - name: Extract changelog for release notes
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
+
       - name: Upload binary to release
         uses: softprops/action-gh-release@v1
         with:
           files: tmmpr-linux-x86_64.tar.gz
+          body_path: release_notes.md
           draft: false
           prerelease: false
         env:

@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- Begin public library API with basic graph geometry module (#1)
+
 ## [0.1.0] - 2026-01-26
 
 ### Added

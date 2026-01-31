@@ -1,9 +1,16 @@
 //! # tmmpr
 //!
-//! Terminal-based mind mapping and graph visualization.
+//! A library for node graph data structures and algorithms.
+//!
+//! ## ⚠️ Work in Progress
+//!
+//! This library is currently under active development and extraction.
+//! **Do not expect anything to be functional or stable at this time.**
+//! The API is subject to breaking changes without notice.
 //!
 //! ## Library Usage
-//! Use the `graph` module for core data structures and algorithms:
+//!
+//! The `graph` module provides core data structures for node graphs:
 //! ```rust
 //! use tmmpr::graph::{Note, Point, calculate_path};
 //! ```
