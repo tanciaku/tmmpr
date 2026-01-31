@@ -1,8 +1,7 @@
 use std::cmp::Reverse;
 use ratatui::style::Color;
 
-use crate::states::{MapState, map::Side};
-
+use crate::states::{MapState, map::{Mode, Side}};
 
 /// Cycles to the next help page (1→2→3→4→5→1)
 pub fn help_next_page(map_state: &mut MapState) {
@@ -200,7 +199,7 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
             }
 
             // Update connection endpoint if in visual connection mode
-            if map_state.visual_mode.visual_connection {
+            if map_state.current_mode == Mode::VisualConnectAdd || map_state.current_mode == Mode::VisualConnectEdit {
                 if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
                     // Prevent self-connections
                     if id == focused_connection.from_id {

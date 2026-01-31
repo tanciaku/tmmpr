@@ -4,7 +4,10 @@ use serde::{Serialize, Deserialize};
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Mode {
     Normal,
-    Visual,
+    VisualSelect,
+    VisualMove,
+    VisualConnectAdd,
+    VisualConnectEdit,
     /// Supports both modal (Vim-style) and non-modal editing.
     /// `None` indicates non-modal editing, `Some` indicates modal with the current sub-mode.
     Edit(Option<ModalEditMode>),

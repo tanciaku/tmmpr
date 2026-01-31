@@ -87,12 +87,9 @@ fn test_new() {
     assert!(map_state.notes_state.render_order.is_empty());
     assert_eq!(map_state.notes_state.selected_note, None);
     assert_eq!(map_state.notes_state.cursor_pos, 0);
-    assert_eq!(map_state.visual_mode.visual_move, false);
-    assert_eq!(map_state.visual_mode.visual_connection, false);
     assert!(map_state.connections_state.connections.is_empty());
     assert!(map_state.connections_state.connection_index.is_empty());
     assert_eq!(map_state.connections_state.focused_connection, None);
-    assert_eq!(map_state.connections_state.visual_editing_a_connection, false);
     assert_eq!(map_state.connections_state.editing_connection_index, None);
     assert_eq!(map_state.persistence.file_write_path, path);
     assert_eq!(map_state.ui_state.show_notification, None);

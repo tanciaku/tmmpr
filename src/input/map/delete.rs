@@ -6,7 +6,7 @@ use crate::{input::AppAction, states::{MapState, map::Mode}};
 pub fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     match key.code {
         KeyCode::Esc => {
-            map_state.current_mode = Mode::Visual;
+            map_state.current_mode = Mode::VisualSelect;
         }
         KeyCode::Char('d') => {
             if let Some(selected_note) = &map_state.notes_state.selected_note {

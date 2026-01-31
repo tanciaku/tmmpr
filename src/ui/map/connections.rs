@@ -187,7 +187,7 @@ pub fn draw_connecting_character(note: &Note, side: Side, is_editing: bool, colo
     // Visual style varies based on mode: thick for Visual, double for Edit, plain otherwise
     let connection_charset = if note.selected || is_editing {
         match map_state.current_mode {
-            Mode::Visual => &THICK_JUNCTIONS,
+            Mode::VisualSelect | Mode::VisualMove | Mode::VisualConnectAdd | Mode::VisualConnectEdit => &THICK_JUNCTIONS,
             Mode::Edit(_) => &DOUBLE_JUNCTIONS,
             _ => &PLAIN_JUNCTIONS,
         }

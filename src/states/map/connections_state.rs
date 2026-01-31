@@ -11,8 +11,6 @@ pub struct ConnectionsState {
     pub connection_index: HashMap<usize, Vec<Connection>>,
     /// Connection currently being created or edited by the user.
     pub focused_connection: Option<Connection>,
-    /// Whether the user is editing an existing connection.
-    pub visual_editing_a_connection: bool,
     /// Original position in the connections vector when a connection was removed for editing.
     pub editing_connection_index: Option<usize>,
 }
@@ -23,7 +21,6 @@ impl ConnectionsState {
             connections: vec![],
             connection_index: HashMap::new(),
             focused_connection: None,
-            visual_editing_a_connection: false,
             editing_connection_index: None,
         }
     }

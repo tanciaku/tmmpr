@@ -6,7 +6,7 @@ use crate::{
     states::{
         map::{
             ConnectionsState, ModalEditMode, Mode, NotesState, PersistenceState,
-            UIState, ViewportState, VisualModeState
+            UIState, ViewportState
         },
         settings::{Settings, SettingsType, get_settings_with_fs},
         start::ErrMsg
@@ -24,7 +24,6 @@ pub struct MapState {
     pub current_mode: Mode,
     pub viewport: ViewportState,
     pub notes_state: NotesState,
-    pub visual_mode: VisualModeState,
     pub connections_state: ConnectionsState,
     pub persistence: PersistenceState,
     pub ui_state: UIState,
@@ -43,7 +42,6 @@ impl MapState {
             current_mode: Mode::Normal,
             viewport: ViewportState::new(),
             notes_state: NotesState::new(),
-            visual_mode: VisualModeState::new(),
             connections_state: ConnectionsState::new(),
             persistence: PersistenceState::new(file_write_path),
             ui_state: UIState::new(),
@@ -91,7 +89,7 @@ impl MapState {
         
         if let Some(id) = self.notes_state.find_closest_note(screen_center_x, screen_center_y) {
             self.notes_state.select_note_by_id(id);
-            self.current_mode = Mode::Visual;
+            self.current_mode = Mode::VisualSelect;
         }
     }
 

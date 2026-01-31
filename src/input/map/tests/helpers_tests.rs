@@ -3,7 +3,7 @@ use ratatui::style::Color;
 
 use crate::{
     input::map::helpers::{cycle_color, cycle_side, help_next_page, help_previous_page, move_note, move_viewport, switch_notes_focus},
-    states::{MapState, map::{Connection, Note, Side}}, utils::test_utils::MockFileSystem,
+    states::{MapState, map::{Connection, Mode, Note, Side}}, utils::test_utils::MockFileSystem,
 };
 
 fn create_test_map_state() -> MapState {
@@ -511,7 +511,7 @@ fn test_switch_notes_focus_with_visual_connection() {
     let mut map_state = create_test_map_state();
     
     // Set up visual connection mode
-    map_state.visual_mode.visual_connection = true;
+    map_state.current_mode = Mode::VisualConnectAdd;
     let connection = Connection {
         from_id: 0,
         from_side: Side::Right,
@@ -542,7 +542,7 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
     let mut map_state = create_test_map_state();
     
     // Set up visual connection mode
-    map_state.visual_mode.visual_connection = true;
+    map_state.current_mode = Mode::VisualConnectAdd;
     let connection = Connection {
         from_id: 0,
         from_side: Side::Right,

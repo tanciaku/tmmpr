@@ -9,12 +9,9 @@ use ratatui::{
 };
 
 use crate::{
-    utils::get_color_name_in_string,
     states::{
-        MapState,
-        start::ErrMsg,
-        map::{DiscardMenuType, ModalEditMode, Mode, Notification},
-    },
+        MapState, map::{DiscardMenuType, ModalEditMode, Mode, Notification}, start::ErrMsg
+    }, utils::get_color_name_in_string
 };
 
 /// Renders the bottom information bar showing mode, viewport position, and transient notifications.
@@ -26,15 +23,9 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
 
     let (mode_text, mode_text_color) = match &map_state.current_mode {
         Mode::Normal => (String::from("[ NORMAL ]"), Style::new().fg(Color::White)),
-        Mode::Visual => {
-            if map_state.visual_mode.visual_move {
-                (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow))
-            } else if map_state.visual_mode.visual_connection {
-                (String::from("[ VISUAL (CONNECTION) ]"), Style::new().fg(Color::Yellow))
-            } else {
-                (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow))
-            }
-        }
+        Mode::VisualSelect => (String::from("[ VISUAL (SELECT) ]"), Style::new().fg(Color::Yellow)),
+        Mode::VisualMove => (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow)),
+        Mode::VisualConnectAdd | Mode::VisualConnectEdit => (String::from("[ VISUAL (CONNECT) ]"), Style::new().fg(Color::Yellow)),
         Mode::Edit(modal) => (
             match modal {
                 None => String::from("[ EDIT ]"),
@@ -107,7 +98,7 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     }
 
     // Show color of focused connection if one exists, otherwise show color of selected note
-    if map_state.current_mode == Mode::Visual {
+    if matches!(map_state.current_mode, Mode::VisualSelect | Mode::VisualMove | Mode::VisualConnectAdd | Mode::VisualConnectEdit) {
                 
         let mut current_color_text = String::from("");
         let mut current_color_name = String::from("");

@@ -43,7 +43,7 @@ fn test_map_kh_normal_mode() {
 #[test]
 fn test_map_kh_visual_mode() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.current_mode = Mode::Visual;
+    map_state.current_mode = Mode::VisualSelect;
     
     let key_event = KeyEvent {
         code: KeyCode::Char('v'),
@@ -218,7 +218,10 @@ fn test_mode_switching_behavior() {
     // Test that we can create different mode combinations for testing
     let modes = vec![
         Mode::Normal,
-        Mode::Visual, 
+        Mode::VisualSelect, 
+        Mode::VisualMove,
+        Mode::VisualConnectAdd,
+        Mode::VisualConnectEdit,
         Mode::Edit(None),
         Mode::Edit(Some(ModalEditMode::Normal)),
         Mode::Edit(Some(ModalEditMode::Insert)),
@@ -260,7 +263,7 @@ fn test_map_kh_maintains_state_integrity() {
     // The mode might change depending on the key, but the state should remain valid
     // We're testing that the function doesn't leave the state in an invalid condition
     match map_state.current_mode {
-        Mode::Normal | Mode::Visual | Mode::Edit(_) | Mode::Delete => {
+        Mode::Normal | Mode::VisualSelect | Mode::VisualMove | Mode::VisualConnectAdd | Mode::VisualConnectEdit | Mode::Edit(_) | Mode::Delete => {
             // All valid modes
             assert!(true);
         }

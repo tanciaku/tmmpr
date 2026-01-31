@@ -748,7 +748,7 @@ fn test_select_note_with_single_note() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note, Some(0));
-    assert_eq!(map_state.current_mode, Mode::Visual);
+    assert_eq!(map_state.current_mode, Mode::VisualSelect);
     assert_eq!(map_state.notes_state.render_order, vec![0]); // Should be moved to back
 }
 
@@ -773,7 +773,7 @@ fn test_select_closest_note_to_center() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note, Some(1)); // Note 1 is closest
-    assert_eq!(map_state.current_mode, Mode::Visual);
+    assert_eq!(map_state.current_mode, Mode::VisualSelect);
     assert_eq!(map_state.notes_state.render_order, vec![0, 2, 1]); // Note 1 moved to back
 }
 

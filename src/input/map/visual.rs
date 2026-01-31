@@ -6,13 +6,12 @@ use crate::{input::{AppAction, map::{cycle_color, cycle_side, move_note, switch_
 
 pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
 
-    if map_state.visual_mode.visual_move {
+    if map_state.current_mode == Mode::VisualMove {
         match key.code {
-            KeyCode::Char('m') => map_state.visual_mode.visual_move = false,
+            KeyCode::Char('m') => map_state.current_mode = Mode::VisualSelect,
 
             KeyCode::Esc => {
                 map_state.current_mode = Mode::Normal;
-                map_state.visual_mode.visual_move = false;
 
                 if let Some(selected_note) = map_state.notes_state.selected_note {
                     if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
@@ -50,13 +49,12 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         return AppAction::Continue
     }
 
-    if map_state.visual_mode.visual_connection {
+    if map_state.current_mode == Mode::VisualConnectAdd || map_state.current_mode == Mode::VisualConnectEdit {
         match key.code {
             KeyCode::Char('c') => {
                 map_state.connections_state.stash_connection();
 
-                map_state.visual_mode.visual_connection = false;
-                map_state.connections_state.visual_editing_a_connection = false;
+                map_state.current_mode = Mode::VisualSelect;
                 map_state.connections_state.editing_connection_index = None;
             }
 
@@ -83,7 +81,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Char('n') => {
                 if let Some(selected_note) = map_state.notes_state.selected_note {
                     // Only cycle when editing existing connections, not creating new ones
-                    if map_state.connections_state.visual_editing_a_connection {
+                    if map_state.current_mode == Mode::VisualConnectEdit {
                         map_state.connections_state.stash_connection();
                         let start_index = map_state.connections_state.editing_connection_index.unwrap();
 
@@ -117,12 +115,11 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             }
 
             KeyCode::Char('d') => {
-                if map_state.connections_state.visual_editing_a_connection {
+                if map_state.current_mode == Mode::VisualConnectEdit {
                     map_state.persistence.mark_dirty();
                     map_state.connections_state.focused_connection = None;
 
-                    map_state.visual_mode.visual_connection = false;
-                    map_state.connections_state.visual_editing_a_connection = false;
+                    map_state.current_mode = Mode::VisualSelect;
                     map_state.connections_state.editing_connection_index = None;
                 }
             }
@@ -164,7 +161,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         }
         KeyCode::Char('i') => map_state.switch_to_edit_mode(),
 
-        KeyCode::Char('m') => map_state.visual_mode.visual_move = true,
+        KeyCode::Char('m') => map_state.current_mode = Mode::VisualMove,
 
         // Enter connection edit mode. Finds and focuses the first connection associated with this note.
         KeyCode::Char('c') => {
@@ -175,8 +172,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 }) {
                     map_state.connections_state.take_out_connection(index);
                     map_state.connections_state.editing_connection_index = Some(index);
-                    map_state.visual_mode.visual_connection = true;
-                    map_state.connections_state.visual_editing_a_connection = true;
+                    map_state.current_mode = Mode::VisualConnectEdit;
                 }
             }
         }
@@ -193,7 +189,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     }
                 );
 
-                map_state.visual_mode.visual_connection = true;
+                map_state.current_mode = Mode::VisualConnectAdd;
                 
                 map_state.persistence.mark_dirty();
             }

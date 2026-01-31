@@ -44,7 +44,7 @@ fn test_switch_to_modal_normal_mode_from_normal_mode() {
 #[test]
 fn test_switch_to_modal_normal_mode_from_visual() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Visual;
+    map_state.current_mode = Mode::VisualSelect;
 
     switch_to_modal_normal_mode(&mut map_state);
 
@@ -89,7 +89,7 @@ fn test_switch_to_modal_insert_mode_from_normal_mode() {
 #[test]
 fn test_switch_to_modal_insert_mode_from_visual() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Visual;
+    map_state.current_mode = Mode::VisualSelect;
 
     switch_to_modal_insert_mode(&mut map_state);
 
