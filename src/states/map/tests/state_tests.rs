@@ -282,7 +282,7 @@ fn test_on_tick_save_changes_disabled() {
     
     let old_last_save = map_state.persistence.last_save;
 
-    map_state.on_tick_save_changes();
+    map_state.auto_save_if_needed();
 
     // Timestamps should not change when saving is disabled
     assert_eq!(map_state.persistence.last_save, old_last_save);
@@ -298,7 +298,7 @@ fn test_on_tick_save_changes_not_enough_time_passed() {
     
     let old_last_save = map_state.persistence.last_save;
 
-    map_state.on_tick_save_changes();
+    map_state.auto_save_if_needed();
 
     // Should not trigger save since not enough time has passed
     assert_eq!(map_state.persistence.last_save, old_last_save);
@@ -314,7 +314,7 @@ fn test_on_tick_save_changes_no_unsaved_changes() {
     
     let old_last_save = map_state.persistence.last_save;
 
-    map_state.on_tick_save_changes();
+    map_state.auto_save_if_needed();
 
     // Should not trigger save since there are no unsaved changes
     assert_eq!(map_state.persistence.last_save, old_last_save);

@@ -34,7 +34,8 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
             }
             Screen::Map(map_state) => { 
                 // Periodic auto-save and backup creation (respects user settings)
-                map_state.on_tick_save_changes();
+                map_state.auto_save_if_needed();
+                map_state.auto_backup_if_needed();
 
                 if map_state.ui_state.needs_clear_and_redraw {
                     terminal.draw(|frame| render_map(frame, map_state))?;

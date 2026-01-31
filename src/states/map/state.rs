@@ -95,8 +95,8 @@ impl MapState {
         }
     }
 
-    /// Handles periodic auto-save and backup operations based on configured intervals.
-    pub fn on_tick_save_changes(&mut self) {
+    /// Handles periodic auto-save operations based on configured intervals.
+    pub fn auto_save_if_needed(&mut self) {
         if let Some(interval) = self.settings.save_interval {
             if self.persistence.should_save(interval) { 
                 let map_file_path = self.persistence.file_write_path.clone();
@@ -104,7 +104,10 @@ impl MapState {
                 self.persistence.reset_save_timer();
             }
         }
+    }
 
+    /// Handles periodic backup operations based on configured intervals.
+    pub fn auto_backup_if_needed(&mut self) {
         if let Some(interval) = &self.settings.runtime_backups_interval {
             if self.persistence.should_backup(interval) {
                 // Runtime backups interval implies backups path exists in settings
