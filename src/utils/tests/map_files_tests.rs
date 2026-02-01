@@ -7,10 +7,10 @@ use crate::{
     states::{
         MapState, 
         map::{BackupResult, Connection, Note, Notification, Side},
-        start::{ErrMsg, StartState}
+        start::StartState,
     },
     utils::{
-        MapData, create_map_file_with_fs, filesystem::test_utils::TempFileSystem, load_map_file_with_fs,
+        IoErrorKind, MapData, create_map_file_with_fs, filesystem::test_utils::TempFileSystem, load_map_file_with_fs,
         read_json_data, save_map_file, test_utils::MockFileSystem,
     },
 };
@@ -175,7 +175,7 @@ fn test_create_map_file_handles_write_error() {
     
     // Verify: Error message is displayed
     if let Screen::Start(start_state) = &app.screen {
-        assert_eq!(start_state.display_err_msg, Some(ErrMsg::FileWrite));
+        assert_eq!(start_state.display_err_msg, Some(IoErrorKind::FileWrite));
     }
 }
 
@@ -576,7 +576,7 @@ fn test_load_map_file_handles_missing_file() {
     
     // Verify: Error message displayed
     if let Screen::Start(start_state) = &app.screen {
-        assert_eq!(start_state.display_err_msg, Some(ErrMsg::FileRead));
+        assert_eq!(start_state.display_err_msg, Some(IoErrorKind::FileRead));
     }
 }
 
@@ -598,7 +598,7 @@ fn test_load_map_file_handles_invalid_json() {
     
     // Verify: Error message displayed
     if let Screen::Start(start_state) = &app.screen {
-        assert_eq!(start_state.display_err_msg, Some(ErrMsg::FileRead));
+        assert_eq!(start_state.display_err_msg, Some(IoErrorKind::FileRead));
     }
 }
 
@@ -620,7 +620,7 @@ fn test_load_map_file_handles_corrupt_json() {
     
     // Verify: Error message displayed
     if let Screen::Start(start_state) = &app.screen {
-        assert_eq!(start_state.display_err_msg, Some(ErrMsg::FileRead));
+        assert_eq!(start_state.display_err_msg, Some(IoErrorKind::FileRead));
     }
 }
 

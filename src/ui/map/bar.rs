@@ -10,8 +10,10 @@ use ratatui::{
 
 use crate::{
     states::{
-        MapState, map::{DiscardMenuType, ModalEditMode, Mode, Notification}, start::ErrMsg
-    }, utils::get_color_name_in_string
+        MapState,
+        map::{DiscardMenuType, ModalEditMode, Mode, Notification}
+    },
+    utils::{IoErrorKind, get_color_name_in_string}
 };
 
 /// Renders the bottom information bar showing mode, viewport position, and transient notifications.
@@ -129,10 +131,10 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     // One-time error notification: rendered once then immediately cleared from state
     if let Some(err_msg) = &map_state.settings_err_msg {
         let settings_err_msg = match err_msg {
-            ErrMsg::DirFind => Line::from(Span::styled("Settings error: no home directory - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-            ErrMsg::DirCreate => Line::from(Span::styled("Settings error: can't create config directory - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-            ErrMsg::FileWrite => Line::from(Span::styled("Settings error: can't create settings file - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-            ErrMsg::FileRead => Line::from(Span::styled("Settings error: can't read settings file - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+            IoErrorKind::DirFind => Line::from(Span::styled("Settings error: no home directory - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+            IoErrorKind::DirCreate => Line::from(Span::styled("Settings error: can't create config directory - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+            IoErrorKind::FileWrite => Line::from(Span::styled("Settings error: can't create settings file - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+            IoErrorKind::FileRead => Line::from(Span::styled("Settings error: can't read settings file - using defaults.", Style::new().fg(Color::Red))).alignment(Alignment::Center),
         };
         
         frame.render_widget(settings_err_msg, row_1_areas[1]);

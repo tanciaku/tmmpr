@@ -2,8 +2,7 @@ use std::path::{Path, PathBuf};
 use serde::{Serialize, Deserialize};
 
 use crate::{
-    states::start::ErrMsg, 
-    utils::{read_json_data, write_json_data, filesystem::FileSystem},
+    utils::{IoErrorKind, read_json_data, write_json_data, filesystem::FileSystem},
 };
 
 /// Stores up to 3 most recently opened map files.
@@ -60,16 +59,16 @@ impl RecentPaths {
 /// 
 /// Returns an error if the config directory cannot be created or accessed, which disables
 /// recent paths functionality for the session. Uses FileSystem abstraction for testability.
-pub fn get_recent_paths_with_fs(fs: &dyn FileSystem) -> Result<RecentPaths, ErrMsg> {
+pub fn get_recent_paths_with_fs(fs: &dyn FileSystem) -> Result<RecentPaths, IoErrorKind> {
     let home_path = match fs.get_home_dir() {
         Some(path) => path,
-        None => return Err(ErrMsg::DirFind),
+        None => return Err(IoErrorKind::DirFind),
     };
 
     let config_dir_path = home_path.join(".config/tmmpr/");
 
     if let Err(_) = fs.create_dir_all(&config_dir_path) {
-        return Err(ErrMsg::DirCreate)
+        return Err(IoErrorKind::DirCreate)
     };
 
     let recent_paths_file_path = config_dir_path.join("recent_paths").with_extension("json");
@@ -77,13 +76,13 @@ pub fn get_recent_paths_with_fs(fs: &dyn FileSystem) -> Result<RecentPaths, ErrM
     if fs.path_exists(&recent_paths_file_path) {
         match read_json_data(&recent_paths_file_path) {
             Ok(recent_paths) => Ok(recent_paths),
-            Err(_) => Err(ErrMsg::FileRead),
+            Err(_) => Err(IoErrorKind::FileRead),
         }
     } else {
         let new_recent_paths = RecentPaths::new();
         match write_json_data(&recent_paths_file_path, &new_recent_paths) {
             Ok(_) => Ok(new_recent_paths),
-            Err(_) => Err(ErrMsg::FileWrite),
+            Err(_) => Err(IoErrorKind::FileWrite),
         }
     }
 }

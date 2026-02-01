@@ -9,9 +9,8 @@ use crate::{
             UIState, ViewportState
         },
         settings::{Settings, SettingsType, get_settings_with_fs},
-        start::ErrMsg
     },
-    utils::{FileSystem, handle_runtime_backup, save_map_file}
+    utils::{IoErrorKind, FileSystem, handle_runtime_backup, save_map_file}
 };
 
 
@@ -28,7 +27,7 @@ pub struct MapState {
     pub persistence: PersistenceState,
     pub ui_state: UIState,
     pub settings: Settings,
-    pub settings_err_msg: Option<ErrMsg>,
+    pub settings_err_msg: Option<IoErrorKind>,
 }
 
 impl MapState {

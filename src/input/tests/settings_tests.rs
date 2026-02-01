@@ -8,9 +8,12 @@ use crate::{
     states::{
         SettingsState, map::Side, settings::{
             BackupsErr, BackupsInterval, DiscardExitTo, RuntimeBackupsInterval, SelectedToggle, Settings, SettingsType
-        }, start::ErrMsg
+        }
     },
-    utils::test_utils::{MockFileSystem, TempFileSystem},
+    utils::{
+        IoErrorKind,
+        test_utils::{MockFileSystem, TempFileSystem},
+    }
 };
 
 // Helper function to create a key event
@@ -36,7 +39,7 @@ fn create_default_settings_state() -> SettingsState {
 fn create_error_settings_state() -> SettingsState {
     let mock_fs = MockFileSystem::new();
     let mut state = SettingsState::new_with_fs(PathBuf::from("/test/map.json"), &mock_fs);
-    state.settings = SettingsType::Default(Settings::new(), Some(ErrMsg::FileRead));
+    state.settings = SettingsType::Default(Settings::new(), Some(IoErrorKind::FileRead));
     state
 }
 

@@ -1,12 +1,16 @@
 use ratatui::style::{Color, Style};
 use serde::{Deserialize, Serialize};
-use crate::states::{settings::Settings, start::ErrMsg};
+
+use crate::{
+    states::settings::Settings,
+    utils::IoErrorKind,
+};
 
 /// Tracks whether settings were loaded from a custom file or fell back to defaults.
 /// Carries an optional error message with defaults to notify the user of load failures.
 #[derive(PartialEq, Debug)]
 pub enum SettingsType {
-    Default(Settings, Option<ErrMsg>),
+    Default(Settings, Option<IoErrorKind>),
     Custom(Settings),
 }
 

@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 use crate::{
     input::AppAction,
-    states::start::{ErrMsg, FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths_with_fs}, utils::{FileSystem, RealFileSystem},
+    states::start::{FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths_with_fs}, utils::{FileSystem, RealFileSystem},
+    utils::IoErrorKind
 };
 
 #[derive(PartialEq, Debug)]
@@ -12,8 +13,8 @@ pub struct StartState {
     pub focused_input_box: FocusedInputBox,
     pub input_path_string: Option<String>,
     pub input_path_name: Option<String>,
-    pub display_err_msg: Option<ErrMsg>,
-    pub recent_paths: Result<RecentPaths, ErrMsg>,
+    pub display_err_msg: Option<IoErrorKind>,
+    pub recent_paths: Result<RecentPaths, IoErrorKind>,
 }
 
 impl StartState {
@@ -81,7 +82,7 @@ impl StartState {
                 if fs.path_exists(&path) {
                     AppAction::LoadMapFile(path)
                 } else {
-                    self.display_err_msg = Some(ErrMsg::FileRead);
+                    self.display_err_msg = Some(IoErrorKind::FileRead);
                     self.clear_and_redraw();
                     AppAction::Continue
                 }
@@ -94,7 +95,7 @@ impl StartState {
                 let home_path = match fs.get_home_dir() {
                     Some(path) => path,
                     None => {
-                        self.handle_submit_error(ErrMsg::DirFind);
+                        self.handle_submit_error(IoErrorKind::DirFind);
                         return AppAction::Continue
                     }
                 };
@@ -102,7 +103,7 @@ impl StartState {
                 let map_path = home_path.join(path);
 
                 if let Err(_) = fs.create_dir_all(&map_path) {
-                    self.handle_submit_error(ErrMsg::DirCreate);
+                    self.handle_submit_error(IoErrorKind::DirCreate);
                     return AppAction::Continue
                 };
 
@@ -118,7 +119,7 @@ impl StartState {
     }
     
     /// Resets input fields and displays an error message when path submission fails
-    pub fn handle_submit_error(&mut self, err_msg: ErrMsg) {
+    pub fn handle_submit_error(&mut self, err_msg: IoErrorKind) {
         self.input_path_string = Some(String::new());
         self.input_path_name = Some(String::new());
         self.focused_input_box = FocusedInputBox::InputBox1;

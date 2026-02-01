@@ -1,7 +1,16 @@
 use std::{collections::HashMap, path::PathBuf, time::{Duration, Instant}};
 use ratatui::style::Color;
 
-use crate::{states::{MapState, map::{Connection, ModalEditMode, Mode, Note, Side}, start::ErrMsg}, utils::test_utils::MockFileSystem};
+use crate::{
+    states::{
+        MapState,
+        map::{Connection, ModalEditMode, Mode, Note, Side}
+    },
+    utils::{
+        IoErrorKind,
+        test_utils::MockFileSystem,
+    },
+};
 
 fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
     let mock_fs = MockFileSystem::new();
@@ -98,7 +107,7 @@ fn test_new() {
     assert_eq!(map_state.ui_state.help_screen, None);
     // Since get_setting_with_fs from map_state creation will
     // fail writing to mock directory - assume write error
-    assert_eq!(map_state.settings_err_msg, Some(ErrMsg::FileWrite));
+    assert_eq!(map_state.settings_err_msg, Some(IoErrorKind::FileWrite));
     assert_eq!(map_state.persistence.backup_res, None);
 }
 

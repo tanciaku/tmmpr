@@ -6,9 +6,14 @@ use ratatui::style::Color;
 use crate::{
     app::{App, Screen},
     states::{
-        MapState, map::{BackupResult, Connection, Note, Notification, ViewPos}, start::ErrMsg
+        MapState,
+        map::{BackupResult, Connection, Note, Notification, ViewPos},
     },
-    utils::{handle_on_load_backup_with_fs, read_json_data, write_json_data, get_color_name_in_string, get_color_from_string, filesystem::{FileSystem, RealFileSystem}},
+    utils::{
+        IoErrorKind, handle_on_load_backup_with_fs, read_json_data, write_json_data,
+        get_color_name_in_string, get_color_from_string, 
+        filesystem::{FileSystem, RealFileSystem}
+    },
 };
 
 /// Serializable representation of map state for JSON persistence.
@@ -65,7 +70,7 @@ pub fn create_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem)
 
     if let Err(_) = write_json_data(path, &map_data) {
         if let Screen::Start(start_state) = &mut app.screen {
-            start_state.handle_submit_error(ErrMsg::FileWrite);
+            start_state.handle_submit_error(IoErrorKind::FileWrite);
         }
         return
     }
@@ -158,7 +163,7 @@ pub fn load_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {
             // Note: handle_submit_error resets input fields even when called from recent paths entry,
             // but this is harmless since the fields aren't visible in that context.
             if let Screen::Start(start_state) = &mut app.screen {
-                start_state.handle_submit_error(ErrMsg::FileRead);
+                start_state.handle_submit_error(IoErrorKind::FileRead);
             }
             return;
         }

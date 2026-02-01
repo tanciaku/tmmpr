@@ -10,9 +10,9 @@ use ratatui::{
 use crate::{
     states::{
         SettingsState,
-        start::ErrMsg,
         settings::{BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, SettingsNotification, SettingsType, side_to_string},
     },
+    utils::IoErrorKind
 };
 
 /// Renders the settings screen with toggleable options for map behavior and backups.
@@ -39,10 +39,10 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
 
             let error_text1 = Line::from(Span::styled("There was an error with using the settings functionality:", Style::new().fg(Color::Red))).alignment(Alignment::Center);
             let error_text2 = match err_msg {
-                ErrMsg::DirFind => Line::from(Span::styled("no home directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-                ErrMsg::DirCreate => Line::from(Span::styled("can't create config directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-                ErrMsg::FileWrite => Line::from(Span::styled("can't create settings file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-                ErrMsg::FileRead => Line::from(Span::styled("can't read settings file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                IoErrorKind::DirFind => Line::from(Span::styled("no home directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                IoErrorKind::DirCreate => Line::from(Span::styled("can't create config directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                IoErrorKind::FileWrite => Line::from(Span::styled("can't create settings file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                IoErrorKind::FileRead => Line::from(Span::styled("can't read settings file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
             };
             let settings_error_controls_text = Line::from("q - exit to start screen      o - go back to the map screen").alignment(Alignment::Center);
 

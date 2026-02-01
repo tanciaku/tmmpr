@@ -2,13 +2,20 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::input::{start::start_kh, AppAction};
-    use crate::states::{
-        start::{FocusedInputBox, SelectedStartButton, StartState, RecentPaths},
-    };
-    use crate::utils::test_utils::MockFileSystem;
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
     use std::path::PathBuf;
+    
+    use crate::{
+        input::{
+            start::start_kh,
+            AppAction
+        },
+        states::start::{FocusedInputBox, SelectedStartButton, StartState, RecentPaths},
+        utils::{
+            IoErrorKind,
+            test_utils::MockFileSystem,
+        }
+    };
 
     fn create_key_event(code: KeyCode) -> KeyEvent {
         KeyEvent::new(code, KeyModifiers::NONE)
@@ -128,7 +135,7 @@ mod tests {
         let key = create_key_event(KeyCode::Enter);
         let result = start_kh(&mut state, key, &mock_fs);
         assert_eq!(result, AppAction::Continue);
-        assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
+        assert_eq!(state.display_err_msg, Some(IoErrorKind::FileRead));
 
         // Reset error message for next test
         state.display_err_msg = None;
@@ -137,7 +144,7 @@ mod tests {
         state.selected_button = SelectedStartButton::Recent2;
         let result = start_kh(&mut state, key, &mock_fs);
         assert_eq!(result, AppAction::Continue);
-        assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
+        assert_eq!(state.display_err_msg, Some(IoErrorKind::FileRead));
 
         // Reset error message for next test
         state.display_err_msg = None;
@@ -146,7 +153,7 @@ mod tests {
         state.selected_button = SelectedStartButton::Recent3;
         let result = start_kh(&mut state, key, &mock_fs);
         assert_eq!(result, AppAction::Continue);
-        assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
+        assert_eq!(state.display_err_msg, Some(IoErrorKind::FileRead));
     }
 
     #[test]
@@ -367,6 +374,6 @@ mod tests {
         // Should return Continue since the file doesn't exist
         assert_eq!(result, AppAction::Continue);
         // Should have set an error message
-        assert_eq!(state.display_err_msg, Some(crate::states::start::ErrMsg::FileRead));
+        assert_eq!(state.display_err_msg, Some(IoErrorKind::FileRead));
     }
 }

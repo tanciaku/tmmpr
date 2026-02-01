@@ -12,8 +12,8 @@ use crate::{
         }
     },
     utils::{
-        filesystem::test_utils::MockFileSystem,
-        read_json_data, test_utils::TempFileSystem
+        read_json_data, IoErrorKind,
+        test_utils::{MockFileSystem, TempFileSystem},
     },
 };
 
@@ -616,7 +616,7 @@ fn test_get_settings_no_home_dir() {
     match settings_type {
         SettingsType::Default(settings, err) => {
             assert_eq!(settings.save_interval, Some(20));
-            assert_eq!(err, Some(crate::states::start::ErrMsg::DirFind));
+            assert_eq!(err, Some(IoErrorKind::DirFind));
         },
         SettingsType::Custom(_) => {
             panic!("Expected Default settings with error when home dir is missing");
@@ -634,7 +634,7 @@ fn test_get_settings_dir_create_failure() {
     match settings_type {
         SettingsType::Default(settings, err) => {
             assert_eq!(settings.save_interval, Some(20));
-            assert_eq!(err, Some(crate::states::start::ErrMsg::DirCreate));
+            assert_eq!(err, Some(IoErrorKind::DirCreate));
         },
         SettingsType::Custom(_) => {
             panic!("Expected Default settings with error when dir creation fails");

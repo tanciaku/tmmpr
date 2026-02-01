@@ -1,4 +1,3 @@
-
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Position},
@@ -10,10 +9,10 @@ use ratatui::{
 use crate::{
     states::{
         StartState,
-        start::{FocusedInputBox, SelectedStartButton, ErrMsg},
+        start::{FocusedInputBox, SelectedStartButton},
     },
+    utils::IoErrorKind
 };
-
 
 /// Renders the start screen with menu options and optional path input dialog.
 pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
@@ -41,10 +40,10 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
         None => {
             match &start_state.recent_paths {
                 Ok(_) => Line::from("Recents:").alignment(Alignment::Center),
-                Err(ErrMsg::DirFind) => Line::from(Span::styled("Error finding the home directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-                Err(ErrMsg::DirCreate) => Line::from(Span::styled("Error creating the config directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-                Err(ErrMsg::FileRead) => Line::from(Span::styled("Error reading recent_paths file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-                Err(ErrMsg::FileWrite) => Line::from(Span::styled("Error creating recent_paths file", Style::new().fg(Color::Red))).alignment(Alignment::Center), 
+                Err(IoErrorKind::DirFind) => Line::from(Span::styled("Error finding the home directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                Err(IoErrorKind::DirCreate) => Line::from(Span::styled("Error creating the config directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                Err(IoErrorKind::FileRead) => Line::from(Span::styled("Error reading recent_paths file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                Err(IoErrorKind::FileWrite) => Line::from(Span::styled("Error creating recent_paths file", Style::new().fg(Color::Red))).alignment(Alignment::Center), 
             }
         }
     };
@@ -190,19 +189,19 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
 
         if let Some(err) = &start_state.display_err_msg {
             match err {
-                ErrMsg::DirFind => {
+                IoErrorKind::DirFind => {
                   let error_text = Line::from(Span::styled("Error finding the home directory", Style::new().fg(Color::Red))).alignment(Alignment::Center);
                   frame.render_widget(error_text, input_menu_areas[8]);
                 }
-                ErrMsg::DirCreate => {
+                IoErrorKind::DirCreate => {
                   let error_text = Line::from(Span::styled("Error creating the directory", Style::new().fg(Color::Red))).alignment(Alignment::Center);
                   frame.render_widget(error_text, input_menu_areas[8]);
                 }
-                ErrMsg::FileWrite => {
+                IoErrorKind::FileWrite => {
                   let error_text = Line::from(Span::styled("Error creating the map file", Style::new().fg(Color::Red))).alignment(Alignment::Center);
                   frame.render_widget(error_text, input_menu_areas[8]);
                 }
-                ErrMsg::FileRead => {
+                IoErrorKind::FileRead => {
                   let error_text = Line::from(Span::styled("Error reading the map file", Style::new().fg(Color::Red))).alignment(Alignment::Center);
                   frame.render_widget(error_text, input_menu_areas[8]);
                 }

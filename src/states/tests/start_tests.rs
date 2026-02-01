@@ -4,10 +4,13 @@ use ratatui::style::{Color, Style};
 use crate::{
     input::AppAction,
     states::start::{
-        StartState, SelectedStartButton, FocusedInputBox, ErrMsg, 
+        StartState, SelectedStartButton, FocusedInputBox,
         RecentPaths, get_recent_paths_with_fs
     },
-    utils::filesystem::test_utils::MockFileSystem, 
+    utils::{
+        IoErrorKind,
+        test_utils::MockFileSystem
+    },
 };
 
 #[test]
@@ -89,7 +92,7 @@ fn test_submit_path_with_nonexistent_recent_path() {
     let result = start_state.submit_path_with_fs(Some(nonexistent_path), &mock_fs);
     
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(start_state.display_err_msg, Some(ErrMsg::FileRead));
+    assert_eq!(start_state.display_err_msg, Some(IoErrorKind::FileRead));
     assert_eq!(start_state.needs_clear_and_redraw, true);
 }
 
@@ -145,7 +148,7 @@ fn test_submit_path_no_home_dir() {
     let result = start_state.submit_path_with_fs(None, &mock_fs);
     
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(start_state.display_err_msg, Some(ErrMsg::DirFind));
+    assert_eq!(start_state.display_err_msg, Some(IoErrorKind::DirFind));
     // Input fields should be reset
     assert_eq!(start_state.input_path_string, Some(String::new()));
     assert_eq!(start_state.input_path_name, Some(String::new()));
@@ -163,7 +166,7 @@ fn test_submit_path_dir_create_failure() {
     let result = start_state.submit_path_with_fs(None, &mock_fs);
     
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(start_state.display_err_msg, Some(ErrMsg::DirCreate));
+    assert_eq!(start_state.display_err_msg, Some(IoErrorKind::DirCreate));
     // Input fields should be reset
     assert_eq!(start_state.input_path_string, Some(String::new()));
     assert_eq!(start_state.input_path_name, Some(String::new()));
@@ -178,12 +181,12 @@ fn test_handle_submit_error() {
     start_state.input_path_name = Some("some_name".to_string());
     start_state.focused_input_box = FocusedInputBox::InputBox2;
     
-    start_state.handle_submit_error(ErrMsg::DirCreate);
+    start_state.handle_submit_error(IoErrorKind::DirCreate);
     
     assert_eq!(start_state.input_path_string, Some(String::new()));
     assert_eq!(start_state.input_path_name, Some(String::new()));
     assert_eq!(start_state.focused_input_box, FocusedInputBox::InputBox1);
-    assert_eq!(start_state.display_err_msg, Some(ErrMsg::DirCreate));
+    assert_eq!(start_state.display_err_msg, Some(IoErrorKind::DirCreate));
 }
 
 #[test]
@@ -287,7 +290,7 @@ fn test_get_recent_paths_no_home_dir() {
     let result = get_recent_paths_with_fs(&mock_fs);
     
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), ErrMsg::DirFind);
+    assert_eq!(result.unwrap_err(), IoErrorKind::DirFind);
 }
 
 #[test]
@@ -297,7 +300,7 @@ fn test_get_recent_paths_dir_create_failure() {
     let result = get_recent_paths_with_fs(&mock_fs);
     
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), ErrMsg::DirCreate);
+    assert_eq!(result.unwrap_err(), IoErrorKind::DirCreate);
 }
 
 #[test]

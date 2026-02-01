@@ -45,12 +45,3 @@ impl FocusedInputBox {
         }
     }
 }
-
-/// Error conditions that can occur during start screen operations.
-#[derive(PartialEq, Debug)]
-pub enum ErrMsg {
-    DirFind,
-    DirCreate,
-    FileRead,
-    FileWrite,
-}

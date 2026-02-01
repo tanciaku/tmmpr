@@ -1,5 +1,13 @@
 use std::{fs, path::Path};
 
+#[derive(PartialEq, Debug)]
+pub enum IoErrorKind {
+    DirFind,
+    DirCreate,
+    FileRead,
+    FileWrite,
+}
+
 /// Writes data as pretty-printed JSON, overwriting if file exists.
 pub fn write_json_data<T>(path: &Path, data: &T) -> Result<(), Box<dyn std::error::Error>>
 where
