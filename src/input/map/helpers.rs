@@ -199,7 +199,7 @@ pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
             }
 
             // Update connection endpoint if in visual connection mode
-            if map_state.current_mode == Mode::VisualConnectAdd || map_state.current_mode == Mode::VisualConnectEdit {
+            if map_state.current_mode == Mode::VisualConnect {
                 if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
                     // Prevent self-connections
                     if id == focused_connection.from_id {

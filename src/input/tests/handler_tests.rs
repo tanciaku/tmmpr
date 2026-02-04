@@ -220,8 +220,7 @@ fn test_mode_switching_behavior() {
         Mode::Normal,
         Mode::VisualSelect, 
         Mode::VisualMove,
-        Mode::VisualConnectAdd,
-        Mode::VisualConnectEdit,
+        Mode::VisualConnect,
         Mode::Edit(None),
         Mode::Edit(Some(ModalEditMode::Normal)),
         Mode::Edit(Some(ModalEditMode::Insert)),
@@ -263,7 +262,7 @@ fn test_map_kh_maintains_state_integrity() {
     // The mode might change depending on the key, but the state should remain valid
     // We're testing that the function doesn't leave the state in an invalid condition
     match map_state.current_mode {
-        Mode::Normal | Mode::VisualSelect | Mode::VisualMove | Mode::VisualConnectAdd | Mode::VisualConnectEdit | Mode::Edit(_) | Mode::Delete => {
+        Mode::Normal | Mode::VisualSelect | Mode::VisualMove | Mode::VisualConnect | Mode::Edit(_) | Mode::Delete => {
             // All valid modes
             assert!(true);
         }

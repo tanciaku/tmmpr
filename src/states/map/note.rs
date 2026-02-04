@@ -47,9 +47,6 @@ impl Note {
     /// Returns the canvas coordinates where a connection line should attach to this note.
     ///
     /// The point is centered on the specified side.
-    ///
-    /// FIXME: Repetition, mixing concerns - enforcing minimum dimensions should be handled
-    /// within get_dimensions(), this also occurs in other places
     pub fn get_connection_point(&self, side: Side) -> (usize, usize) {
         let (note_width, note_height) = self.get_dimensions();
 

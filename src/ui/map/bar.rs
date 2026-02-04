@@ -27,7 +27,7 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         Mode::Normal => (String::from("[ NORMAL ]"), Style::new().fg(Color::White)),
         Mode::VisualSelect => (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow)),
         Mode::VisualMove => (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow)),
-        Mode::VisualConnectAdd | Mode::VisualConnectEdit => (String::from("[ VISUAL (CONNECT) ]"), Style::new().fg(Color::Yellow)),
+        Mode::VisualConnect => (String::from("[ VISUAL (CONNECT) ]"), Style::new().fg(Color::Yellow)),
         Mode::Edit(modal) => (
             match modal {
                 None => String::from("[ EDIT ]"),
@@ -100,7 +100,7 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     }
 
     // Show color of focused connection if one exists, otherwise show color of selected note
-    if matches!(map_state.current_mode, Mode::VisualSelect | Mode::VisualMove | Mode::VisualConnectAdd | Mode::VisualConnectEdit) {
+    if matches!(map_state.current_mode, Mode::VisualSelect | Mode::VisualMove | Mode::VisualConnect) {
                 
         let mut current_color_text = String::from("");
         let mut current_color_name = String::from("");

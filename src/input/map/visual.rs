@@ -49,7 +49,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         return AppAction::Continue
     }
 
-    if map_state.current_mode == Mode::VisualConnectAdd || map_state.current_mode == Mode::VisualConnectEdit {
+    if map_state.current_mode == Mode::VisualConnect {
         match key.code {
             KeyCode::Char('c') => {
                 map_state.connections_state.stash_connection();
@@ -80,7 +80,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             // This allows editing different connections on the same note.
             KeyCode::Char('n') => {
                 if let Some(selected_note) = map_state.notes_state.selected_note {
-                    // Only cycle when editing existing connections, not creating new ones
+                    // Can only cycle when editing existing connections, not creating new ones
                     if let Some(editing_idx) = map_state.connections_state.editing_connection_index { 
                         // The take out, then stash operation effectively cycles the list by moving 
                         // the current connection to the back
@@ -97,7 +97,8 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             }
 
             KeyCode::Char('d') => {
-                if map_state.current_mode == Mode::VisualConnectEdit {
+                // Can only delete when editing existing connections, not creating new ones
+                if let Some(_) = map_state.connections_state.editing_connection_index {
                     map_state.persistence.mark_dirty();
                     map_state.connections_state.focused_connection = None;
 
@@ -151,7 +152,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 if let Some(&index) = map_state.connections_state.get_indices_for_note(selected_note).first() {
                     map_state.connections_state.take_out_connection(index);
                     map_state.connections_state.editing_connection_index = Some(index);
-                    map_state.current_mode = Mode::VisualConnectEdit;
+                    map_state.current_mode = Mode::VisualConnect;
                 }
             }
         }
@@ -169,7 +170,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     }
                 );
 
-                map_state.current_mode = Mode::VisualConnectAdd;
+                map_state.current_mode = Mode::VisualConnect;
                 map_state.persistence.mark_dirty();
             }
         }
