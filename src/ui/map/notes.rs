@@ -141,15 +141,14 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
 
                 // Draw connection characters after each note to prevent them covering
                 // notes with higher z-index. Only done for visible notes as an optimization.
-                if let Some(connection_vec) = map_state.connections_state.connection_index.get(&note_id) {
-                    // NOTE: Multiple connections to the same side will redraw the character,
-                    // but this has negligible performance impact
-                    for connection in connection_vec {
-                        if note_id == connection.from_id {
-                            draw_connecting_character(note, connection.from_side, false, border_color, frame, map_state);
-                        } else {
-                            draw_connecting_character(note, connection.to_side.unwrap(), false, border_color, frame, map_state);
-                        }
+                // NOTE: Multiple connections to the same side will redraw the character,
+                // but this has negligible performance impact
+                let connection_vec = map_state.connections_state.get_connections_for_note(note_id);
+                for connection in connection_vec {
+                    if note_id == connection.from_id {
+                        draw_connecting_character(note, connection.from_side, false, border_color, frame, map_state);
+                    } else {
+                        draw_connecting_character(note, connection.to_side.unwrap(), false, border_color, frame, map_state);
                     }
                 }
             }

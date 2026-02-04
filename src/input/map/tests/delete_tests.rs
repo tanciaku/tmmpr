@@ -121,6 +121,8 @@ fn test_delete_note_with_multiple_connections() {
         to_side: Some(Side::Left),
         color: Color::White,
     };
+    map_state.connections_state.focused_connection = Some(connection1);
+    map_state.connections_state.stash_connection();
     
     let connection2 = Connection {
         from_id: 1,
@@ -129,6 +131,8 @@ fn test_delete_note_with_multiple_connections() {
         to_side: Some(Side::Left),
         color: Color::Green,
     };
+    map_state.connections_state.focused_connection = Some(connection2);
+    map_state.connections_state.stash_connection();
     
     // Add an unrelated connection: 0->2 (should be preserved)
     let connection3 = Connection {
@@ -138,14 +142,9 @@ fn test_delete_note_with_multiple_connections() {
         to_side: Some(Side::Top),
         color: Color::Blue,
     };
-    
-    map_state.connections_state.connections.extend_from_slice(&[connection1, connection2, connection3]);
-    
-    // Set up connection index
-    map_state.connections_state.connection_index.entry(0).or_default().extend_from_slice(&[connection1, connection3]);
-    map_state.connections_state.connection_index.entry(1).or_default().extend_from_slice(&[connection1, connection2]);
-    map_state.connections_state.connection_index.entry(2).or_default().extend_from_slice(&[connection2, connection3]);
-    
+    map_state.connections_state.focused_connection = Some(connection3);
+    map_state.connections_state.stash_connection();
+     
     map_state.current_mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
@@ -159,24 +158,24 @@ fn test_delete_note_with_multiple_connections() {
     assert!(map_state.notes_state.notes.contains_key(&2));
     
     // Only connection3 (0->2) should remain
-    assert_eq!(map_state.connections_state.connections.len(), 1);
-    assert_eq!(map_state.connections_state.connections[0], connection3);
+    assert_eq!(map_state.connections_state.connections().len(), 1);
+    assert_eq!(map_state.connections_state.connections()[0], connection3);
     
     // Connection index should be cleaned up
     // Note 0 should only have connection3
-    if let Some(connections) = map_state.connections_state.connection_index.get(&0) {
-        assert_eq!(connections.len(), 1);
-        assert_eq!(connections[0], connection3);
+    if let Some(indices_vec) = map_state.connections_state.connection_index().get(&0) {
+        assert_eq!(indices_vec.len(), 1);
+        assert_eq!(map_state.connections_state.connections()[indices_vec[0]], connection3);
     }
     
     // Note 2 should only have connection3
-    if let Some(connections) = map_state.connections_state.connection_index.get(&2) {
-        assert_eq!(connections.len(), 1);
-        assert_eq!(connections[0], connection3);
+    if let Some(indices_vec) = map_state.connections_state.connection_index().get(&2) {
+        assert_eq!(indices_vec.len(), 1);
+        assert_eq!(map_state.connections_state.connections()[indices_vec[0]], connection3);
     }
     
     // Note 1 should not exist in connection index
-    assert!(!map_state.connections_state.connection_index.contains_key(&1));
+    assert!(!map_state.connections_state.connection_index().contains_key(&1));
     
     assert_eq!(map_state.notes_state.selected_note, None);
     assert_eq!(map_state.current_mode, Mode::Normal);
@@ -201,12 +200,8 @@ fn test_delete_note_as_connection_target() {
         to_side: Some(Side::Left),
         color: Color::White,
     };
-    
-    map_state.connections_state.connections.push(connection);
-    
-    // Add to connection index
-    map_state.connections_state.connection_index.entry(0).or_default().push(connection);
-    map_state.connections_state.connection_index.entry(1).or_default().push(connection);
+    map_state.connections_state.focused_connection = Some(connection);
+    map_state.connections_state.stash_connection();
     
     map_state.current_mode = Mode::Delete;
 
@@ -220,12 +215,12 @@ fn test_delete_note_as_connection_target() {
     assert!(map_state.notes_state.notes.contains_key(&1));
     
     // Connection should be removed
-    assert!(map_state.connections_state.connections.is_empty());
+    assert!(map_state.connections_state.connections().is_empty());
     
     // Connection index should be cleaned up
-    assert!(!map_state.connections_state.connection_index.contains_key(&0));
-    if let Some(connections) = map_state.connections_state.connection_index.get(&1) {
-        assert!(connections.is_empty());
+    assert!(!map_state.connections_state.connection_index().contains_key(&0));
+    if let Some(vec_indices) = map_state.connections_state.connection_index().get(&1) {
+        assert!(vec_indices.is_empty());
     }
     
     assert_eq!(map_state.notes_state.selected_note, None);
@@ -251,12 +246,8 @@ fn test_delete_note_as_connection_source() {
         to_side: Some(Side::Left),
         color: Color::White,
     };
-    
-    map_state.connections_state.connections.push(connection);
-    
-    // Add to connection index
-    map_state.connections_state.connection_index.entry(0).or_default().push(connection);
-    map_state.connections_state.connection_index.entry(1).or_default().push(connection);
+    map_state.connections_state.focused_connection = Some(connection);
+    map_state.connections_state.stash_connection();
     
     map_state.current_mode = Mode::Delete;
 
@@ -270,12 +261,12 @@ fn test_delete_note_as_connection_source() {
     assert!(map_state.notes_state.notes.contains_key(&1));
     
     // Connection should be removed
-    assert!(map_state.connections_state.connections.is_empty());
+    assert!(map_state.connections_state.connections().is_empty());
     
     // Connection index should be cleaned up
-    assert!(!map_state.connections_state.connection_index.contains_key(&0));
-    if let Some(connections) = map_state.connections_state.connection_index.get(&1) {
-        assert!(connections.is_empty());
+    assert!(!map_state.connections_state.connection_index().contains_key(&0));
+    if let Some(vec_indices) = map_state.connections_state.connection_index().get(&1) {
+        assert!(vec_indices.is_empty());
     }
     
     assert_eq!(map_state.notes_state.selected_note, None);

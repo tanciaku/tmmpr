@@ -7,12 +7,10 @@ use crate::{
     app::{App, Screen},
     states::{
         MapState,
-        map::{BackupResult, Connection, Note, Notification, ViewPos},
+        map::{BackupResult, Connection, ConnectionsState, Note, Notification, ViewPos},
     },
     utils::{
-        IoErrorKind, handle_on_load_backup_with_fs, read_json_data, write_json_data,
-        get_color_name_in_string, get_color_from_string, 
-        filesystem::{FileSystem, RealFileSystem}
+        IoErrorKind, filesystem::{FileSystem, RealFileSystem}, get_color_from_string, get_color_name_in_string, handle_on_load_backup_with_fs, read_json_data, write_json_data
     },
 };
 
@@ -28,7 +26,6 @@ pub struct MapData {
     pub notes: HashMap<usize, Note>,
     pub render_order: Vec<usize>,
     pub connections: Vec<Connection>,
-    pub connection_index: HashMap<usize, Vec<Connection>>,
 }
 
 /// Serializes `ratatui::style::Color` as a human-readable color name string.
@@ -64,8 +61,7 @@ pub fn create_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem)
         next_note_id_counter: map_state.notes_state.next_note_id_counter,
         notes: map_state.notes_state.notes,
         render_order: map_state.notes_state.render_order,
-        connections: map_state.connections_state.connections,
-        connection_index: map_state.connections_state.connection_index,
+        connections: map_state.connections_state.connections().to_vec(),
     };
 
     if let Err(_) = write_json_data(path, &map_data) {
@@ -97,8 +93,7 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
         next_note_id_counter: map_state.notes_state.next_note_id_counter,
         notes: map_state.notes_state.notes.clone(),
         render_order: map_state.notes_state.render_order.clone(),
-        connections: map_state.connections_state.connections.clone(),
-        connection_index: map_state.connections_state.connection_index.clone(),
+        connections: map_state.connections_state.connections().to_vec(),
     };
 
     match write_json_data(path, &map_data) {
@@ -156,8 +151,7 @@ pub fn load_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {
             map_state.notes_state.next_note_id_counter = map_data.next_note_id_counter;
             map_state.notes_state.notes = map_data.notes;
             map_state.notes_state.render_order = map_data.render_order;
-            map_state.connections_state.connections = map_data.connections;
-            map_state.connections_state.connection_index = map_data.connection_index;
+            map_state.connections_state = ConnectionsState::from_connections(map_data.connections);
         }
         Err(_) => {
             // Note: handle_submit_error resets input fields even when called from recent paths entry,

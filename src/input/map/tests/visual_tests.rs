@@ -172,7 +172,8 @@ fn test_visual_enter_connection_mode_with_existing_connection() {
         to_side: Some(Side::Left),
         color: Color::White,
     };
-    map_state.connections_state.connections.push(connection);
+    map_state.connections_state.focused_connection = Some(connection);
+    map_state.connections_state.stash_connection();
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('c')));
 
@@ -611,6 +612,8 @@ fn test_connection_mode_cycle_connections() {
         to_side: Some(Side::Left),
         color: Color::White,
     };
+    map_state.connections_state.focused_connection = Some(connection1);
+    map_state.connections_state.stash_connection();
     
     let connection2 = Connection {
         from_id: 0,
@@ -619,6 +622,8 @@ fn test_connection_mode_cycle_connections() {
         to_side: Some(Side::Top),
         color: Color::Green,
     };
+    map_state.connections_state.focused_connection = Some(connection2);
+    map_state.connections_state.stash_connection();
     
     let connection3 = Connection {
         from_id: 0,
@@ -627,13 +632,11 @@ fn test_connection_mode_cycle_connections() {
         to_side: Some(Side::Bottom),
         color: Color::Blue,
     };
-    
-    // Add connections 2 and 3 to the vector (connection 1 will be focused)
-    map_state.connections_state.connections.push(connection2);
-    map_state.connections_state.connections.push(connection3);
+    map_state.connections_state.focused_connection = Some(connection3);
+    map_state.connections_state.stash_connection();
     
     // Set up focused connection and editing index (connection1 was at index 0)
-    map_state.connections_state.focused_connection = Some(connection1);
+    map_state.connections_state.take_out_connection(0);
     map_state.connections_state.editing_connection_index = Some(0);
 
     // First cycle - should move to connection2
@@ -672,7 +675,18 @@ fn test_connection_mode_cycle_connections_not_editing() {
     map_state.notes_state.notes.insert(1, Note::new(50, 10, String::from("Note 1"), false, Color::White));
     map_state.notes_state.selected_note = Some(0);
     map_state.current_mode = Mode::VisualConnectAdd;
-    
+        
+    // Add an existing connection associated with note 0 in the connections vector
+    let existing_connection = Connection {
+        from_id: 0,
+        from_side: Side::Bottom,
+        to_id: Some(1),
+        to_side: Some(Side::Top),
+        color: Color::Green,
+    };
+    map_state.connections_state.focused_connection = Some(existing_connection);
+    map_state.connections_state.stash_connection();
+
     // Set up a focused connection (partial - being created)
     let focused_connection = Connection {
         from_id: 0,
@@ -682,16 +696,6 @@ fn test_connection_mode_cycle_connections_not_editing() {
         color: Color::Blue,
     };
     map_state.connections_state.focused_connection = Some(focused_connection);
-    
-    // Add an existing connection associated with note 0 in the connections vector
-    let existing_connection = Connection {
-        from_id: 0,
-        from_side: Side::Bottom,
-        to_id: Some(1),
-        to_side: Some(Side::Top),
-        color: Color::Green,
-    };
-    map_state.connections_state.connections.push(existing_connection);
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('n')));
 
@@ -705,8 +709,8 @@ fn test_connection_mode_cycle_connections_not_editing() {
     assert_eq!(focused.color, Color::Blue); // Should be unchanged
     
     // The existing connection should still be in the vector
-    assert_eq!(map_state.connections_state.connections.len(), 1);
-    assert_eq!(map_state.connections_state.connections[0].color, Color::Green);
+    assert_eq!(map_state.connections_state.connections().len(), 1);
+    assert_eq!(map_state.connections_state.connections()[0].color, Color::Green);
 }
 
 #[test]
@@ -928,6 +932,8 @@ fn test_multiple_notes_with_connections() {
         to_side: Some(Side::Left),
         color: Color::White,
     };
+    map_state.connections_state.focused_connection = Some(connection1);
+    map_state.connections_state.stash_connection();
     
     let connection2 = Connection {
         from_id: 1,
@@ -936,9 +942,9 @@ fn test_multiple_notes_with_connections() {
         to_side: Some(Side::Left),
         color: Color::Green,
     };
+    map_state.connections_state.focused_connection = Some(connection2);
+    map_state.connections_state.stash_connection();
     
-    map_state.connections_state.connections.extend_from_slice(&[connection1, connection2]);
-
     // Enter connection mode on note 0
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('c')));
 

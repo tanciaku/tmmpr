@@ -25,7 +25,7 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
 
     let (mode_text, mode_text_color) = match &map_state.current_mode {
         Mode::Normal => (String::from("[ NORMAL ]"), Style::new().fg(Color::White)),
-        Mode::VisualSelect => (String::from("[ VISUAL (SELECT) ]"), Style::new().fg(Color::Yellow)),
+        Mode::VisualSelect => (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow)),
         Mode::VisualMove => (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow)),
         Mode::VisualConnectAdd | Mode::VisualConnectEdit => (String::from("[ VISUAL (CONNECT) ]"), Style::new().fg(Color::Yellow)),
         Mode::Edit(modal) => (

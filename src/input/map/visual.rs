@@ -81,35 +81,17 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Char('n') => {
                 if let Some(selected_note) = map_state.notes_state.selected_note {
                     // Only cycle when editing existing connections, not creating new ones
-                    if map_state.current_mode == Mode::VisualConnectEdit {
+                    if let Some(editing_idx) = map_state.connections_state.editing_connection_index { 
+                        // The take out, then stash operation effectively cycles the list by moving 
+                        // the current connection to the back
                         map_state.connections_state.stash_connection();
-                        let start_index = map_state.connections_state.editing_connection_index.unwrap();
 
-                        let mut next_index_option = None;
-
-                        // Search forward from current position
-                        if start_index < map_state.connections_state.connections.len() {
-                            next_index_option = map_state.connections_state.connections[start_index..]
-                                .iter()
-                                .position(|c| {
-                                    selected_note == c.from_id || selected_note == c.to_id.unwrap()
-                                })
-                                .map(|i| i + start_index);
-                        }
-
-                        // Wrap around to beginning if no connection found ahead
-                        if next_index_option.is_none() {
-                            next_index_option = map_state.connections_state.connections
-                                .iter()
-                                .position(|c| {
-                                    selected_note == c.from_id || selected_note == c.to_id.unwrap()
-                                });
-                        }
-
-                        if let Some(next_index) = next_index_option {
-                            map_state.connections_state.take_out_connection(next_index);
-                            map_state.connections_state.editing_connection_index = Some(next_index);
-                        }
+                        let indices = map_state.connections_state.get_indices_for_note(selected_note);
+                        let pos = indices.iter().position(|&i| i == editing_idx).unwrap_or(0);
+                        let next_index = indices[pos];
+                        
+                        map_state.connections_state.take_out_connection(next_index);
+                        map_state.connections_state.editing_connection_index = Some(next_index);
                     }
                 }
             }
@@ -166,10 +148,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         // Enter connection edit mode. Finds and focuses the first connection associated with this note.
         KeyCode::Char('c') => {
             if let Some(selected_note) = map_state.notes_state.selected_note {
-                if let Some(index) = map_state.connections_state.connections.iter().position(|c| {
-                    // Safe: all connections in the vector have both endpoints set
-                    selected_note == c.from_id || selected_note == c.to_id.unwrap()
-                }) {
+                if let Some(&index) = map_state.connections_state.get_indices_for_note(selected_note).first() {
                     map_state.connections_state.take_out_connection(index);
                     map_state.connections_state.editing_connection_index = Some(index);
                     map_state.current_mode = Mode::VisualConnectEdit;
@@ -179,6 +158,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
         KeyCode::Char('C') => {
             if let Some(selected_note) = map_state.notes_state.selected_note {
+                // FIXME?: create a helper?
                 map_state.connections_state.focused_connection = Some(
                     Connection {
                         from_id: selected_note,
@@ -190,7 +170,6 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 );
 
                 map_state.current_mode = Mode::VisualConnectAdd;
-                
                 map_state.persistence.mark_dirty();
             }
         }

@@ -14,7 +14,7 @@ use crate::{
 
 pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
 
-    for connection in &map_state.connections_state.connections {
+    for connection in map_state.connections_state.connections() {
         if let Some(start_note) = map_state.notes_state.notes.get(&connection.from_id){
             if let Some(end_note_id) = connection.to_id {
                 if let Some(end_note) = map_state.notes_state.notes.get(&end_note_id) {

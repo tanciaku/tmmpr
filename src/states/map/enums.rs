@@ -6,8 +6,8 @@ pub enum Mode {
     Normal,
     VisualSelect,
     VisualMove,
-    VisualConnectAdd,
-    VisualConnectEdit,
+    VisualConnectAdd, // FIXME?: redundant? - can just get that from .editing_connection_index being Some() or None?
+    VisualConnectEdit, // FIXME?: redundant? - can just get that from .editing_connection_index being Some() or None?
     /// Supports both modal (Vim-style) and non-modal editing.
     /// `None` indicates non-modal editing, `Some` indicates modal with the current sub-mode.
     Edit(Option<ModalEditMode>),
