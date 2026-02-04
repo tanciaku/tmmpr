@@ -88,7 +88,7 @@ impl MapState {
         
         if let Some(id) = self.notes_state.find_closest_note(screen_center_x, screen_center_y) {
             self.notes_state.select_note_by_id(id);
-            self.current_mode = Mode::VisualSelect;
+            self.current_mode = Mode::Visual;
         }
     }
 

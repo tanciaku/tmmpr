@@ -72,7 +72,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 let border_color = if note.selected {
                     match map_state.current_mode {
                         Mode::Normal => Color::White,
-                        Mode::VisualSelect | Mode::VisualMove | Mode::VisualConnect => Color::Yellow,
+                        Mode::Visual | Mode::VisualMove | Mode::VisualConnect => Color::Yellow,
                         Mode::Edit(_) => Color::Blue,
                         Mode::Delete => Color::Red,
                     }
@@ -83,7 +83,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 let border_type = if note.selected {
                     match map_state.current_mode {
                         Mode::Normal => BorderType::Plain,
-                        Mode::VisualSelect | Mode::VisualMove | Mode::VisualConnect => BorderType::Thick,
+                        Mode::Visual | Mode::VisualMove | Mode::VisualConnect => BorderType::Thick,
                         Mode::Edit(_) => BorderType::Double,
                         Mode::Delete => BorderType::Rounded,
                     }

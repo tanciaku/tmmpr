@@ -30,7 +30,6 @@ pub enum FocusedInputBox {
     InputBox2,
 }
 
-// FIXME: Unclear why this attribute is needed - investigate and remove if possible
 #[allow(mismatched_lifetime_syntaxes)]
 impl FocusedInputBox {
     pub fn get_style(&self, focused_input_box: &FocusedInputBox) -> Block {

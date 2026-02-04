@@ -45,7 +45,7 @@ fn test_delete_kh_escape_switches_to_visual() {
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Esc));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.current_mode, Mode::VisualSelect);
+    assert_eq!(map_state.current_mode, Mode::Visual);
     assert_eq!(map_state.notes_state.selected_note, Some(0)); // Should remain selected
 }
 

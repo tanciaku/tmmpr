@@ -8,7 +8,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
     if map_state.current_mode == Mode::VisualMove {
         match key.code {
-            KeyCode::Char('m') => map_state.current_mode = Mode::VisualSelect,
+            KeyCode::Char('m') => map_state.current_mode = Mode::Visual,
 
             KeyCode::Esc => {
                 map_state.current_mode = Mode::Normal;
@@ -54,7 +54,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Char('c') => {
                 map_state.connections_state.stash_connection();
 
-                map_state.current_mode = Mode::VisualSelect;
+                map_state.current_mode = Mode::Visual;
                 map_state.connections_state.editing_connection_index = None;
             }
 
@@ -102,7 +102,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     map_state.persistence.mark_dirty();
                     map_state.connections_state.focused_connection = None;
 
-                    map_state.current_mode = Mode::VisualSelect;
+                    map_state.current_mode = Mode::Visual;
                     map_state.connections_state.editing_connection_index = None;
                 }
             }
@@ -159,7 +159,6 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
         KeyCode::Char('C') => {
             if let Some(selected_note) = map_state.notes_state.selected_note {
-                // FIXME?: create a helper?
                 map_state.connections_state.focused_connection = Some(
                     Connection {
                         from_id: selected_note,
