@@ -97,7 +97,7 @@ impl MapState {
         if let Some(interval) = self.settings.save_interval {
             if self.persistence.should_save(interval) { 
                 let map_file_path = self.persistence.file_write_path.clone();
-                save_map_file(self, &map_file_path, false, false);
+                let _ = save_map_file(self, &map_file_path); // No notification for auto-save
                 self.persistence.reset_save_timer();
             }
         }

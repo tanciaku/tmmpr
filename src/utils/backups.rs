@@ -4,10 +4,10 @@ use std::{path::PathBuf, time::Duration as StdDuration};
 use crate::{
     states::{
         MapState,
-        map::{BackupResult, Notification},
+        map::Notification,
         settings::{BackupsInterval, RuntimeBackupsInterval}
     },
-    utils::{save_map_file, save_settings_to_file_with_fs, filesystem::FileSystem},
+    utils::{filesystem::FileSystem, save_settings_to_file_with_fs, save_with_notification},
 };
 
 /// Creates a backup snapshot when a map file is loaded, respecting the configured backup interval.
@@ -53,23 +53,11 @@ pub fn handle_on_load_backup_with_fs(
                 .join(format!("{}-load-backup-{}", filename, date.format("%y-%m-%d")))
                 .with_extension("json");
 
-            save_map_file(map_state, &backups_file_path, true, true);
- 
-            match &map_state.persistence.backup_res {
-                Some(BackupResult::BackupSuccess) => {
-                    map_state.settings.backup_dates.insert(filename, date);
-                    
-                    if let Err(_) = save_settings_to_file_with_fs(&map_state.settings, fs) {
-                        map_state.ui_state.set_notification(Notification::BackupRecordFail);
-                    }
-
-                    map_state.persistence.backup_res = None;
+            if save_with_notification(map_state, &backups_file_path, Notification::BackupSuccess, Notification::BackupFail).is_ok() {
+                map_state.settings.backup_dates.insert(filename, date);
+                if save_settings_to_file_with_fs(&map_state.settings, fs).is_err() {
+                    map_state.ui_state.set_notification(Notification::BackupRecordFail);
                 }
-                Some(BackupResult::BackupFail) => {
-                    // Notification already handled by save_map_file
-                    map_state.persistence.backup_res = None;
-                }
-                None => unreachable!(), // save_map_file with backup flag always sets backup_res
             }
         }
     }
@@ -106,19 +94,7 @@ pub fn handle_runtime_backup(map_state: &mut MapState) {
             .join(format!("{}-session-backup-{}", filename, date.format("%y-%m-%d-%H%M")))
             .with_extension("json");
 
-        save_map_file(map_state, &backups_file_path, true, true);
-
-        match &map_state.persistence.backup_res {
-            Some(BackupResult::BackupSuccess) => {
-                // Notification already handled by save_map_file
-                map_state.persistence.backup_res = None;
-            }
-            Some(BackupResult::BackupFail) => {
-                // Notification already handled by save_map_file
-                map_state.persistence.backup_res = None;
-            }
-            None => unreachable!(), // save_map_file with backup flag always sets backup_res
-        }
+        let _ = save_with_notification(map_state, &backups_file_path, Notification::BackupSuccess, Notification::BackupFail);
     }
 }
 

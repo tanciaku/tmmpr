@@ -49,9 +49,3 @@ pub enum DiscardMenuType {
     Start,
     Settings
 }
-
-#[derive(PartialEq, Debug)]
-pub enum BackupResult {
-    BackupSuccess,
-    BackupFail,
-}

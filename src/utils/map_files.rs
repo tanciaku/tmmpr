@@ -7,7 +7,7 @@ use crate::{
     app::{App, Screen},
     states::{
         MapState,
-        map::{BackupResult, Connection, ConnectionsState, Note, Notification, ViewPos},
+        map::{Connection, ConnectionsState, Note, Notification, ViewPos},
     },
     utils::{
         IoErrorKind, filesystem::{FileSystem, RealFileSystem}, get_color_from_string, get_color_name_in_string, handle_on_load_backup_with_fs, read_json_data, write_json_data
@@ -84,10 +84,30 @@ pub fn create_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem)
     app.screen = Screen::Map(MapState::new_with_fs(path.to_path_buf(), fs));
 }
 
-/// Saves map data to a file, optionally showing notifications.
+pub fn save_with_notification(
+    map_state: &mut MapState,
+    path: &Path,
+    success_notif: Notification,
+    fail_notif: Notification,
+) -> Result<(), Box<dyn std::error::Error>> {
+    match save_map_file(map_state, path) {
+        Ok(_) => {
+            map_state.ui_state.set_notification(success_notif);
+            map_state.clear_and_redraw();
+            Ok(())
+        }
+        Err(e) => {
+            map_state.ui_state.set_notification(fail_notif);
+            map_state.clear_and_redraw();
+            Err(e)
+        }
+    }
+}
+
+/// Saves map data to a file.
 /// 
 /// Updates persistence state to allow exit after successful save.
-pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notification: bool, making_backup: bool) {
+pub fn save_map_file(map_state: &mut MapState, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let map_data = MapData {
         view_pos: map_state.viewport.view_pos.clone(),
         next_note_id_counter: map_state.notes_state.next_note_id_counter,
@@ -96,41 +116,9 @@ pub fn save_map_file(map_state: &mut MapState, path: &Path, show_save_notificati
         connections: map_state.connections_state.connections().to_vec(),
     };
 
-    match write_json_data(path, &map_data) {
-        Ok(_) => {
-            // Mark as clean to allow exit without discard changes prompt
-            map_state.persistence.mark_clean();
-
-            if making_backup {
-                map_state.persistence.backup_res = Some(BackupResult::BackupSuccess);
-            }
-
-            if show_save_notification {
-                if making_backup {
-                    map_state.ui_state.set_notification(Notification::BackupSuccess);
-                } else {
-                    map_state.ui_state.set_notification(Notification::SaveSuccess);
-                }
-
-                map_state.clear_and_redraw();
-            }
-        }
-        Err(_) => {
-            if making_backup {
-                map_state.persistence.backup_res = Some(BackupResult::BackupFail);
-            }
-
-            if show_save_notification {
-                if making_backup {
-                    map_state.ui_state.set_notification(Notification::BackupFail);
-                } else {
-                    map_state.ui_state.set_notification(Notification::SaveFail);
-                }
-
-                map_state.clear_and_redraw();
-            }
-        }
-    }            
+    write_json_data(path, &map_data).inspect(|_| {
+        map_state.persistence.mark_clean();
+    })
 }
 
 /// Loads a map file and transitions to the Map screen.

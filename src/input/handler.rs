@@ -1,8 +1,8 @@
 use crate::{
     app::{App, Screen},
     input::{map::{map_delete_kh, map_edit_kh, map_normal_kh, map_visual_kh}, settings_kh, start_kh},
-    states::{MapState, map::Mode},
-    utils::{RealFileSystem, create_map_file, load_map_file, save_map_file},
+    states::{MapState, map::{Mode, Notification}},
+    utils::{RealFileSystem, create_map_file, load_map_file, save_with_notification},
 };
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyEvent, KeyEventKind};
@@ -42,10 +42,10 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                     AppAction::Switch(screen) => app.screen = screen,
                     AppAction::CreateMapFile(path) => create_map_file(app, &path),
                     AppAction::SaveMapFile(path) => {
-                        // SaveMapFile can only be triggered from map screen, so this is guaranteed to succeed
-                        if let Screen::Map(map_state) = &mut app.screen {
-                            save_map_file(map_state, &path, true, false);
-                        }
+                        let Screen::Map(map_state) = &mut app.screen else {
+                            unreachable!("SaveMapFile triggered outside map screen")
+                        };
+                        let _ = save_with_notification(map_state, &path, Notification::SaveSuccess, Notification::SaveFail);
                     }
                     AppAction::LoadMapFile(path) => load_map_file(app, &path),
                 }

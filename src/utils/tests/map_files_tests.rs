@@ -6,12 +6,11 @@ use crate::{
     app::{App, Screen},
     states::{
         MapState, 
-        map::{BackupResult, Connection, Note, Notification, Side},
+        map::{Connection, Note, Notification, Side},
         start::StartState,
     },
     utils::{
-        IoErrorKind, MapData, create_map_file_with_fs, filesystem::test_utils::TempFileSystem, load_map_file_with_fs,
-        read_json_data, save_map_file, test_utils::MockFileSystem,
+        IoErrorKind, MapData, create_map_file_with_fs, filesystem::test_utils::TempFileSystem, load_map_file_with_fs, read_json_data, save_map_file, save_with_notification, test_utils::MockFileSystem
     },
 };
 
@@ -206,7 +205,7 @@ fn test_save_map_file_writes_data_correctly() {
     let mut map_state = create_populated_map_state(file_path.clone());
     
     // Save the file
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Verify: File exists
     assert!(file_path.exists());
@@ -229,7 +228,7 @@ fn test_save_map_file_sets_can_exit_flag() {
     // Initially can_exit should be true
     map_state.persistence.mark_dirty();
     
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // After successful save, can_exit should be true
     assert!(!map_state.persistence.has_unsaved_changes);
@@ -244,50 +243,13 @@ fn test_save_map_file_shows_save_success_notification() {
     map_state.ui_state.clear_notification();
     
     // Save with notification enabled
-    save_map_file(&mut map_state, &file_path, true, false);
+    let _ = save_with_notification(&mut map_state, &file_path, Notification::SaveSuccess, Notification::SaveFail);
     
     // Verify: Success notification shown
     assert_eq!(map_state.ui_state.show_notification, Some(Notification::SaveSuccess));
     
     // Verify: Needs redraw
     assert!(map_state.ui_state.needs_clear_and_redraw);
-}
-
-#[test]
-fn test_save_map_file_without_notification() {
-    let temp_dir = tempdir().unwrap();
-    let file_path = temp_dir.path().join("test.json");
-    let mut map_state = create_populated_map_state(file_path.clone());
-    
-    map_state.ui_state.clear_notification();
-    map_state.ui_state.mark_redrawn();
-    
-    // Save with notification disabled
-    save_map_file(&mut map_state, &file_path, false, false);
-    
-    // Verify: No notification shown
-    assert_eq!(map_state.ui_state.show_notification, None);
-    
-    // Verify: No redraw triggered
-    assert!(!map_state.ui_state.needs_clear_and_redraw);
-}
-
-#[test]
-fn test_save_map_file_backup_mode_success() {
-    let temp_dir = tempdir().unwrap();
-    let file_path = temp_dir.path().join("test.json");
-    let mut map_state = create_populated_map_state(file_path.clone());
-    
-    map_state.persistence.backup_res = None;
-    
-    // Save in backup mode with notification
-    save_map_file(&mut map_state, &file_path, true, true);
-    
-    // Verify: Backup success result set
-    assert_eq!(map_state.persistence.backup_res, Some(BackupResult::BackupSuccess));
-    
-    // Verify: Backup notification shown
-    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupSuccess));
 }
 
 #[test]
@@ -299,7 +261,7 @@ fn test_save_map_file_handles_write_failure() {
     map_state.ui_state.clear_notification();
     
     // Attempt to save with notification enabled
-    save_map_file(&mut map_state, &invalid_path, true, false);
+    let _ = save_with_notification(&mut map_state, &invalid_path, Notification::SaveSuccess, Notification::SaveFail);
     
     // Verify: Save failure notification shown
     assert_eq!(map_state.ui_state.show_notification, Some(Notification::SaveFail));
@@ -309,30 +271,13 @@ fn test_save_map_file_handles_write_failure() {
 }
 
 #[test]
-fn test_save_map_file_backup_mode_failure() {
-    let invalid_path = PathBuf::from("/invalid/path/map.json");
-    let mut map_state = create_populated_map_state(invalid_path.clone());
-    
-    map_state.persistence.backup_res = None;
-    
-    // Attempt backup save with notification
-    save_map_file(&mut map_state, &invalid_path, true, true);
-    
-    // Verify: Backup failure result set
-    assert_eq!(map_state.persistence.backup_res, Some(BackupResult::BackupFail));
-    
-    // Verify: Backup failure notification shown
-    assert_eq!(map_state.ui_state.show_notification, Some(Notification::BackupFail));
-}
-
-#[test]
 fn test_save_map_file_overwrites_existing_file() {
     let temp_dir = tempdir().unwrap();
     let file_path = temp_dir.path().join("overwrite_test.json");
     
     // Create initial map state and save
     let mut map_state1 = create_map_state_using_mock_filesystem(file_path.clone());
-    save_map_file(&mut map_state1, &file_path, false, false);
+    let _ = save_map_file(&mut map_state1, &file_path);
     
     // Read the initial data
     let initial_data: MapData = read_json_data(&file_path).unwrap();
@@ -341,7 +286,7 @@ fn test_save_map_file_overwrites_existing_file() {
     // Create a new map state with different data and save to same file
     let mut map_state2 = create_populated_map_state(file_path.clone());
     map_state2.notes_state.next_note_id_counter = 5;
-    save_map_file(&mut map_state2, &file_path, false, false);
+    let _ = save_map_file(&mut map_state2, &file_path);
     
     // Verify: File was overwritten with new data
     let updated_data: MapData = read_json_data(&file_path).unwrap();
@@ -362,7 +307,7 @@ fn test_save_map_file_preserves_note_properties() {
     map_state.notes_state.render_order.push(42);
     map_state.notes_state.next_note_id_counter = 43;
     
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Verify: All note properties are preserved
     let loaded_data: MapData = read_json_data(&file_path).unwrap();
@@ -407,7 +352,7 @@ fn test_save_map_file_preserves_connections() {
     map_state.connections_state.focused_connection = Some(conn2);
     map_state.connections_state.stash_connection();
     
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Verify: Connections preserved
     let loaded_data: MapData = read_json_data(&file_path).unwrap();
@@ -424,7 +369,7 @@ fn test_save_map_file_empty_state() {
     
     // Save an empty map state
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Verify: File created with default/empty values
     let loaded_data: MapData = read_json_data(&file_path).unwrap();
@@ -443,7 +388,7 @@ fn test_load_map_file_loads_valid_file() {
     
     // Create and save a map file first
     let mut map_state = create_populated_map_state(file_path.clone());
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Now load it with a fresh app
     let mut app = create_test_app_with_start_state();
@@ -476,7 +421,7 @@ fn test_load_map_file_loads_note_properties() {
     map_state.notes_state.render_order.push(7);
     map_state.notes_state.next_note_id_counter = 8;
     
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Load the file
     let mut app = create_test_app_with_start_state();
@@ -514,7 +459,7 @@ fn test_load_map_file_loads_connections() {
     map_state.connections_state.focused_connection = Some(conn);
     map_state.connections_state.stash_connection();
     
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Load the file
     let mut app = create_test_app_with_start_state();
@@ -544,7 +489,7 @@ fn test_load_map_file_loads_view_position() {
     map_state.viewport.view_pos.x = 500;
     map_state.viewport.view_pos.y = 750;
     
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Load the file
     let mut app = create_test_app_with_start_state();
@@ -628,7 +573,7 @@ fn test_load_map_file_empty_map() {
     
     // Save an empty map
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Load it
     let mut app = create_test_app_with_start_state();
@@ -659,7 +604,7 @@ fn test_load_map_file_with_many_notes() {
     }
     map_state.notes_state.next_note_id_counter = 50;
     
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Load it
     let mut app = create_test_app_with_start_state();
@@ -725,7 +670,7 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     original_state.viewport.view_pos.y = 200;
     
     // Save the file
-    save_map_file(&mut original_state, &file_path, false, false);
+    let _ = save_map_file(&mut original_state, &file_path);
     
     // Load the file
     let mut app = create_test_app_with_start_state();
@@ -780,7 +725,7 @@ fn test_roundtrip_create_save_load() {
         map_state.viewport.view_pos.x = 50;
         
         // Save the changes
-        save_map_file(map_state, &file_path, false, false);
+        let _ = save_map_file(map_state, &file_path);
     }
     
     // Step 3: Load the file in a fresh app
@@ -806,7 +751,7 @@ fn test_multiple_save_load_cycles() {
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("V1"), false, Color::White));
     map_state.notes_state.next_note_id_counter = 1;
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Load and modify (cycle 1)
     let mut app = create_test_app_with_start_state();
@@ -815,7 +760,7 @@ fn test_multiple_save_load_cycles() {
     if let Screen::Map(state) = &mut app.screen {
         state.notes_state.notes.insert(1, Note::new(20, 20, String::from("V2"), false, Color::White));
         state.notes_state.next_note_id_counter = 2;
-        save_map_file(state, &file_path, false, false);
+        let _ = save_map_file(state, &file_path);
     }
     
     // Load and modify (cycle 2)
@@ -825,7 +770,7 @@ fn test_multiple_save_load_cycles() {
     if let Screen::Map(state) = &mut app2.screen {
         state.notes_state.notes.insert(2, Note::new(30, 30, String::from("V3"), false, Color::White));
         state.notes_state.next_note_id_counter = 3;
-        save_map_file(state, &file_path, false, false);
+        let _ = save_map_file(state, &file_path);
     }
     
     // Final load - verify all changes persisted
@@ -874,7 +819,7 @@ fn test_connection_index_roundtrip() {
     map_state.connections_state.focused_connection = Some(conn2);
     map_state.connections_state.stash_connection();
     
-    save_map_file(&mut map_state, &file_path, false, false);
+    let _ = save_map_file(&mut map_state, &file_path);
     
     // Load and verify
     let mut app = create_test_app_with_start_state();

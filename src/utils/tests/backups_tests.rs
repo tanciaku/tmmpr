@@ -120,10 +120,7 @@ fn test_handle_on_load_backup_disabled_backups() {
     
     // Call the function
     handle_on_load_backup_with_fs(&mut map_state, &fs, Local::now());
-    
-    // Verify no backup was created (backup_res should remain None)
-    assert_eq!(map_state.persistence.backup_res, None);
-    
+     
     // Verify no notification was set
     assert_eq!(map_state.ui_state.show_notification, None);
 }

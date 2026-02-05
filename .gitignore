@@ -1,7 +1,8 @@
 /target
 /short_term_td.txt
 /long_term_td.txt
-/prompts_cmds.txt
+/prompts.txt
+/cmds.txt
 /notes.txt
 /old_refs.txt
 /temp_context.txt

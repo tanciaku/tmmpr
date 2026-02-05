@@ -108,7 +108,6 @@ fn test_new() {
     // Since get_setting_with_fs from map_state creation will
     // fail writing to mock directory - assume write error
     assert_eq!(map_state.settings_err_msg, Some(IoErrorKind::FileWrite));
-    assert_eq!(map_state.persistence.backup_res, None);
 }
 
 #[test]

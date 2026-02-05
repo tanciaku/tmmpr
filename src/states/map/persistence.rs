@@ -1,6 +1,6 @@
 use std::{path::PathBuf, time::{Duration, Instant}};
 
-use crate::{states::map::BackupResult, utils::get_duration_rt};
+use crate::utils::get_duration_rt;
 
 /// Tracks file persistence, auto-save timing, and backup state for a map.
 #[derive(PartialEq, Debug)]
@@ -12,7 +12,6 @@ pub struct PersistenceState {
     /// true when all changes are saved.
     pub has_unsaved_changes: bool,
     pub last_save: Instant,
-    pub backup_res: Option<BackupResult>,
     pub runtime_backup_timestamp: Instant,
 }
 
@@ -22,7 +21,6 @@ impl PersistenceState {
             file_write_path,
             has_unsaved_changes: false,
             last_save: Instant::now(),
-            backup_res: None,
             runtime_backup_timestamp: Instant::now(),
         }
     }
