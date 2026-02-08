@@ -102,19 +102,33 @@ impl NotesState {
         self.selected_note_id = None;
     }
 
-    // FIXME: should panic on non existing note
+    /// Panics if the note id doesn't exist or is not in the render order
+    fn expect_id_exists(&self, id: usize) {
+        assert!(
+            self.notes.contains_key(&id),
+            "Bug: note id {} not found in notes HashMap",
+            id
+        );
+        assert!(
+            self.render_order.contains(&id),
+            "Bug: note id {} not found in render order",
+            id
+        );
+    }
+
+    /// Panics if the note id doesn't exist or is not in the render order
     pub fn select(&mut self, id: usize) {
+        self.expect_id_exists(id);
+
         self.selected_note_id = Some(id);
 
         // Bring to front of render order
-        if let Some(pos) = self.render_order.iter().position(|&x| x == id) {
-            let item = self.render_order.remove(pos);
-            self.render_order.push(item);
-        }
+        let pos = self.render_order.iter().position(|&x| x == id).unwrap();
+        let item = self.render_order.remove(pos);
+        self.render_order.push(item);
 
-        if let Some(note) = self.notes.get_mut(&id) {
-            note.selected = true;
-        }
+        let note = self.notes.get_mut(&id).unwrap();
+        note.selected = true;
     }
 
     /// Panics if no note is selected.

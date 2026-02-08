@@ -24,8 +24,9 @@ fn create_key_event(code: KeyCode) -> KeyEvent {
 #[test]
 fn test_delete_kh_escape_switches_to_visual() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Delete;
+    map_state.notes_state.add(10, 10, String::from("Note 0"), false, Color::White);
     map_state.notes_state.select(0);
+    map_state.current_mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Esc));
 
@@ -347,8 +348,9 @@ fn test_delete_note_clears_and_redraws() {
 #[test]
 fn test_escape_clears_and_redraws() {
     let mut map_state = create_test_map_state();
-    map_state.ui_state.mark_redrawn();
+    map_state.notes_state.add(10, 10, String::from("Note 0"), false, Color::White);
     map_state.notes_state.select(0);
+    map_state.ui_state.mark_redrawn();
     map_state.current_mode = Mode::Delete;
 
     let _result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Esc));
