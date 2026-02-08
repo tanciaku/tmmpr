@@ -38,11 +38,11 @@ fn test_add_note() {
     map_state.add_note();
 
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    assert_eq!(map_state.notes_state.notes, HashMap::from([(0, Note::new(50, 25, String::from(""), true, Color::White))]));
-    assert_eq!(map_state.notes_state.render_order, vec![0]);
-    assert_eq!(map_state.notes_state.selected_note, Some(0));
+    assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, Note::new(50, 25, String::from(""), true, Color::White))]));
+    assert_eq!(*map_state.notes_state.render_order(), vec![0]);
+    assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     assert_eq!(map_state.current_mode, Mode::Edit(None));
-    assert_eq!(map_state.notes_state.next_note_id_counter, 1);
+    assert_eq!(map_state.notes_state.next_note_id_counter(), 1);
 }
 
 #[test]
@@ -54,15 +54,15 @@ fn test_add_several_notes() {
     map_state.add_note();
 
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    assert_eq!(map_state.notes_state.notes, HashMap::from([
+    assert_eq!(*map_state.notes_state.notes(), HashMap::from([
         (0, Note::new(50, 25, String::from(""), true, Color::White)),
         (1, Note::new(50, 25, String::from(""), true, Color::White)),
         (2, Note::new(50, 25, String::from(""), true, Color::White)),
     ]));
-    assert_eq!(map_state.notes_state.render_order, vec![0, 1, 2]);
-    assert_eq!(map_state.notes_state.selected_note, Some(2));
+    assert_eq!(*map_state.notes_state.render_order(), vec![0, 1, 2]);
+    assert_eq!(map_state.notes_state.selected_note_id(), Some(2));
     assert_eq!(map_state.current_mode, Mode::Edit(None));
-    assert_eq!(map_state.notes_state.next_note_id_counter, 3);
+    assert_eq!(map_state.notes_state.next_note_id_counter(), 3);
 }
 
 #[test]
@@ -72,11 +72,11 @@ fn test_add_note_diff_viewpos() {
     map_state.add_note();
 
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    assert_eq!(map_state.notes_state.notes, HashMap::from([(0, Note::new(145, 120, String::from(""), true, Color::White))]));
-    assert_eq!(map_state.notes_state.render_order, vec![0]);
-    assert_eq!(map_state.notes_state.selected_note, Some(0));
+    assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, Note::new(145, 120, String::from(""), true, Color::White))]));
+    assert_eq!(*map_state.notes_state.render_order(), vec![0]);
+    assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     assert_eq!(map_state.current_mode, Mode::Edit(None));
-    assert_eq!(map_state.notes_state.next_note_id_counter, 1);
+    assert_eq!(map_state.notes_state.next_note_id_counter(), 1);
 }
 
 #[test]
@@ -91,11 +91,11 @@ fn test_new() {
     assert_eq!(map_state.viewport.view_pos.y, 0);
     assert_eq!(map_state.viewport.screen_width, 0);
     assert_eq!(map_state.viewport.screen_height, 0);
-    assert_eq!(map_state.notes_state.next_note_id_counter, 0);
-    assert!(map_state.notes_state.notes.is_empty());
-    assert!(map_state.notes_state.render_order.is_empty());
-    assert_eq!(map_state.notes_state.selected_note, None);
-    assert_eq!(map_state.notes_state.cursor_pos, 0);
+    assert_eq!(map_state.notes_state.next_note_id_counter(), 0);
+    assert!(map_state.notes_state.notes().is_empty());
+    assert!(map_state.notes_state.render_order().is_empty());
+    assert_eq!(map_state.notes_state.selected_note_id(), None);
+    assert_eq!(map_state.notes_state.cursor_pos(), 0);
     assert!(map_state.connections_state.connections().is_empty());
     assert!(map_state.connections_state.connection_index().is_empty());
     assert_eq!(map_state.connections_state.focused_connection, None);
@@ -148,7 +148,7 @@ fn test_select_note_empty_map() {
 
     map_state.select_note();
 
-    assert_eq!(map_state.notes_state.selected_note, None);
+    assert_eq!(map_state.notes_state.selected_note_id(), None);
 }
 
 #[test]
@@ -156,17 +156,15 @@ fn test_select_note_single_note() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
     
     // Add a note at position (40, 20) - close to screen center (50, 25)
-    map_state.notes_state.notes.insert(0, Note::new(40, 20, String::from("test"), false, Color::White));
-    map_state.notes_state.render_order.push(0);
-    map_state.notes_state.next_note_id_counter = 1;
+    map_state.notes_state.add(40, 20, String::from("test"), false, Color::White);
 
     map_state.select_note();
 
-    assert_eq!(map_state.notes_state.selected_note, Some(0));
+    assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     // Check that the note is marked as selected
-    assert_eq!(map_state.notes_state.notes[&0].selected, true);
+    assert_eq!(map_state.notes_state.notes()[&0].selected, true);
     // Check that render order was updated (note moved to back)
-    assert_eq!(map_state.notes_state.render_order, vec![0]);
+    assert_eq!(*map_state.notes_state.render_order(), vec![0]);
 }
 
 #[test]
@@ -175,22 +173,19 @@ fn test_select_note_multiple_notes() {
     
     // Screen center is at (50, 25)
     // Add notes at different distances from center
-    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("far"), false, Color::White));      // Distance: 40 + 15 = 55
-    map_state.notes_state.notes.insert(1, Note::new(45, 20, String::from("close"), false, Color::White));    // Distance: 5 + 5 = 10
-    map_state.notes_state.notes.insert(2, Note::new(80, 40, String::from("medium"), false, Color::White));   // Distance: 30 + 15 = 45
-    
-    map_state.notes_state.render_order = vec![0, 1, 2];
-    map_state.notes_state.next_note_id_counter = 3;
+    map_state.notes_state.add(10, 10, String::from("far"), false, Color::White);      // Distance: 40 + 15 = 55
+    map_state.notes_state.add(45, 20, String::from("close"), false, Color::White);    // Distance: 5 + 5 = 10
+    map_state.notes_state.add(80, 40, String::from("medium"), false, Color::White);   // Distance: 30 + 15 = 45
 
     map_state.select_note();
 
     // Should select note 1 (closest to center)
-    assert_eq!(map_state.notes_state.selected_note, Some(1));
-    assert_eq!(map_state.notes_state.notes[&1].selected, true);
-    assert_eq!(map_state.notes_state.notes[&0].selected, false);
-    assert_eq!(map_state.notes_state.notes[&2].selected, false);
+    assert_eq!(map_state.notes_state.selected_note_id(), Some(1));
+    assert_eq!(map_state.notes_state.notes()[&1].selected, true);
+    assert_eq!(map_state.notes_state.notes()[&0].selected, false);
+    assert_eq!(map_state.notes_state.notes()[&2].selected, false);
     // Check that render order was updated (note 1 moved to back)
-    assert_eq!(map_state.notes_state.render_order, vec![0, 2, 1]);
+    assert_eq!(*map_state.notes_state.render_order(), vec![0, 2, 1]);
 }
 
 #[test]

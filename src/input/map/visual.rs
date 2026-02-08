@@ -13,11 +13,8 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Esc => {
                 map_state.current_mode = Mode::Normal;
 
-                if let Some(selected_note) = map_state.notes_state.selected_note {
-                    if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
-                        note.selected = false;
-                    }
-                }
+                let note = map_state.notes_state.expect_selected_note_mut();
+                note.selected = false;
             }
 
             // Vim-style movement: hjkl and arrow keys. Shift modifier increases step size to 5.
@@ -59,18 +56,18 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             }
 
             KeyCode::Char('r') => {
-                if let Some(selected_note) = map_state.notes_state.selected_note {
-                    map_state.persistence.mark_dirty();
-                    if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
-                        if focused_connection.from_id == selected_note {
-                            focused_connection.from_side = cycle_side(focused_connection.from_side);
-                        }
+                let selected_note_id = map_state.notes_state.expect_selected_note_id();
+                map_state.persistence.mark_dirty();
 
-                        if let Some(to_id) = focused_connection.to_id {
-                            if to_id == selected_note {
-                                // Safe: to_side always exists when to_id exists
-                                focused_connection.to_side = Some(cycle_side(focused_connection.to_side.unwrap()));
-                            }
+                if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
+                    if focused_connection.from_id == selected_note_id {
+                        focused_connection.from_side = cycle_side(focused_connection.from_side);
+                    }
+
+                    if let Some(to_id) = focused_connection.to_id {
+                        if to_id == selected_note_id {
+                            // Safe: to_side always exists when to_id exists
+                            focused_connection.to_side = Some(cycle_side(focused_connection.to_side.unwrap()));
                         }
                     }
                 }
@@ -79,20 +76,20 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             // Cycle through all connections associated with the selected note (where it's either the start or end point).
             // This allows editing different connections on the same note.
             KeyCode::Char('n') => {
-                if let Some(selected_note) = map_state.notes_state.selected_note {
-                    // Can only cycle when editing existing connections, not creating new ones
-                    if let Some(editing_idx) = map_state.connections_state.editing_connection_index { 
-                        // The take out, then stash operation effectively cycles the list by moving 
-                        // the current connection to the back
-                        map_state.connections_state.stash_connection();
+                let selected_note_id = map_state.notes_state.expect_selected_note_id();
 
-                        let indices = map_state.connections_state.get_indices_for_note(selected_note);
-                        let pos = indices.iter().position(|&i| i == editing_idx).unwrap_or(0);
-                        let next_index = indices[pos];
-                        
-                        map_state.connections_state.take_out_connection(next_index);
-                        map_state.connections_state.editing_connection_index = Some(next_index);
-                    }
+                // Can only cycle when editing existing connections, not creating new ones
+                if let Some(editing_idx) = map_state.connections_state.editing_connection_index { 
+                    // The take out, then stash operation effectively cycles the list by moving 
+                    // the current connection to the back
+                    map_state.connections_state.stash_connection();
+
+                    let indices = map_state.connections_state.get_indices_for_note(selected_note_id);
+                    let pos = indices.iter().position(|&i| i == editing_idx).unwrap_or(0);
+                    let next_index = indices[pos];
+                    
+                    map_state.connections_state.take_out_connection(next_index);
+                    map_state.connections_state.editing_connection_index = Some(next_index);
                 }
             }
 
@@ -136,11 +133,8 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         KeyCode::Esc => {
             map_state.current_mode = Mode::Normal;
 
-            if let Some(selected_note) = map_state.notes_state.selected_note {
-                if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
-                    note.selected = false;
-                }
-            }
+            let note = map_state.notes_state.expect_selected_note_mut();
+            note.selected = false;
         }
         KeyCode::Char('i') => map_state.switch_to_edit_mode(),
 
@@ -148,30 +142,30 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
         // Enter connection edit mode. Finds and focuses the first connection associated with this note.
         KeyCode::Char('c') => {
-            if let Some(selected_note) = map_state.notes_state.selected_note {
-                if let Some(&index) = map_state.connections_state.get_indices_for_note(selected_note).first() {
-                    map_state.connections_state.take_out_connection(index);
-                    map_state.connections_state.editing_connection_index = Some(index);
-                    map_state.current_mode = Mode::VisualConnect;
-                }
+            let selected_note_id = map_state.notes_state.expect_selected_note_id();
+
+            if let Some(&index) = map_state.connections_state.get_indices_for_note(selected_note_id).first() {
+                map_state.connections_state.take_out_connection(index);
+                map_state.connections_state.editing_connection_index = Some(index);
+                map_state.current_mode = Mode::VisualConnect;
             }
         }
 
         KeyCode::Char('C') => {
-            if let Some(selected_note) = map_state.notes_state.selected_note {
-                map_state.connections_state.focused_connection = Some(
-                    Connection {
-                        from_id: selected_note,
-                        from_side: map_state.settings.default_start_side,
-                        to_id: None,
-                        to_side: None,
-                        color: Color::White,
-                    }
-                );
+            let selected_note_id = map_state.notes_state.expect_selected_note_id();
 
-                map_state.current_mode = Mode::VisualConnect;
-                map_state.persistence.mark_dirty();
-            }
+            map_state.connections_state.focused_connection = Some(
+                Connection {
+                    from_id: selected_note_id,
+                    from_side: map_state.settings.default_start_side,
+                    to_id: None,
+                    to_side: None,
+                    color: Color::White,
+                }
+            );
+
+            map_state.current_mode = Mode::VisualConnect;
+            map_state.persistence.mark_dirty();
         }
 
         KeyCode::Char('d') => map_state.current_mode = Mode::Delete,
@@ -186,13 +180,10 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         KeyCode::Right => switch_notes_focus(map_state, "Right"),
 
         KeyCode::Char('e') => {
-            if let Some(selected_note) = map_state.notes_state.selected_note {
-                if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
-                    note.color = cycle_color(note.color);
-                    
-                    map_state.persistence.mark_dirty();
-                }
-            }
+            let note = map_state.notes_state.expect_selected_note_mut();
+
+            note.color = cycle_color(note.color);
+            map_state.persistence.mark_dirty();
         }
 
         _ => {}

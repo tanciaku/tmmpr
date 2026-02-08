@@ -9,21 +9,12 @@ pub fn map_delete_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             map_state.current_mode = Mode::Visual;
         }
         KeyCode::Char('d') => {
-            if let Some(selected_note) = &map_state.notes_state.selected_note {
-                map_state.persistence.mark_dirty();
-            
-                map_state.notes_state.notes.remove(selected_note);
+            let selected_note_id = map_state.notes_state.expect_selected_note_id();
 
-                if let Some(pos) = map_state.notes_state.render_order.iter().position(|&x| x == *selected_note) {
-                    map_state.notes_state.render_order.remove(pos);
-                }
-
-                map_state.connections_state.remove_note(*selected_note);
-
-                map_state.notes_state.selected_note = None;
-
-                map_state.current_mode = Mode::Normal;
-            }
+            map_state.persistence.mark_dirty(); 
+            map_state.notes_state.remove(selected_note_id);
+            map_state.connections_state.remove_note(selected_note_id);
+            map_state.current_mode = Mode::Normal;
         }
         _ => {}
     }

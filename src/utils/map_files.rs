@@ -7,7 +7,7 @@ use crate::{
     app::{App, Screen},
     states::{
         MapState,
-        map::{Connection, ConnectionsState, Note, Notification, ViewPos},
+        map::{Connection, ConnectionsState, Note, NotesState, Notification, ViewPos},
     },
     utils::{
         IoErrorKind, filesystem::{FileSystem, RealFileSystem}, get_color_from_string, get_color_name_in_string, handle_on_load_backup_with_fs, read_json_data, write_json_data
@@ -56,11 +56,12 @@ pub fn create_map_file(app: &mut App, path: &Path) {
 /// Creates a new map file with a custom filesystem (testable version).
 pub fn create_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {
     let map_state = MapState::new_with_fs(path.to_path_buf(), fs);
+
     let map_data = MapData {
         view_pos: map_state.viewport.view_pos,
-        next_note_id_counter: map_state.notes_state.next_note_id_counter,
-        notes: map_state.notes_state.notes,
-        render_order: map_state.notes_state.render_order,
+        next_note_id_counter: map_state.notes_state.next_note_id_counter(),
+        notes: map_state.notes_state.notes().clone(),
+        render_order: map_state.notes_state.render_order().clone(),
         connections: map_state.connections_state.connections().to_vec(),
     };
 
@@ -110,9 +111,9 @@ pub fn save_with_notification(
 pub fn save_map_file(map_state: &mut MapState, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let map_data = MapData {
         view_pos: map_state.viewport.view_pos.clone(),
-        next_note_id_counter: map_state.notes_state.next_note_id_counter,
-        notes: map_state.notes_state.notes.clone(),
-        render_order: map_state.notes_state.render_order.clone(),
+        next_note_id_counter: map_state.notes_state.next_note_id_counter(),
+        notes: map_state.notes_state.notes().clone(),
+        render_order: map_state.notes_state.render_order().clone(),
         connections: map_state.connections_state.connections().to_vec(),
     };
 
@@ -136,9 +137,11 @@ pub fn load_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {
     match read_json_data::<MapData>(path) {
         Ok(map_data) => {
             map_state.viewport.view_pos = map_data.view_pos;
-            map_state.notes_state.next_note_id_counter = map_data.next_note_id_counter;
-            map_state.notes_state.notes = map_data.notes;
-            map_state.notes_state.render_order = map_data.render_order;
+            map_state.notes_state = NotesState::from_map_data(
+                map_data.notes,
+                map_data.next_note_id_counter,
+                map_data.render_order,
+            );
             map_state.connections_state = ConnectionsState::from_connections(map_data.connections);
         }
         Err(_) => {

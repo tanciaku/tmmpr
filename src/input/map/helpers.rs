@@ -61,49 +61,45 @@ pub fn move_viewport(map_state: &mut MapState, axis: &str, amount: isize) {
 /// 
 /// Viewport follows the note when it would move beyond screen edges, creating a
 /// smooth panning effect. Uses saturating subtraction to prevent coordinate underflow.
+///
+/// # Panics
+/// If no note is selected.
 pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {    
-    if let Some(selected_note) = map_state.notes_state.selected_note {
-        let (note_width, note_height) = if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) { 
-                note.get_dimensions()
-        } else {
-            unreachable!()
-        };
+    let note = map_state.notes_state.expect_selected_note_mut();
+    let (note_width, note_height) = note.get_dimensions();
 
-        if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
-            match axis {
-                "x" => {
-                    if amount > 0 {
-                        note.x += amount as usize;
-                        if note.x + note_width as usize > map_state.viewport.view_pos.x + map_state.viewport.screen_width {
-                            map_state.viewport.view_pos.x += amount as usize;
-                        }
-                    } else {
-                        note.x = note.x.saturating_sub(amount.abs() as usize);
-                        if note.x < map_state.viewport.view_pos.x {
-                            map_state.viewport.view_pos.x = map_state.viewport.view_pos.x.saturating_sub(amount.abs() as usize);
-                        }
-                    }
+    match axis {
+        "x" => {
+            if amount > 0 {
+                note.x += amount as usize;
+                if note.x + note_width as usize > map_state.viewport.view_pos.x + map_state.viewport.screen_width {
+                    map_state.viewport.view_pos.x += amount as usize;
                 }
-                "y" => {
-                    if amount > 0 {
-                        note.y += amount as usize;
-                        // Account for bottom info bar (3 lines) when checking visibility
-                        if note.y as isize + note_height as isize > map_state.viewport.view_pos.y as isize + map_state.viewport.screen_height as isize - 3 {
-                            map_state.viewport.view_pos.y += amount as usize;
-                        }
-                    } else {
-                        note.y = note.y.saturating_sub(amount.abs() as usize);
-                        if note.y < map_state.viewport.view_pos.y {
-                            map_state.viewport.view_pos.y = map_state.viewport.view_pos.y.saturating_sub(amount.abs() as usize);
-                        }
-                    }
+            } else {
+                note.x = note.x.saturating_sub(amount.abs() as usize);
+                if note.x < map_state.viewport.view_pos.x {
+                    map_state.viewport.view_pos.x = map_state.viewport.view_pos.x.saturating_sub(amount.abs() as usize);
                 }
-                _ => {}
             }
-            
-            map_state.persistence.mark_dirty();
         }
+        "y" => {
+            if amount > 0 {
+                note.y += amount as usize;
+                // Account for bottom info bar (3 lines) when checking visibility
+                if note.y as isize + note_height as isize > map_state.viewport.view_pos.y as isize + map_state.viewport.screen_height as isize - 3 {
+                    map_state.viewport.view_pos.y += amount as usize;
+                }
+            } else {
+                note.y = note.y.saturating_sub(amount.abs() as usize);
+                if note.y < map_state.viewport.view_pos.y {
+                    map_state.viewport.view_pos.y = map_state.viewport.view_pos.y.saturating_sub(amount.abs() as usize);
+                }
+            }
+        }
+        _ => {}
     }
+    
+    map_state.persistence.mark_dirty();
 }
 
 /// Switches focus to an adjacent note using vim-style directional navigation (h/j/k/l).
@@ -115,103 +111,90 @@ pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {
 /// 
 /// When multiple candidates exist, selects the closest one along the primary axis,
 /// with secondary axis used as a tiebreaker. Centers viewport on the newly selected note.
+///
+/// # Panics
+/// If no note is selected.
 pub fn switch_notes_focus(map_state: &mut MapState, key: &str) {
-    if let Some(selected_note) = map_state.notes_state.selected_note {
-        // Copy coordinates to avoid borrowing conflicts during iteration
-        let (selected_note_x, selected_note_y) = if let Some(note) = map_state.notes_state.notes.get(&selected_note) {
-            (note.x, note.y)
-        } else {
-            return;
-        };
+    let notes = map_state.notes_state.notes();
 
-        let candidate_ids: Vec<usize> = map_state.notes_state.notes.iter()
-            .filter(|(id, note)| {
-                let dx = (note.x as isize - selected_note_x as isize).abs();
-                let dy = (note.y as isize - selected_note_y as isize).abs();
+    let selected_note_id = map_state.notes_state.expect_selected_note_id();
+    let selected_note = map_state.notes_state.expect_selected_note();
 
-                // Cone of selection: primary axis distance must exceed secondary axis distance
-                let is_in_direction = match key {
-                    "j" | "Down" => note.y > selected_note_y && dy > dx,
-                    "k" | "Up" => note.y < selected_note_y && dy > dx,
-                    "l" | "Right" => note.x > selected_note_x && dx > dy,
-                    "h" | "Left" => note.x < selected_note_x && dx > dy,
-                    _ => false,
-                };
-            
-                is_in_direction && **id != selected_note
+    let candidate_ids: Vec<usize> = notes.iter()
+        .filter(|(id, note)| {
+            let dx = (note.x as isize - selected_note.x as isize).abs();
+            let dy = (note.y as isize - selected_note.y as isize).abs();
+
+            // Cone of selection: primary axis distance must exceed secondary axis distance
+            let is_in_direction = match key {
+                "j" | "Down" => note.y > selected_note.y && dy > dx,
+                "k" | "Up" => note.y < selected_note.y && dy > dx,
+                "l" | "Right" => note.x > selected_note.x && dx > dy,
+                "h" | "Left" => note.x < selected_note.x && dx > dy,
+                _ => false,
+            };
+        
+            is_in_direction && **id != selected_note_id
+        })
+        .map(|(id, _)| *id)
+        .collect();
+
+    // Find closest note by primary axis, use secondary axis as tiebreaker
+    let closest_note_id_option = match key {
+        "j" | "Down" => {
+            candidate_ids.iter().min_by_key(|&&id| {
+                let note = &notes[&id];
+                let x_dist = (note.x as isize - selected_note.x as isize).abs() as usize;
+                (note.y, x_dist)
             })
-            .map(|(id, _)| *id)
-            .collect();
-
-        // Find closest note by primary axis, use secondary axis as tiebreaker
-        let closest_note_id_option = match key {
-            "j" | "Down" => {
-                candidate_ids.iter().min_by_key(|&&id| {
-                    let note = &map_state.notes_state.notes[&id];
-                    let x_dist = (note.x as isize - selected_note_x as isize).abs() as usize;
-                    (note.y, x_dist)
-                })
-            }
-            "k" | "Up" => {
-                candidate_ids.iter().max_by_key(|&&id| {
-                    let note = &map_state.notes_state.notes[&id];
-                    let x_dist = (note.x as isize - selected_note_x as isize).abs() as usize;
-                    (note.y, Reverse(x_dist))
-                })
-            }
-            "l" | "Right" => {
-                candidate_ids.iter().min_by_key(|&&id| {
-                    let note = &map_state.notes_state.notes[&id];
-                    let y_dist = (note.y as isize - selected_note_y as isize).abs() as usize;
-                    (note.x, y_dist)
-                })
-            }
-            "h" | "Left" => {
-                candidate_ids.iter().max_by_key(|&&id| {
-                    let note = &map_state.notes_state.notes[&id];
-                    let y_dist = (note.y as isize - selected_note_y as isize).abs() as usize;
-                    (note.x, Reverse(y_dist))
-                })
-            }
-            _ => None,
-        };
+        }
+        "k" | "Up" => {
+            candidate_ids.iter().max_by_key(|&&id| {
+                let note = &notes[&id];
+                let x_dist = (note.x as isize - selected_note.x as isize).abs() as usize;
+                (note.y, Reverse(x_dist))
+            })
+        }
+        "l" | "Right" => {
+            candidate_ids.iter().min_by_key(|&&id| {
+                let note = &notes[&id];
+                let y_dist = (note.y as isize - selected_note.y as isize).abs() as usize;
+                (note.x, y_dist)
+            })
+        }
+        "h" | "Left" => {
+            candidate_ids.iter().max_by_key(|&&id| {
+                let note = &notes[&id];
+                let y_dist = (note.y as isize - selected_note.y as isize).abs() as usize;
+                (note.x, Reverse(y_dist))
+            })
+        }
+        _ => None,
+    };
     
-        if let Some(&id) = closest_note_id_option { 
-            if let Some(note) = map_state.notes_state.notes.get_mut(&selected_note) {
-                note.selected = false;
-            }
+    if let Some(&id) = closest_note_id_option { 
+        map_state.notes_state.deselect();
 
-            map_state.notes_state.selected_note = Some(id);
+        map_state.notes_state.select(id);
 
-            // Move selected note to back of render order so it renders on top
-            if let Some(pos) = map_state.notes_state.render_order.iter().position(|&x| x == id) {
-                let item = map_state.notes_state.render_order.remove(pos);
-                map_state.notes_state.render_order.push(item);
-            }
+        if let Some(note) = map_state.notes_state.notes().get(&id) {
+            map_state.viewport.view_pos.x = note.x.saturating_sub(map_state.viewport.screen_width/2);
+            map_state.viewport.view_pos.y = note.y.saturating_sub(map_state.viewport.screen_height/2);
+        }
 
-            if let Some(note) = map_state.notes_state.notes.get_mut(&id) {
-                note.selected = true;
-            }
-
-            if let Some(note) = map_state.notes_state.notes.get(&id) {
-                map_state.viewport.view_pos.x = note.x.saturating_sub(map_state.viewport.screen_width/2);
-                map_state.viewport.view_pos.y = note.y.saturating_sub(map_state.viewport.screen_height/2);
-            }
-
-            // Update connection endpoint if in visual connection mode
-            if map_state.current_mode == Mode::VisualConnect {
-                if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
-                    // Prevent self-connections
-                    if id == focused_connection.from_id {
-                        focused_connection.to_id = None;
-                        focused_connection.to_side = None;
-                    } else {
-                        focused_connection.to_id = Some(id);
-                        focused_connection.to_side = Some(map_state.settings.default_end_side);
-                    }
-
-                    map_state.persistence.mark_dirty();
+        // Update connection endpoint if in visual connection mode
+        if map_state.current_mode == Mode::VisualConnect {
+            if let Some(focused_connection) = map_state.connections_state.focused_connection.as_mut() {
+                // Prevent self-connections
+                if id == focused_connection.from_id {
+                    focused_connection.to_id = None;
+                    focused_connection.to_side = None;
+                } else {
+                    focused_connection.to_id = Some(id);
+                    focused_connection.to_side = Some(map_state.settings.default_end_side);
                 }
+
+                map_state.persistence.mark_dirty();
             }
         }
     }

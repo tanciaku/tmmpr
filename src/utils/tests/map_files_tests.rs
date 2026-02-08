@@ -6,7 +6,7 @@ use crate::{
     app::{App, Screen},
     states::{
         MapState, 
-        map::{Connection, Note, Notification, Side},
+        map::{Connection, Notification, Side},
         start::StartState,
     },
     utils::{
@@ -37,16 +37,9 @@ fn create_test_app_with_start_state() -> App {
 fn create_populated_map_state(path: PathBuf) -> MapState {
     let mut map_state = create_map_state_using_mock_filesystem(path);
     
-    // Add some notes
-    let note1 = Note::new(10, 20, String::from("Test Note 1"), true, Color::White);
-    let note2 = Note::new(50, 60, String::from("Test Note 2"), false, Color::Green);
-    
-    map_state.notes_state.notes.insert(0, note1);
-    map_state.notes_state.notes.insert(1, note2);
-    map_state.notes_state.render_order = vec![0, 1];
-    map_state.notes_state.next_note_id_counter = 2;
-    
-    // Add a connection
+    map_state.notes_state.add(10, 20, String::from("Test Note 1"), true, Color::White);
+    map_state.notes_state.add(50, 60, String::from("Test Note 2"), false, Color::Green);
+     
     let connection = Connection {
         from_id: 0,
         from_side: Side::Right,
@@ -285,12 +278,11 @@ fn test_save_map_file_overwrites_existing_file() {
     
     // Create a new map state with different data and save to same file
     let mut map_state2 = create_populated_map_state(file_path.clone());
-    map_state2.notes_state.next_note_id_counter = 5;
     let _ = save_map_file(&mut map_state2, &file_path);
     
     // Verify: File was overwritten with new data
     let updated_data: MapData = read_json_data(&file_path).unwrap();
-    assert_eq!(updated_data.next_note_id_counter, 5);
+    assert_eq!(updated_data.next_note_id_counter, 2);
     assert_eq!(updated_data.notes.len(), 2);
 }
 
@@ -302,17 +294,14 @@ fn test_save_map_file_preserves_note_properties() {
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     
     // Add a note with specific properties
-    let note = Note::new(100, 200, String::from("Important Note"), true, Color::Cyan);
-    map_state.notes_state.notes.insert(42, note);
-    map_state.notes_state.render_order.push(42);
-    map_state.notes_state.next_note_id_counter = 43;
+    map_state.notes_state.add(100, 200, String::from("Important Note"), true, Color::Cyan);
     
     let _ = save_map_file(&mut map_state, &file_path);
     
     // Verify: All note properties are preserved
     let loaded_data: MapData = read_json_data(&file_path).unwrap();
     
-    let loaded_note = loaded_data.notes.get(&42).unwrap();
+    let loaded_note = loaded_data.notes.get(&0).unwrap();
     assert_eq!(loaded_note.x, 100);
     assert_eq!(loaded_note.y, 200);
     assert_eq!(loaded_note.content, "Important Note");
@@ -327,11 +316,9 @@ fn test_save_map_file_preserves_connections() {
     
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     
-    // Add notes
-    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("A"), false, Color::White));
-    map_state.notes_state.notes.insert(1, Note::new(20, 20, String::from("B"), false, Color::White));
+    map_state.notes_state.add(10, 10, String::from("A"), false, Color::White);
+    map_state.notes_state.add(20, 20, String::from("B"), false, Color::White);
     
-    // Add multiple connections
     let conn1 = Connection {
         from_id: 0,
         from_side: Side::Right,
@@ -400,9 +387,9 @@ fn test_load_map_file_loads_valid_file() {
     
     // Verify: Data was loaded correctly
     if let Screen::Map(loaded_state) = &app.screen {
-        assert_eq!(loaded_state.notes_state.next_note_id_counter, 2);
-        assert_eq!(loaded_state.notes_state.notes.len(), 2);
-        assert_eq!(loaded_state.notes_state.render_order, vec![0, 1]);
+        assert_eq!(loaded_state.notes_state.next_note_id_counter(), 2);
+        assert_eq!(loaded_state.notes_state.notes().len(), 2);
+        assert_eq!(*loaded_state.notes_state.render_order(), vec![0, 1]);
         assert_eq!(loaded_state.connections_state.connections().len(), 1);
         assert_eq!(loaded_state.persistence.file_write_path, file_path);
     }
@@ -416,10 +403,7 @@ fn test_load_map_file_loads_note_properties() {
     
     // Create a map with specific note properties
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
-    let note = Note::new(123, 456, String::from("Specific Note"), true, Color::Magenta);
-    map_state.notes_state.notes.insert(7, note);
-    map_state.notes_state.render_order.push(7);
-    map_state.notes_state.next_note_id_counter = 8;
+    map_state.notes_state.add(123, 456, String::from("Specific Note"), true, Color::Magenta);
     
     let _ = save_map_file(&mut map_state, &file_path);
     
@@ -429,7 +413,7 @@ fn test_load_map_file_loads_note_properties() {
     
     // Verify: Note properties preserved
     if let Screen::Map(loaded_state) = &app.screen {
-        let loaded_note = loaded_state.notes_state.notes.get(&7).unwrap();
+        let loaded_note = loaded_state.notes_state.notes().get(&0).unwrap();
         assert_eq!(loaded_note.x, 123);
         assert_eq!(loaded_note.y, 456);
         assert_eq!(loaded_note.content, "Specific Note");
@@ -446,8 +430,8 @@ fn test_load_map_file_loads_connections() {
     
     // Create a map with connections
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
-    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("A"), false, Color::White));
-    map_state.notes_state.notes.insert(1, Note::new(20, 20, String::from("B"), false, Color::White));
+    map_state.notes_state.add(10, 10, String::from("A"), false, Color::White);
+    map_state.notes_state.add(20, 20, String::from("B"), false, Color::White);
     
     let conn = Connection {
         from_id: 0,
@@ -581,9 +565,9 @@ fn test_load_map_file_empty_map() {
     
     // Verify: Loaded successfully with empty data
     if let Screen::Map(loaded_state) = &app.screen {
-        assert_eq!(loaded_state.notes_state.next_note_id_counter, 0);
-        assert!(loaded_state.notes_state.notes.is_empty());
-        assert!(loaded_state.notes_state.render_order.is_empty());
+        assert_eq!(loaded_state.notes_state.next_note_id_counter(), 0);
+        assert!(loaded_state.notes_state.notes().is_empty());
+        assert!(loaded_state.notes_state.render_order().is_empty());
         assert!(loaded_state.connections_state.connections().is_empty());
     }
 }
@@ -598,11 +582,8 @@ fn test_load_map_file_with_many_notes() {
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     
     for i in 0..50 {
-        let note = Note::new(i * 10, i * 20, format!("Note {}", i), false, Color::White);
-        map_state.notes_state.notes.insert(i, note);
-        map_state.notes_state.render_order.push(i);
+        map_state.notes_state.add(i * 10, i * 20, format!("Note {}", i), false, Color::White);
     }
-    map_state.notes_state.next_note_id_counter = 50;
     
     let _ = save_map_file(&mut map_state, &file_path);
     
@@ -612,14 +593,14 @@ fn test_load_map_file_with_many_notes() {
     
     // Verify: All notes loaded
     if let Screen::Map(loaded_state) = &app.screen {
-        assert_eq!(loaded_state.notes_state.notes.len(), 50);
-        assert_eq!(loaded_state.notes_state.render_order.len(), 50);
-        assert_eq!(loaded_state.notes_state.next_note_id_counter, 50);
+        assert_eq!(loaded_state.notes_state.notes().len(), 50);
+        assert_eq!(loaded_state.notes_state.render_order().len(), 50);
+        assert_eq!(loaded_state.notes_state.next_note_id_counter(), 50);
         
         // Spot check a few notes
-        assert_eq!(loaded_state.notes_state.notes.get(&0).unwrap().content, "Note 0");
-        assert_eq!(loaded_state.notes_state.notes.get(&25).unwrap().content, "Note 25");
-        assert_eq!(loaded_state.notes_state.notes.get(&49).unwrap().content, "Note 49");
+        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().content, "Note 0");
+        assert_eq!(loaded_state.notes_state.notes().get(&25).unwrap().content, "Note 25");
+        assert_eq!(loaded_state.notes_state.notes().get(&49).unwrap().content, "Note 49");
     }
 }
 
@@ -637,12 +618,9 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     let mut original_state = create_map_state_using_mock_filesystem(file_path.clone());
     
     // Add diverse notes
-    original_state.notes_state.notes.insert(0, Note::new(10, 20, String::from("First"), true, Color::Red));
-    original_state.notes_state.notes.insert(1, Note::new(30, 40, String::from("Second"), false, Color::Green));
-    original_state.notes_state.notes.insert(5, Note::new(50, 60, String::from("Third"), false, Color::Blue));
-    
-    original_state.notes_state.render_order = vec![0, 5, 1]; // Non-sequential order
-    original_state.notes_state.next_note_id_counter = 6;
+    original_state.notes_state.add(10, 20, String::from("First"), true, Color::Red);
+    original_state.notes_state.add(30, 40, String::from("Second"), false, Color::Green);
+    original_state.notes_state.add(50, 60, String::from("Third"), false, Color::Blue);
     
     // Add connections
     let conn1 = Connection {
@@ -656,7 +634,7 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     original_state.connections_state.stash_connection();
     
     let conn2 = Connection {
-        from_id: 5,
+        from_id: 2,
         from_side: Side::Bottom,
         to_id: Some(1),
         to_side: Some(Side::Top),
@@ -679,26 +657,25 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
     // Verify: Everything matches
     if let Screen::Map(loaded_state) = &app.screen {
         // Check basic state
-        assert_eq!(loaded_state.notes_state.next_note_id_counter, 6);
+        assert_eq!(loaded_state.notes_state.next_note_id_counter(), 3);
         assert_eq!(loaded_state.viewport.view_pos.x, 100);
         assert_eq!(loaded_state.viewport.view_pos.y, 200);
         
         // Check notes
-        assert_eq!(loaded_state.notes_state.notes.len(), 3);
-        assert_eq!(loaded_state.notes_state.notes.get(&0).unwrap().content, "First");
-        assert_eq!(loaded_state.notes_state.notes.get(&0).unwrap().selected, true);
-        assert_eq!(loaded_state.notes_state.notes.get(&1).unwrap().content, "Second");
-        assert_eq!(loaded_state.notes_state.notes.get(&5).unwrap().content, "Third");
+        assert_eq!(loaded_state.notes_state.notes().len(), 3);
+        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().content, "First");
+        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().selected, true);
+        assert_eq!(loaded_state.notes_state.notes().get(&1).unwrap().content, "Second");
+        assert_eq!(loaded_state.notes_state.notes().get(&2).unwrap().content, "Third");
         
         // Check render order preserved
-        assert_eq!(loaded_state.notes_state.render_order, vec![0, 5, 1]);
+        assert_eq!(*loaded_state.notes_state.render_order(), vec![0, 1, 2]);
         
-        println!("{:?}", loaded_state.connections_state.connections());
         // Check connections
         assert_eq!(loaded_state.connections_state.connections().len(), 2);
         assert_eq!(loaded_state.connections_state.connections()[0].from_id, 0);
         assert_eq!(loaded_state.connections_state.connections()[0].to_id, Some(1));
-        assert_eq!(loaded_state.connections_state.connections()[1].from_id, 5);
+        assert_eq!(loaded_state.connections_state.connections()[1].from_id, 2);
         assert_eq!(loaded_state.connections_state.connections()[1].to_id, Some(1));
         
         // Check connection index
@@ -718,10 +695,7 @@ fn test_roundtrip_create_save_load() {
     
     // Step 2: Modify the map state
     if let Screen::Map(map_state) = &mut app.screen {
-        let note = Note::new(100, 200, String::from("Created Note"), false, Color::Magenta);
-        map_state.notes_state.notes.insert(0, note);
-        map_state.notes_state.render_order.push(0);
-        map_state.notes_state.next_note_id_counter = 1;
+        map_state.notes_state.add(100, 200, String::from("Created Note"), false, Color::Magenta);
         map_state.viewport.view_pos.x = 50;
         
         // Save the changes
@@ -734,9 +708,9 @@ fn test_roundtrip_create_save_load() {
     
     // Step 4: Verify the modifications persisted
     if let Screen::Map(loaded_state) = &fresh_app.screen {
-        assert_eq!(loaded_state.notes_state.next_note_id_counter, 1);
-        assert_eq!(loaded_state.notes_state.notes.len(), 1);
-        assert_eq!(loaded_state.notes_state.notes.get(&0).unwrap().content, "Created Note");
+        assert_eq!(loaded_state.notes_state.next_note_id_counter(), 1);
+        assert_eq!(loaded_state.notes_state.notes().len(), 1);
+        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().content, "Created Note");
         assert_eq!(loaded_state.viewport.view_pos.x, 50);
     }
 }
@@ -749,8 +723,7 @@ fn test_multiple_save_load_cycles() {
     
     // Create initial map
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
-    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("V1"), false, Color::White));
-    map_state.notes_state.next_note_id_counter = 1;
+    map_state.notes_state.add(10, 10, String::from("V1"), false, Color::White);
     let _ = save_map_file(&mut map_state, &file_path);
     
     // Load and modify (cycle 1)
@@ -758,8 +731,7 @@ fn test_multiple_save_load_cycles() {
     load_map_file_with_fs(&mut app, &file_path, &fs);
     
     if let Screen::Map(state) = &mut app.screen {
-        state.notes_state.notes.insert(1, Note::new(20, 20, String::from("V2"), false, Color::White));
-        state.notes_state.next_note_id_counter = 2;
+        state.notes_state.add(20, 20, String::from("V2"), false, Color::White);
         let _ = save_map_file(state, &file_path);
     }
     
@@ -768,8 +740,7 @@ fn test_multiple_save_load_cycles() {
     load_map_file_with_fs(&mut app2, &file_path, &fs);
     
     if let Screen::Map(state) = &mut app2.screen {
-        state.notes_state.notes.insert(2, Note::new(30, 30, String::from("V3"), false, Color::White));
-        state.notes_state.next_note_id_counter = 3;
+        state.notes_state.add(30, 30, String::from("V3"), false, Color::White);
         let _ = save_map_file(state, &file_path);
     }
     
@@ -778,11 +749,11 @@ fn test_multiple_save_load_cycles() {
     load_map_file_with_fs(&mut final_app, &file_path, &fs);
     
     if let Screen::Map(final_state) = &final_app.screen {
-        assert_eq!(final_state.notes_state.notes.len(), 3);
-        assert_eq!(final_state.notes_state.next_note_id_counter, 3);
-        assert!(final_state.notes_state.notes.contains_key(&0));
-        assert!(final_state.notes_state.notes.contains_key(&1));
-        assert!(final_state.notes_state.notes.contains_key(&2));
+        assert_eq!(final_state.notes_state.notes().len(), 3);
+        assert_eq!(final_state.notes_state.next_note_id_counter(), 3);
+        assert!(final_state.notes_state.notes().contains_key(&0));
+        assert!(final_state.notes_state.notes().contains_key(&1));
+        assert!(final_state.notes_state.notes().contains_key(&2));
     }
 }
 
@@ -795,9 +766,9 @@ fn test_connection_index_roundtrip() {
     // Create complex connection structure
     let mut map_state = create_map_state_using_mock_filesystem(file_path.clone());
     
-    map_state.notes_state.notes.insert(0, Note::new(10, 10, String::from("A"), false, Color::White));
-    map_state.notes_state.notes.insert(1, Note::new(20, 20, String::from("B"), false, Color::White));
-    map_state.notes_state.notes.insert(2, Note::new(30, 30, String::from("C"), false, Color::White));
+    map_state.notes_state.add(10, 10, String::from("A"), false, Color::White);
+    map_state.notes_state.add(20, 20, String::from("B"), false, Color::White);
+    map_state.notes_state.add(30, 30, String::from("C"), false, Color::White);
     
     let conn1 = Connection {
         from_id: 0,

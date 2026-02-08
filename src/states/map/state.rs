@@ -59,8 +59,7 @@ impl MapState {
 
         let (note_x, note_y) = self.viewport.center();
 
-        let note_id = self.notes_state.create_note(note_x, note_y, String::from(""), true, Color::White);
-        self.notes_state.selected_note = Some(note_id);
+        self.notes_state.add(note_x, note_y, String::from(""), true, Color::White);
         
         self.switch_to_edit_mode();
     }
@@ -87,7 +86,7 @@ impl MapState {
         let (screen_center_x, screen_center_y) = self.viewport.center();
         
         if let Some(id) = self.notes_state.find_closest_note(screen_center_x, screen_center_y) {
-            self.notes_state.select_note_by_id(id);
+            self.notes_state.select(id);
             self.current_mode = Mode::Visual;
         }
     }

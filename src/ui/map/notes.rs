@@ -1,4 +1,3 @@
-
 use ratatui::{
     Frame,
     layout::Position,
@@ -11,7 +10,8 @@ use crate::{
     states::{
         MapState,
         map::{Mode, SignedRect},
-    }, ui::draw_connecting_character,
+    },
+    ui::draw_connecting_character,
 };
 
 /// Renders notes with proper clipping, scrolling, and z-ordering.
@@ -20,8 +20,8 @@ use crate::{
 /// visibility handling. Connection points are drawn after each note to prevent
 /// visual layering issues.
 pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
-    for &note_id in &map_state.notes_state.render_order {
-        if let Some(note) = map_state.notes_state.notes.get(&note_id) {
+    for &note_id in map_state.notes_state.render_order() {
+        if let Some(note) = map_state.notes_state.notes().get(&note_id) {
             let (note_width, note_height) = note.get_dimensions();
 
             // Convert canvas coordinates to screen space (can be negative if off-screen)
@@ -104,18 +104,18 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 frame.render_widget(Clear, note_area);
                 frame.render_widget(text_widget, note_area);
 
-                if let Some(selected_note) = &map_state.notes_state.selected_note {
+                if let Some(selected_note) = &map_state.notes_state.selected_note_id() {
                     if matches!(map_state.current_mode, Mode::Edit(_)) && note_id == *selected_note {
-                        let text_before_cursor = &note.content[..map_state.notes_state.cursor_pos];
+                        let text_before_cursor = &note.content[..map_state.notes_state.cursor_pos()];
 
                         let cursor_y_relative = text_before_cursor.matches('\n').count();
 
                         let cursor_x_relative = match text_before_cursor.rfind('\n') {
                             Some(c) => {
-                                text_before_cursor[c+1..map_state.notes_state.cursor_pos].chars().count()
+                                text_before_cursor[c+1..map_state.notes_state.cursor_pos()].chars().count()
                             }
                             None => {
-                                text_before_cursor[0..map_state.notes_state.cursor_pos].chars().count()
+                                text_before_cursor[0..map_state.notes_state.cursor_pos()].chars().count()
                             }
                         };
 
@@ -158,11 +158,11 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
     // Highlight connection endpoints while user is creating a new connection
     if let Some(connection) = &map_state.connections_state.focused_connection {
     
-        if let Some(start_note) = map_state.notes_state.notes.get(&connection.from_id){
+        if let Some(start_note) = map_state.notes_state.notes().get(&connection.from_id){
             draw_connecting_character(start_note, connection.from_side, true, Color::Yellow, frame, map_state);
 
             if let Some(end_note_id) = connection.to_id {
-                if let Some(end_note) = map_state.notes_state.notes.get(&end_note_id) {
+                if let Some(end_note) = map_state.notes_state.notes().get(&end_note_id) {
                     draw_connecting_character(end_note, connection.to_side.unwrap(), true, Color::Yellow, frame, map_state);
                 }
             }
