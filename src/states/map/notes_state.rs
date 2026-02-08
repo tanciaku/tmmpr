@@ -82,14 +82,13 @@ impl NotesState {
             .expect("Bug: selected_note_id references non-existent note")
     }
 
-    /// Creates a new note and selects it
-    /// FIXME: decouple selecting
-    pub fn add(&mut self, x: usize, y: usize, text: String, selected: bool, color: Color) {
+    /// Creates a new note, returns its id
+    pub fn add(&mut self, x: usize, y: usize, text: String, selected: bool, color: Color) -> usize {
         let id = self.next_note_id_counter;
         self.notes.insert(id, Note::new(x, y, text, selected, color));
         self.render_order.push(id);
         self.next_note_id_counter += 1;
-        self.selected_note_id = Some(id);
+        id
     }
  
     /// Removes a note by ID and updates the render order
@@ -147,7 +146,8 @@ impl NotesState {
     }
 
     /// If `pos` exceeds the content length, it will be set to the maximum valid position.
-    /// Panics if no note is selected.
+    /// # Panics
+    /// If no note is selected.
     pub fn set_cursor_pos(&mut self, pos: usize) {
         let note = self.expect_selected_note();
         self.cursor_pos = pos.min(note.content.chars().count());

@@ -507,10 +507,8 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
     };
     map_state.connections_state.focused_connection = Some(connection);
     
-    map_state.notes_state.add(50, 25, String::from("Only"), true, Color::White);
-    map_state.notes_state.deselect();
+    map_state.notes_state.add(50, 25, String::from("Only"), false, Color::White);
     map_state.notes_state.add(70, 25, String::from("Too close"), false, Color::White); 
-    map_state.notes_state.deselect();
     
     map_state.notes_state.select(0);
     switch_notes_focus(&mut map_state, "l");
