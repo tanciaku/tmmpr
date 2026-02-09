@@ -1,4 +1,7 @@
+use std::io::stdout;
+
 use color_eyre::Result;
+use crossterm::{cursor::SetCursorStyle, execute};
 use ratatui::DefaultTerminal;
 use tmmpr::{
     app::{App, Screen},
@@ -18,6 +21,8 @@ fn main() -> color_eyre::Result<()> {
 /// Main event loop using on-demand rendering to reduce CPU usage.
 /// Each screen state tracks whether it needs redrawing instead of rendering every frame.
 fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
+    let _ = execute!(stdout(), SetCursorStyle::SteadyBar);
+    
     while app.running {
         match &mut app.screen {
             Screen::Start(start_state) => {

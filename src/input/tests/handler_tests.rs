@@ -219,7 +219,7 @@ fn test_map_kh_with_modifiers() {
 }
 
 #[test]
-fn test_mode_switching_behavior() { ///////////////////////////////////////////////////
+fn test_mode_switching_behavior() {
     // Test that we can create different mode combinations for testing
     let modes = vec![
         Mode::Normal,
