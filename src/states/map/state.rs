@@ -5,7 +5,7 @@ use ratatui::style::Color;
 use crate::{
     states::{
         map::{
-            ConnectionsState, ModalEditMode, Mode, NotesState, PersistenceState,
+            ConnectionsState, Mode, NotesState, PersistenceState,
             UIState, ViewportState
         },
         settings::{Settings, SettingsType, get_settings_with_fs},
@@ -69,15 +69,12 @@ impl MapState {
     ///
     /// Block cursor provides visual feedback that modal editing is active (vim-style).
     pub fn switch_to_edit_mode(&mut self) {
-        self.current_mode = Mode::Edit(
-            if self.settings.edit_modal {
-                let _ = execute!(stdout(), SetCursorStyle::SteadyBlock);
-
-                Some(ModalEditMode::Normal)
-            } else {
-                None
-            }
-        );
+        if self.settings.edit_modal { 
+            let _ = execute!(stdout(), SetCursorStyle::SteadyBlock);
+            self.current_mode = Mode::EditNormal;
+        } else {
+            self.current_mode = Mode::Edit;
+        }
     }
 
     /// Selects the note closest to the viewport center and enters Visual mode.

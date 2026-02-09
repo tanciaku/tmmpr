@@ -58,7 +58,7 @@ fn test_visual_enter_edit_mode() {
     assert_eq!(result, AppAction::Continue);
     // Should switch to Edit mode (with or without modal editing depending on settings)
     match map_state.current_mode {
-        Mode::Edit(_) => {}, // Success
+        Mode::Edit | Mode::EditNormal | Mode::EditInsert => {}, // Success
         _ => panic!("Expected Edit mode"),
     }
 }

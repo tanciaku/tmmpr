@@ -11,7 +11,7 @@ use ratatui::{
 use crate::{
     states::{
         MapState,
-        map::{DiscardMenuType, ModalEditMode, Mode, Notification}
+        map::{DiscardMenuType, Mode, Notification}
     },
     utils::{IoErrorKind, get_color_name_in_string}
 };
@@ -28,13 +28,9 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         Mode::Visual => (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow)),
         Mode::VisualMove => (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow)),
         Mode::VisualConnect => (String::from("[ VISUAL (CONNECT) ]"), Style::new().fg(Color::Yellow)),
-        Mode::Edit(modal) => (
-            match modal {
-                None => String::from("[ EDIT ]"),
-                Some(ModalEditMode::Normal) => String::from("[ EDIT (NORMAL) ]"),
-                Some(ModalEditMode::Insert) => String::from("[ EDIT (INSERT) ]"),
-            },
-            Style::new().fg(Color::Blue)),
+        Mode::Edit => (String::from("[ EDIT ]"), Style::new().fg(Color::Blue)),
+        Mode::EditNormal => (String::from("[ EDIT (NORMAL) ]"), Style::new().fg(Color::Blue)),
+        Mode::EditInsert => (String::from("[ EDIT (INSERT) ]"), Style::new().fg(Color::Blue)),
         Mode::Delete => (String::from("[ DELETE ]"), Style::new().fg(Color::Red)),
     };
 

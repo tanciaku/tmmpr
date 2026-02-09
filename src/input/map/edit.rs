@@ -2,25 +2,25 @@ use std::io::stdout;
 
 use crossterm::{cursor::SetCursorStyle, event::{KeyCode, KeyEvent}, execute};
 
-use crate::{input::{AppAction, map::{append, backspace_char, cursor_pos_beginning, cursor_pos_end, insert_char, jump_back_a_word, jump_forward_a_word, move_cursor_down, move_cursor_left, move_cursor_right, move_cursor_right_norm, move_cursor_up, remove_char, switch_to_modal_insert_mode, switch_to_modal_normal_mode}}, states::{MapState, map::{ModalEditMode, Mode}}};
+use crate::{input::{AppAction, map::{append, backspace_char, cursor_pos_beginning, cursor_pos_end, insert_char, jump_back_a_word, jump_forward_a_word, move_cursor_down, move_cursor_left, move_cursor_right, move_cursor_right_norm, move_cursor_up, remove_char, switch_to_modal_insert_mode, switch_to_modal_normal_mode}}, states::{MapState, map::Mode}};
 
 /// Handles keyboard input for Edit mode.
 /// 
 /// `modal`: Controls vim-style modal editing. `None` = always insert mode, `Some(mode)` = vim-style with normal/insert modes.
-pub fn map_edit_kh(map_state: &mut MapState, key: KeyEvent, modal: Option<ModalEditMode>) -> AppAction {
-    match modal {
-        None | Some(ModalEditMode::Insert) => {
+pub fn map_edit_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
+    match map_state.current_mode {
+        Mode::Edit | Mode::EditInsert => {
             match key.code {
                 KeyCode::Esc => {
-                    match modal {
-                        None => {
+                    match map_state.current_mode {
+                        Mode::Edit => {
                             cursor_pos_beginning(&mut map_state.notes_state);
                             map_state.notes_state.deselect();
 
                             let _ = execute!(stdout(), SetCursorStyle::SteadyBar);
                             map_state.current_mode = Mode::Normal;
                         }
-                        Some(ModalEditMode::Insert) => {
+                        Mode::EditInsert => {
                             // Vim behavior: move cursor back one position when leaving insert mode
                             move_cursor_left(&mut map_state.notes_state);
 
@@ -40,7 +40,7 @@ pub fn map_edit_kh(map_state: &mut MapState, key: KeyEvent, modal: Option<ModalE
                 _ => {}
             }
         }
-        Some(ModalEditMode::Normal) => {
+        Mode::EditNormal => {
             match key.code {
                 KeyCode::Esc => {
                     cursor_pos_beginning(&mut map_state.notes_state);
@@ -63,9 +63,9 @@ pub fn map_edit_kh(map_state: &mut MapState, key: KeyEvent, modal: Option<ModalE
                 _ => {}
             }
         }
+        _ => unreachable!("Bug: shouldn't call Edit key handling when not in Edit Mode")
     }
 
-    // Always redraw to reflect cursor movement and text changes
     map_state.clear_and_redraw();
     AppAction::Continue
 }

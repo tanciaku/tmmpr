@@ -70,7 +70,7 @@ pub fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     match &map_state.current_mode {
         Mode::Normal => map_normal_kh(map_state, key, &RealFileSystem),
         Mode::Visual | Mode::VisualMove | Mode::VisualConnect => map_visual_kh(map_state, key),
-        Mode::Edit(modal) => map_edit_kh(map_state, key, *modal),
+        Mode::Edit | Mode::EditNormal | Mode::EditInsert => map_edit_kh(map_state, key),
         // Delete mode requires user confirmation before actually deleting
         Mode::Delete => map_delete_kh(map_state, key),
     }

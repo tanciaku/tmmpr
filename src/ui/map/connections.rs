@@ -193,7 +193,7 @@ pub fn draw_connecting_character(note: &Note, note_id: usize, side: Side, is_edi
             match map_state.current_mode {
                 Mode::Normal => unreachable!("Bug: cannot be in Normal Mode with a selected note"),
                 Mode::Visual | Mode::VisualMove | Mode::VisualConnect => &THICK_JUNCTIONS,
-                Mode::Edit(_) => &DOUBLE_JUNCTIONS,
+                Mode::Edit | Mode::EditNormal | Mode::EditInsert => &DOUBLE_JUNCTIONS,
                 Mode::Delete => &PLAIN_JUNCTIONS,
             }
         }

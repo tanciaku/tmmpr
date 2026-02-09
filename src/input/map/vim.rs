@@ -2,17 +2,17 @@ use std::io::stdout;
 
 use crossterm::{cursor::SetCursorStyle, execute};
 
-use crate::states::{MapState, map::{ModalEditMode, Mode, NotesState}};
+use crate::states::{MapState, map::{Mode, NotesState}};
 
 
 pub fn switch_to_modal_normal_mode(map_state: &mut MapState) {
     let _ = execute!(stdout(), SetCursorStyle::SteadyBlock);
-    map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
+    map_state.current_mode = Mode::EditNormal;
 }
 
 pub fn switch_to_modal_insert_mode(map_state: &mut MapState) {
     let _ = execute!(stdout(), SetCursorStyle::SteadyBar);
-    map_state.current_mode = Mode::Edit(Some(ModalEditMode::Insert));
+    map_state.current_mode = Mode::EditInsert;
 }
 
 /// Panics if no note is selected.

@@ -683,7 +683,7 @@ fn test_add_note() {
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     
     // Check mode switched to Edit
-    assert!(matches!(map_state.current_mode, Mode::Edit(_)));
+    assert!(matches!(map_state.current_mode, Mode::Edit | Mode::EditNormal | Mode::EditInsert));
     
     // Check can_exit is false
     assert_eq!(map_state.persistence.has_unsaved_changes, true);

@@ -74,7 +74,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                         match map_state.current_mode {
                             Mode::Normal => unreachable!("Bug: cannot be in Normal Mode with a selected note"),
                             Mode::Visual | Mode::VisualMove | Mode::VisualConnect => Color::Yellow,
-                            Mode::Edit(_) => Color::Blue,
+                            Mode::Edit | Mode::EditNormal | Mode::EditInsert  => Color::Blue,
                             Mode::Delete => Color::Red,
                         }
                     }
@@ -86,7 +86,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                         match map_state.current_mode {
                             Mode::Normal => unreachable!("Bug: cannot be in Normal Mode with a selected note"),
                             Mode::Visual | Mode::VisualMove | Mode::VisualConnect => BorderType::Thick,
-                            Mode::Edit(_) => BorderType::Double,
+                            Mode::Edit | Mode::EditNormal | Mode::EditInsert => BorderType::Double,
                             Mode::Delete => BorderType::Rounded,
                         }
                     }
@@ -107,7 +107,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 frame.render_widget(text_widget, note_area);
 
                 if let Some(selected_note) = &map_state.notes_state.selected_note_id() {
-                    if matches!(map_state.current_mode, Mode::Edit(_)) && note_id == *selected_note {
+                    if matches!(map_state.current_mode, Mode::Edit | Mode::EditNormal | Mode::EditInsert) && note_id == *selected_note {
                         let text_before_cursor = &note.content[..map_state.notes_state.cursor_pos()];
 
                         let cursor_y_relative = text_before_cursor.matches('\n').count();

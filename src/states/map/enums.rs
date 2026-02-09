@@ -7,18 +7,10 @@ pub enum Mode {
     Visual,
     VisualMove,
     VisualConnect,
-    /// Supports both modal (Vim-style) and non-modal editing.
-    /// `None` indicates non-modal editing, `Some` indicates modal with the current sub-mode.
-    Edit(Option<ModalEditMode>),
+    Edit,
+    EditNormal,
+    EditInsert,
     Delete,
-}
-
-/// Modal editing sub-modes within Edit mode.
-/// Allows Vim-style navigation (Normal) and text insertion (Insert) while editing a note.
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub enum ModalEditMode {
-    Normal,
-    Insert,
 }
 
 /// Represents which side of a note a connection is attached to.

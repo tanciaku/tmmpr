@@ -4,7 +4,7 @@ use ratatui::style::Color;
 
 use crate::{
     input::handler::{AppAction, map_kh},
-    states::{MapState, map::{ModalEditMode, Mode}}, utils::test_utils::MockFileSystem,
+    states::{MapState, map::Mode}, utils::test_utils::MockFileSystem,
 };
 
 fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
@@ -70,7 +70,7 @@ fn test_map_kh_edit_mode_non_modal() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
-    map_state.current_mode = Mode::Edit(None);
+    map_state.current_mode = Mode::Edit;
 
     let key_event = KeyEvent {
         code: KeyCode::Char('a'),
@@ -94,7 +94,7 @@ fn test_map_kh_edit_mode_non_modal() {
 #[test]
 fn test_map_kh_edit_mode_modal_normal() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.current_mode = Mode::Edit(Some(ModalEditMode::Normal));
+    map_state.current_mode = Mode::EditNormal;
 
     let key_event = KeyEvent {
         code: KeyCode::Char('i'),
@@ -119,7 +119,7 @@ fn test_map_kh_edit_mode_modal_insert() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
-    map_state.current_mode = Mode::Edit(Some(ModalEditMode::Insert));
+    map_state.current_mode = Mode::EditInsert;
 
     let key_event = KeyEvent {
         code: KeyCode::Char('x'),
@@ -226,9 +226,9 @@ fn test_mode_switching_behavior() {
         Mode::Visual, 
         Mode::VisualMove,
         Mode::VisualConnect,
-        Mode::Edit(None),
-        Mode::Edit(Some(ModalEditMode::Normal)),
-        Mode::Edit(Some(ModalEditMode::Insert)),
+        Mode::Edit,
+        Mode::EditNormal,
+        Mode::EditInsert,
         Mode::Delete,
     ];
 
@@ -272,7 +272,7 @@ fn test_map_kh_maintains_state_integrity() {
     // The mode might change depending on the key, but the state should remain valid
     // We're testing that the function doesn't leave the state in an invalid condition
     match map_state.current_mode {
-        Mode::Normal | Mode::Visual | Mode::VisualMove | Mode::VisualConnect | Mode::Edit(_) | Mode::Delete => {
+        Mode::Normal | Mode::Visual | Mode::VisualMove | Mode::VisualConnect | Mode::Edit | Mode::EditNormal | Mode::EditInsert | Mode::Delete => {
             // All valid modes
             assert!(true);
         }
