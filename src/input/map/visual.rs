@@ -6,13 +6,13 @@ use crate::{input::{AppAction, map::{cycle_color, cycle_side, move_note, switch_
 
 pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
 
-    if map_state.current_mode == Mode::VisualMove {
+    if map_state.mode == Mode::VisualMove {
         match key.code {
-            KeyCode::Char('m') => map_state.current_mode = Mode::Visual,
+            KeyCode::Char('m') => map_state.mode = Mode::Visual,
 
             KeyCode::Esc => {
                 map_state.notes_state.deselect();
-                map_state.current_mode = Mode::Normal
+                map_state.mode = Mode::Normal
             }
 
             // Vim-style movement: hjkl and arrow keys. Shift modifier increases step size to 5.
@@ -44,12 +44,12 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         return AppAction::Continue
     }
 
-    if map_state.current_mode == Mode::VisualConnect {
+    if map_state.mode == Mode::VisualConnect {
         match key.code {
             KeyCode::Char('c') => {
                 map_state.connections_state.stash_connection();
 
-                map_state.current_mode = Mode::Visual;
+                map_state.mode = Mode::Visual;
                 map_state.connections_state.editing_connection_index = None;
             }
 
@@ -97,7 +97,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     map_state.persistence.mark_dirty();
                     map_state.connections_state.focused_connection = None;
 
-                    map_state.current_mode = Mode::Visual;
+                    map_state.mode = Mode::Visual;
                     map_state.connections_state.editing_connection_index = None;
                 }
             }
@@ -130,10 +130,10 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     match key.code {
         KeyCode::Esc => {
             map_state.notes_state.deselect();
-            map_state.current_mode = Mode::Normal
+            map_state.mode = Mode::Normal
         }
         KeyCode::Char('i') => map_state.switch_to_edit_mode(),
-        KeyCode::Char('m') => map_state.current_mode = Mode::VisualMove,
+        KeyCode::Char('m') => map_state.mode = Mode::VisualMove,
         // Enter connection edit mode. Finds and focuses the first connection associated with this note.
         KeyCode::Char('c') => {
             let selected_note_id = map_state.notes_state.expect_selected_note_id();
@@ -141,7 +141,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             if let Some(&index) = map_state.connections_state.get_indices_for_note(selected_note_id).first() {
                 map_state.connections_state.take_out_connection(index);
                 map_state.connections_state.editing_connection_index = Some(index);
-                map_state.current_mode = Mode::VisualConnect;
+                map_state.mode = Mode::VisualConnect;
             }
         }
 
@@ -158,11 +158,11 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 }
             );
 
-            map_state.current_mode = Mode::VisualConnect;
+            map_state.mode = Mode::VisualConnect;
             map_state.persistence.mark_dirty();
         }
 
-        KeyCode::Char('d') => map_state.current_mode = Mode::Delete,
+        KeyCode::Char('d') => map_state.mode = Mode::Delete,
 
         KeyCode::Char('j') => switch_notes_focus(map_state, "j"),
         KeyCode::Down => switch_notes_focus(map_state, "Down"),

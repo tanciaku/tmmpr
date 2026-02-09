@@ -24,42 +24,42 @@ fn create_test_map_state() -> MapState {
 #[test]
 fn test_switch_to_modal_normal_mode_from_insert() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::EditInsert;
+    map_state.mode = Mode::EditInsert;
 
     switch_to_modal_normal_mode(&mut map_state);
 
-    assert_eq!(map_state.current_mode, Mode::EditNormal);
+    assert_eq!(map_state.mode, Mode::EditNormal);
 }
 
 #[test]
 fn test_switch_to_modal_normal_mode_from_normal_mode() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
 
     switch_to_modal_normal_mode(&mut map_state);
 
-    assert_eq!(map_state.current_mode, Mode::EditNormal);
+    assert_eq!(map_state.mode, Mode::EditNormal);
 }
 
 #[test]
 fn test_switch_to_modal_normal_mode_from_visual() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Visual;
+    map_state.mode = Mode::Visual;
 
     switch_to_modal_normal_mode(&mut map_state);
 
-    assert_eq!(map_state.current_mode, Mode::EditNormal);
+    assert_eq!(map_state.mode, Mode::EditNormal);
 }
 
 #[test]
 fn test_switch_to_modal_normal_mode_already_in_modal_normal() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::EditNormal;
+    map_state.mode = Mode::EditNormal;
 
     switch_to_modal_normal_mode(&mut map_state);
 
     // Should remain in modal normal mode
-    assert_eq!(map_state.current_mode, Mode::EditNormal);
+    assert_eq!(map_state.mode, Mode::EditNormal);
 }
 
 // ============================================================================
@@ -69,42 +69,42 @@ fn test_switch_to_modal_normal_mode_already_in_modal_normal() {
 #[test]
 fn test_switch_to_modal_insert_mode_from_normal() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::EditNormal;
+    map_state.mode = Mode::EditNormal;
 
     switch_to_modal_insert_mode(&mut map_state);
 
-    assert_eq!(map_state.current_mode, Mode::EditInsert);
+    assert_eq!(map_state.mode, Mode::EditInsert);
 }
 
 #[test]
 fn test_switch_to_modal_insert_mode_from_normal_mode() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
 
     switch_to_modal_insert_mode(&mut map_state);
 
-    assert_eq!(map_state.current_mode, Mode::EditInsert);
+    assert_eq!(map_state.mode, Mode::EditInsert);
 }
 
 #[test]
 fn test_switch_to_modal_insert_mode_from_visual() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Visual;
+    map_state.mode = Mode::Visual;
 
     switch_to_modal_insert_mode(&mut map_state);
 
-    assert_eq!(map_state.current_mode, Mode::EditInsert);
+    assert_eq!(map_state.mode, Mode::EditInsert);
 }
 
 #[test]
 fn test_switch_to_modal_insert_mode_already_in_modal_insert() {
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::EditInsert;
+    map_state.mode = Mode::EditInsert;
 
     switch_to_modal_insert_mode(&mut map_state);
 
     // Should remain in modal insert mode
-    assert_eq!(map_state.current_mode, Mode::EditInsert);
+    assert_eq!(map_state.mode, Mode::EditInsert);
 }
 
 // ============================================================================

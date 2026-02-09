@@ -15,7 +15,7 @@ fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
 #[test]
 fn test_map_kh_normal_mode() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     
     // Create a test key event (we're testing the dispatch, not the actual handler)
     let key_event = KeyEvent {
@@ -44,7 +44,7 @@ fn test_map_kh_normal_mode() {
 #[test]
 fn test_map_kh_visual_mode() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.current_mode = Mode::Visual;
+    map_state.mode = Mode::Visual;
     
     let key_event = KeyEvent {
         code: KeyCode::Char('v'),
@@ -70,7 +70,7 @@ fn test_map_kh_edit_mode_non_modal() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
-    map_state.current_mode = Mode::Edit;
+    map_state.mode = Mode::Edit;
 
     let key_event = KeyEvent {
         code: KeyCode::Char('a'),
@@ -94,7 +94,7 @@ fn test_map_kh_edit_mode_non_modal() {
 #[test]
 fn test_map_kh_edit_mode_modal_normal() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.current_mode = Mode::EditNormal;
+    map_state.mode = Mode::EditNormal;
 
     let key_event = KeyEvent {
         code: KeyCode::Char('i'),
@@ -119,7 +119,7 @@ fn test_map_kh_edit_mode_modal_insert() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
-    map_state.current_mode = Mode::EditInsert;
+    map_state.mode = Mode::EditInsert;
 
     let key_event = KeyEvent {
         code: KeyCode::Char('x'),
@@ -142,7 +142,7 @@ fn test_map_kh_edit_mode_modal_insert() {
 #[test]
 fn test_map_kh_delete_mode() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let key_event = KeyEvent {
         code: KeyCode::Char('y'),
@@ -165,7 +165,7 @@ fn test_map_kh_delete_mode() {
 #[test]
 fn test_map_kh_various_key_codes() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
 
     let test_keys = vec![
         KeyCode::Enter,
@@ -196,7 +196,7 @@ fn test_map_kh_various_key_codes() {
 #[test]
 fn test_map_kh_with_modifiers() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
 
     let modifiers = vec![
         KeyModifiers::NONE,
@@ -239,7 +239,7 @@ fn test_mode_switching_behavior() {
         map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
         map_state.notes_state.select(0);
 
-        map_state.current_mode = mode;
+        map_state.mode = mode;
 
         let key_event = KeyEvent {
             code: KeyCode::Char('t'),
@@ -258,7 +258,7 @@ fn test_map_kh_maintains_state_integrity() {
     // Test that map_kh doesn't corrupt the MapState
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     let original_mode = Mode::Normal;
-    map_state.current_mode = original_mode;
+    map_state.mode = original_mode;
 
     let key_event = KeyEvent {
         code: KeyCode::Char('z'),
@@ -271,7 +271,7 @@ fn test_map_kh_maintains_state_integrity() {
 
     // The mode might change depending on the key, but the state should remain valid
     // We're testing that the function doesn't leave the state in an invalid condition
-    match map_state.current_mode {
+    match map_state.mode {
         Mode::Normal | Mode::Visual | Mode::VisualMove | Mode::VisualConnect | Mode::Edit | Mode::EditNormal | Mode::EditInsert | Mode::Delete => {
             // All valid modes
             assert!(true);

@@ -8,17 +8,17 @@ use crate::{input::{AppAction, map::{append, backspace_char, cursor_pos_beginnin
 /// 
 /// `modal`: Controls vim-style modal editing. `None` = always insert mode, `Some(mode)` = vim-style with normal/insert modes.
 pub fn map_edit_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
-    match map_state.current_mode {
+    match map_state.mode {
         Mode::Edit | Mode::EditInsert => {
             match key.code {
                 KeyCode::Esc => {
-                    match map_state.current_mode {
+                    match map_state.mode {
                         Mode::Edit => {
                             cursor_pos_beginning(&mut map_state.notes_state);
                             map_state.notes_state.deselect();
 
                             let _ = execute!(stdout(), SetCursorStyle::SteadyBar);
-                            map_state.current_mode = Mode::Normal;
+                            map_state.mode = Mode::Normal;
                         }
                         Mode::EditInsert => {
                             // Vim behavior: move cursor back one position when leaving insert mode
@@ -47,7 +47,7 @@ pub fn map_edit_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                     map_state.notes_state.deselect();
                     
                     let _ = execute!(stdout(), SetCursorStyle::SteadyBar);
-                    map_state.current_mode = Mode::Normal;
+                    map_state.mode = Mode::Normal;
                 }
                 KeyCode::Char('i') => switch_to_modal_insert_mode(map_state),
                 KeyCode::Char('h') => move_cursor_left(&mut map_state.notes_state),

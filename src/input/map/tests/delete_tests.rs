@@ -26,12 +26,12 @@ fn test_delete_kh_escape_switches_to_visual() {
     let mut map_state = create_test_map_state();
     map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
     map_state.notes_state.select(0);
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Esc));
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.current_mode, Mode::Visual);
+    assert_eq!(map_state.mode, Mode::Visual);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0)); // Should remain selected
 }
 
@@ -41,7 +41,7 @@ fn test_delete_single_note() {
     
     map_state.notes_state.add(50, 25, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
@@ -50,7 +50,7 @@ fn test_delete_single_note() {
     assert!(map_state.notes_state.notes().is_empty()); // Note should be removed
     assert!(map_state.notes_state.render_order().is_empty()); // Render order should be empty
     assert_eq!(map_state.notes_state.selected_note_id(), None); // No selected note
-    assert_eq!(map_state.current_mode, Mode::Normal); // Should switch to Normal mode
+    assert_eq!(map_state.mode, Mode::Normal); // Should switch to Normal mode
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn test_delete_note_with_multiple_notes() {
     map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
     
     map_state.notes_state.select(1);
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
@@ -80,7 +80,7 @@ fn test_delete_note_with_multiple_notes() {
     assert_eq!(*map_state.notes_state.render_order(), vec![0, 2]);
     
     assert_eq!(map_state.notes_state.selected_note_id(), None);
-    assert_eq!(map_state.current_mode, Mode::Normal);
+    assert_eq!(map_state.mode, Mode::Normal);
 }
 
 #[test]
@@ -125,7 +125,7 @@ fn test_delete_note_with_multiple_connections() {
     map_state.connections_state.focused_connection = Some(connection3);
     map_state.connections_state.stash_connection();
      
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
@@ -158,7 +158,7 @@ fn test_delete_note_with_multiple_connections() {
     assert!(!map_state.connections_state.connection_index().contains_key(&1));
     
     assert_eq!(map_state.notes_state.selected_note_id(), None);
-    assert_eq!(map_state.current_mode, Mode::Normal);
+    assert_eq!(map_state.mode, Mode::Normal);
 }
 
 #[test]
@@ -181,7 +181,7 @@ fn test_delete_note_as_connection_target() {
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
     
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
@@ -202,7 +202,7 @@ fn test_delete_note_as_connection_target() {
     }
     
     assert_eq!(map_state.notes_state.selected_note_id(), None);
-    assert_eq!(map_state.current_mode, Mode::Normal);
+    assert_eq!(map_state.mode, Mode::Normal);
 }
 
 #[test]
@@ -226,7 +226,7 @@ fn test_delete_note_as_connection_source() {
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
     
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
@@ -247,7 +247,7 @@ fn test_delete_note_as_connection_source() {
     }
     
     assert_eq!(map_state.notes_state.selected_note_id(), None);
-    assert_eq!(map_state.current_mode, Mode::Normal);
+    assert_eq!(map_state.mode, Mode::Normal);
 }
 
 #[test]
@@ -257,7 +257,7 @@ fn test_delete_kh_other_keys_ignored() {
     // Add a note
     map_state.notes_state.add(50, 25, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     // Test various other keys
     let test_keys = vec![
@@ -278,7 +278,7 @@ fn test_delete_kh_other_keys_ignored() {
         
         // Should not change anything for unhandled keys
         assert_eq!(result, AppAction::Continue);
-        assert_eq!(map_state.current_mode, Mode::Delete);
+        assert_eq!(map_state.mode, Mode::Delete);
         assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
         assert_eq!(map_state.notes_state.notes().len(), 1); // Note should still be there
         assert_eq!(map_state.persistence.has_unsaved_changes, false); // Should remain unchanged
@@ -296,7 +296,7 @@ fn test_delete_note_render_order() {
     
     // Test deleting first note in render order
     map_state.notes_state.select(2);
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
@@ -319,7 +319,7 @@ fn test_delete_note_last_in_render_order() {
     
     // Test deleting last note in render order
     map_state.notes_state.select(2);
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
@@ -337,7 +337,7 @@ fn test_delete_note_clears_and_redraws() {
     // Add a note
     map_state.notes_state.add(50, 25, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let _result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
@@ -351,7 +351,7 @@ fn test_escape_clears_and_redraws() {
     map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
     map_state.notes_state.select(0);
     map_state.ui_state.mark_redrawn();
-    map_state.current_mode = Mode::Delete;
+    map_state.mode = Mode::Delete;
 
     let _result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Esc));
 

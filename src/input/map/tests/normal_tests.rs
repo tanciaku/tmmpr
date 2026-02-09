@@ -30,7 +30,7 @@ fn create_key_event_with_mods(code: KeyCode, modifiers: KeyModifiers) -> KeyEven
 fn test_toggle_help_screen_with_f1() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.hide_help();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::F(1)), &mock_fs);
@@ -44,7 +44,7 @@ fn test_toggle_help_screen_with_f1() {
 fn test_toggle_help_screen_with_question_mark() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.hide_help();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('?')), &mock_fs);
@@ -58,7 +58,7 @@ fn test_toggle_help_screen_with_question_mark() {
 fn test_close_help_screen_with_f1() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(1);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::F(1)), &mock_fs);
@@ -72,7 +72,7 @@ fn test_close_help_screen_with_f1() {
 fn test_close_help_screen_with_question_mark() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(1);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('?')), &mock_fs);
@@ -86,7 +86,7 @@ fn test_close_help_screen_with_question_mark() {
 fn test_close_help_screen_with_escape() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(3);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Esc), &mock_fs);
@@ -100,7 +100,7 @@ fn test_close_help_screen_with_escape() {
 fn test_help_next_page_with_right_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(1);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Right), &mock_fs);
@@ -114,7 +114,7 @@ fn test_help_next_page_with_right_arrow() {
 fn test_help_next_page_with_l() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(2);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('l')), &mock_fs);
@@ -128,7 +128,7 @@ fn test_help_next_page_with_l() {
 fn test_help_next_page_with_tab() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(4);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Tab), &mock_fs);
@@ -142,7 +142,7 @@ fn test_help_next_page_with_tab() {
 fn test_help_next_page_wraps_to_first() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(5);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Right), &mock_fs);
@@ -156,7 +156,7 @@ fn test_help_next_page_wraps_to_first() {
 fn test_help_previous_page_with_left_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(2);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Left), &mock_fs);
@@ -170,7 +170,7 @@ fn test_help_previous_page_with_left_arrow() {
 fn test_help_previous_page_with_h() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(3);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('h')), &mock_fs);
@@ -184,7 +184,7 @@ fn test_help_previous_page_with_h() {
 fn test_help_previous_page_wraps_to_last() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(1);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Left), &mock_fs);
@@ -198,7 +198,7 @@ fn test_help_previous_page_wraps_to_last() {
 fn test_help_screen_blocks_other_input() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(1);
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
@@ -220,7 +220,7 @@ fn test_help_screen_blocks_other_input() {
 fn test_discard_menu_cancel_with_escape() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Esc), &mock_fs);
@@ -234,7 +234,7 @@ fn test_discard_menu_cancel_with_escape() {
 fn test_discard_menu_confirm_to_start_screen() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')), &mock_fs);
@@ -251,7 +251,7 @@ fn test_discard_menu_confirm_to_start_screen() {
 fn test_discard_menu_confirm_to_settings_screen() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.persistence.file_write_path = PathBuf::from("/test/map.json");
     map_state.ui_state.show_discard_menu(DiscardMenuType::Settings);
 
@@ -269,7 +269,7 @@ fn test_discard_menu_confirm_to_settings_screen() {
 fn test_discard_menu_blocks_other_input() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
@@ -291,7 +291,7 @@ fn test_discard_menu_blocks_other_input() {
 fn test_quit_when_can_exit_is_true() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.persistence.mark_clean();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')), &mock_fs);
@@ -308,7 +308,7 @@ fn test_quit_when_can_exit_is_true() {
 fn test_quit_when_can_exit_is_false_shows_discard_menu() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.persistence.mark_dirty();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')), &mock_fs);
@@ -324,7 +324,7 @@ fn test_quit_when_can_exit_is_false_shows_discard_menu() {
 fn test_save_map_file() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.persistence.file_write_path = PathBuf::from("/test/my_map.json");
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('s')), &mock_fs);
@@ -343,7 +343,7 @@ fn test_save_map_file() {
 fn test_open_settings_when_can_exit_is_true() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.persistence.mark_clean();
     map_state.persistence.file_write_path = PathBuf::from("/test/map.json");
 
@@ -361,7 +361,7 @@ fn test_open_settings_when_can_exit_is_true() {
 fn test_open_settings_when_can_exit_is_false_shows_discard_menu() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.persistence.mark_dirty();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('o')), &mock_fs);
@@ -377,7 +377,7 @@ fn test_open_settings_when_can_exit_is_false_shows_discard_menu() {
 fn test_move_viewport_left_with_h() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
@@ -395,7 +395,7 @@ fn test_move_viewport_left_with_h() {
 fn test_move_viewport_left_with_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.persistence.mark_clean();
 
@@ -410,7 +410,7 @@ fn test_move_viewport_left_with_arrow() {
 fn test_move_viewport_left_saturates_at_zero() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 0;
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('h')), &mock_fs);
@@ -423,7 +423,7 @@ fn test_move_viewport_left_saturates_at_zero() {
 fn test_move_viewport_left_by_5_with_shift_h() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 20;
     map_state.persistence.mark_clean();
 
@@ -438,7 +438,7 @@ fn test_move_viewport_left_by_5_with_shift_h() {
 fn test_move_viewport_left_by_5_with_shift_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 20;
     map_state.persistence.mark_clean();
 
@@ -453,7 +453,7 @@ fn test_move_viewport_left_by_5_with_shift_arrow() {
 fn test_move_viewport_down_with_j() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
@@ -470,7 +470,7 @@ fn test_move_viewport_down_with_j() {
 fn test_move_viewport_down_with_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
 
@@ -485,7 +485,7 @@ fn test_move_viewport_down_with_arrow() {
 fn test_move_viewport_down_by_5_with_shift_j() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.y = 20;
     map_state.persistence.mark_clean();
 
@@ -500,7 +500,7 @@ fn test_move_viewport_down_by_5_with_shift_j() {
 fn test_move_viewport_down_by_5_with_shift_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.y = 20;
     map_state.persistence.mark_clean();
 
@@ -515,7 +515,7 @@ fn test_move_viewport_down_by_5_with_shift_arrow() {
 fn test_move_viewport_up_with_k() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
@@ -532,7 +532,7 @@ fn test_move_viewport_up_with_k() {
 fn test_move_viewport_up_with_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
 
@@ -547,7 +547,7 @@ fn test_move_viewport_up_with_arrow() {
 fn test_move_viewport_up_saturates_at_zero() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.y = 0;
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('k')), &mock_fs);
@@ -560,7 +560,7 @@ fn test_move_viewport_up_saturates_at_zero() {
 fn test_move_viewport_up_by_5_with_shift_k() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.y = 20;
     map_state.persistence.mark_clean();
 
@@ -575,7 +575,7 @@ fn test_move_viewport_up_by_5_with_shift_k() {
 fn test_move_viewport_up_by_5_with_shift_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.y = 20;
     map_state.persistence.mark_clean();
 
@@ -590,7 +590,7 @@ fn test_move_viewport_up_by_5_with_shift_arrow() {
 fn test_move_viewport_right_with_l() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
@@ -607,7 +607,7 @@ fn test_move_viewport_right_with_l() {
 fn test_move_viewport_right_with_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 10;
     map_state.persistence.mark_clean();
 
@@ -622,7 +622,7 @@ fn test_move_viewport_right_with_arrow() {
 fn test_move_viewport_right_by_5_with_shift_l() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 20;
     map_state.persistence.mark_clean();
 
@@ -637,7 +637,7 @@ fn test_move_viewport_right_by_5_with_shift_l() {
 fn test_move_viewport_right_by_5_with_shift_arrow() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 20;
     map_state.persistence.mark_clean();
 
@@ -654,7 +654,7 @@ fn test_move_viewport_right_by_5_with_shift_arrow() {
 fn test_add_note() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 100;
     map_state.viewport.view_pos.y = 50;
     map_state.viewport.screen_width = 80;
@@ -683,7 +683,7 @@ fn test_add_note() {
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     
     // Check mode switched to Edit
-    assert!(matches!(map_state.current_mode, Mode::Edit | Mode::EditNormal | Mode::EditInsert));
+    assert!(matches!(map_state.mode, Mode::Edit | Mode::EditNormal | Mode::EditInsert));
     
     // Check can_exit is false
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
@@ -696,15 +696,15 @@ fn test_add_note() {
 fn test_add_multiple_notes() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
 
     // Add first note
     let _result1 = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('a')), &mock_fs);
-    map_state.current_mode = Mode::Normal; // Reset mode
+    map_state.mode = Mode::Normal; // Reset mode
     
     // Add second note
     let _result2 = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('a')), &mock_fs);
-    map_state.current_mode = Mode::Normal; // Reset mode
+    map_state.mode = Mode::Normal; // Reset mode
     
     // Add third note
     let _result3 = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('a')), &mock_fs);
@@ -722,20 +722,20 @@ fn test_add_multiple_notes() {
 fn test_select_note_with_no_notes() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')), &mock_fs);
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note_id(), None);
-    assert_eq!(map_state.current_mode, Mode::Normal);
+    assert_eq!(map_state.mode, Mode::Normal);
 }
 
 #[test]
 fn test_select_note_with_single_note() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     
     // Add a note
     map_state.notes_state.add(50, 25, String::from("Test"), Color::White);
@@ -746,7 +746,7 @@ fn test_select_note_with_single_note() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
-    assert_eq!(map_state.current_mode, Mode::Visual);
+    assert_eq!(map_state.mode, Mode::Visual);
     assert_eq!(*map_state.notes_state.render_order(), vec![0]); // Should be moved to back
 }
 
@@ -754,7 +754,7 @@ fn test_select_note_with_single_note() {
 fn test_select_closest_note_to_center() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
     map_state.viewport.screen_width = 100;
@@ -770,7 +770,7 @@ fn test_select_closest_note_to_center() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(1)); // Note 1 is closest
-    assert_eq!(map_state.current_mode, Mode::Visual);
+    assert_eq!(map_state.mode, Mode::Visual);
     assert_eq!(*map_state.notes_state.render_order(), vec![0, 2, 1]); // Note 1 moved to back
 }
 
@@ -778,7 +778,7 @@ fn test_select_closest_note_to_center() {
 fn test_select_note_updates_render_order() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     
     // Add multiple notes
     map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
@@ -805,7 +805,7 @@ fn test_select_note_updates_render_order() {
 fn test_unhandled_keys_still_trigger_redraw() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
     map_state.ui_state.mark_redrawn();
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('z')), &mock_fs);
@@ -818,7 +818,7 @@ fn test_unhandled_keys_still_trigger_redraw() {
 fn test_normal_mode_continues() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('h')), &mock_fs);
 

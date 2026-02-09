@@ -7,12 +7,12 @@ use crate::states::{MapState, map::{Mode, NotesState}};
 
 pub fn switch_to_modal_normal_mode(map_state: &mut MapState) {
     let _ = execute!(stdout(), SetCursorStyle::SteadyBlock);
-    map_state.current_mode = Mode::EditNormal;
+    map_state.mode = Mode::EditNormal;
 }
 
 pub fn switch_to_modal_insert_mode(map_state: &mut MapState) {
     let _ = execute!(stdout(), SetCursorStyle::SteadyBar);
-    map_state.current_mode = Mode::EditInsert;
+    map_state.mode = Mode::EditInsert;
 }
 
 /// Panics if no note is selected.

@@ -23,7 +23,7 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
 
     let size = frame.area();
 
-    let (mode_text, mode_text_color) = match &map_state.current_mode {
+    let (mode_text, mode_text_color) = match &map_state.mode {
         Mode::Normal => (String::from("[ NORMAL ]"), Style::new().fg(Color::White)),
         Mode::Visual => (String::from("[ VISUAL ]"), Style::new().fg(Color::Yellow)),
         Mode::VisualMove => (String::from("[ VISUAL (MOVE) ]"), Style::new().fg(Color::Yellow)),
@@ -86,7 +86,7 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     frame.render_widget(mode_display, row_2_areas[0]);
     frame.render_widget(view_position_display, row_2_areas[2]);
 
-    if let Mode::Delete = &map_state.current_mode {
+    if let Mode::Delete = &map_state.mode {
         let delete_note_prompt = Line::from(Span::styled(
             String::from("d - Delete the selected note          Esc - Go back to Visual Mode"),
             Style::new().fg(Color::Red)
@@ -96,7 +96,7 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
     }
 
     // Show color of focused connection if one exists, otherwise show color of selected note
-    if matches!(map_state.current_mode, Mode::Visual | Mode::VisualMove | Mode::VisualConnect) {
+    if matches!(map_state.mode, Mode::Visual | Mode::VisualMove | Mode::VisualConnect) {
                 
         let mut current_color_text = String::from("");
         let mut current_color_name = String::from("");

@@ -190,7 +190,7 @@ pub fn draw_connecting_character(note: &Note, note_id: usize, side: Side, is_edi
     // Visual style varies based on mode: thick for Visual, double for Edit, plain otherwise
     let connection_charset = match map_state.notes_state.selected_note_id() {
         Some(selected_note_id) if selected_note_id == note_id || is_editing => {
-            match map_state.current_mode {
+            match map_state.mode {
                 Mode::Normal => unreachable!("Bug: cannot be in Normal Mode with a selected note"),
                 Mode::Visual | Mode::VisualMove | Mode::VisualConnect => &THICK_JUNCTIONS,
                 Mode::Edit | Mode::EditNormal | Mode::EditInsert => &DOUBLE_JUNCTIONS,

@@ -20,7 +20,7 @@ use crate::{
 /// viewport navigation, visual selection, and auto-save/backup functionality.
 #[derive(PartialEq, Debug)]
 pub struct MapState {
-    pub current_mode: Mode,
+    pub mode: Mode,
     pub viewport: ViewportState,
     pub notes_state: NotesState,
     pub connections_state: ConnectionsState,
@@ -38,7 +38,7 @@ impl MapState {
         };
 
         MapState {
-            current_mode: Mode::Normal,
+            mode: Mode::Normal,
             viewport: ViewportState::new(),
             notes_state: NotesState::new(),
             connections_state: ConnectionsState::new(),
@@ -71,9 +71,9 @@ impl MapState {
     pub fn switch_to_edit_mode(&mut self) {
         if self.settings.edit_modal { 
             let _ = execute!(stdout(), SetCursorStyle::SteadyBlock);
-            self.current_mode = Mode::EditNormal;
+            self.mode = Mode::EditNormal;
         } else {
-            self.current_mode = Mode::Edit;
+            self.mode = Mode::Edit;
         }
     }
 
@@ -85,7 +85,7 @@ impl MapState {
         
         if let Some(id) = self.notes_state.find_closest_note(screen_center_x, screen_center_y) {
             self.notes_state.select(id);
-            self.current_mode = Mode::Visual;
+            self.mode = Mode::Visual;
         }
     }
 

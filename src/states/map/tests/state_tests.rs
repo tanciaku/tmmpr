@@ -41,7 +41,7 @@ fn test_add_note() {
     assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, Note::new(50, 25, String::from(""), Color::White))]));
     assert_eq!(*map_state.notes_state.render_order(), vec![0]);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
-    assert_eq!(map_state.current_mode, Mode::Edit);
+    assert_eq!(map_state.mode, Mode::Edit);
     assert_eq!(map_state.notes_state.next_note_id_counter(), 1);
 }
 
@@ -61,7 +61,7 @@ fn test_add_several_notes() {
     ]));
     assert_eq!(*map_state.notes_state.render_order(), vec![0, 1, 2]);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(2));
-    assert_eq!(map_state.current_mode, Mode::Edit);
+    assert_eq!(map_state.mode, Mode::Edit);
     assert_eq!(map_state.notes_state.next_note_id_counter(), 3);
 }
 
@@ -75,7 +75,7 @@ fn test_add_note_diff_viewpos() {
     assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, Note::new(145, 120, String::from(""), Color::White))]));
     assert_eq!(*map_state.notes_state.render_order(), vec![0]);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
-    assert_eq!(map_state.current_mode, Mode::Edit);
+    assert_eq!(map_state.mode, Mode::Edit);
     assert_eq!(map_state.notes_state.next_note_id_counter(), 1);
 }
 
@@ -86,7 +86,7 @@ fn test_new() {
 
     // Test initial values
     assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
-    assert_eq!(map_state.current_mode, Mode::Normal);
+    assert_eq!(map_state.mode, Mode::Normal);
     assert_eq!(map_state.viewport.view_pos.x, 0);
     assert_eq!(map_state.viewport.view_pos.y, 0);
     assert_eq!(map_state.viewport.screen_width, 0);
@@ -124,22 +124,22 @@ fn test_clear_and_redraw() {
 fn test_switch_to_edit_mode_without_modal() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
     map_state.settings.edit_modal = false;
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
 
     map_state.switch_to_edit_mode();
 
-    assert_eq!(map_state.current_mode, Mode::Edit);
+    assert_eq!(map_state.mode, Mode::Edit);
 }
 
 #[test]
 fn test_switch_to_edit_mode_with_modal() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
     map_state.settings.edit_modal = true;
-    map_state.current_mode = Mode::Normal;
+    map_state.mode = Mode::Normal;
 
     map_state.switch_to_edit_mode();
 
-    assert_eq!(map_state.current_mode, Mode::EditNormal);
+    assert_eq!(map_state.mode, Mode::EditNormal);
 }
 
 #[test]

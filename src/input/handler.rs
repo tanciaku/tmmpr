@@ -67,7 +67,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
 
 /// Dispatches key events to mode-specific handlers in the map screen.
 pub fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
-    match &map_state.current_mode {
+    match &map_state.mode {
         Mode::Normal => map_normal_kh(map_state, key, &RealFileSystem),
         Mode::Visual | Mode::VisualMove | Mode::VisualConnect => map_visual_kh(map_state, key),
         Mode::Edit | Mode::EditNormal | Mode::EditInsert => map_edit_kh(map_state, key),
