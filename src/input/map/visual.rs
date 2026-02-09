@@ -11,10 +11,8 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
             KeyCode::Char('m') => map_state.current_mode = Mode::Visual,
 
             KeyCode::Esc => {
-                map_state.current_mode = Mode::Normal;
-
-                let note = map_state.notes_state.expect_selected_note_mut();
-                note.selected = false;
+                map_state.notes_state.deselect();
+                map_state.current_mode = Mode::Normal
             }
 
             // Vim-style movement: hjkl and arrow keys. Shift modifier increases step size to 5.
@@ -131,15 +129,11 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
 
     match key.code {
         KeyCode::Esc => {
-            map_state.current_mode = Mode::Normal;
-
-            let note = map_state.notes_state.expect_selected_note_mut();
-            note.selected = false;
+            map_state.notes_state.deselect();
+            map_state.current_mode = Mode::Normal
         }
         KeyCode::Char('i') => map_state.switch_to_edit_mode(),
-
         KeyCode::Char('m') => map_state.current_mode = Mode::VisualMove,
-
         // Enter connection edit mode. Finds and focuses the first connection associated with this note.
         KeyCode::Char('c') => {
             let selected_note_id = map_state.notes_state.expect_selected_note_id();

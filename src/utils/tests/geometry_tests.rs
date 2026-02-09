@@ -7,7 +7,7 @@ use crate::{
 
 // Helper functions for creating test data
 fn create_test_note(x: usize, y: usize, content: &str) -> Note {
-    Note::new(x, y, content.to_string(), false, Color::White)
+    Note::new(x, y, content.to_string(), Color::White)
 }
 
 // --- Tests for get_offset_point ---

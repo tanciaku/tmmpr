@@ -8,18 +8,17 @@ mod tests {
 
     #[test]
     fn test_note_creation() {
-        let note = Note::new(10, 5, "Hello World".to_string(), true, Color::Red);
+        let note = Note::new(10, 5, "Hello World".to_string(), Color::Red);
         
         assert_eq!(note.x, 10);
         assert_eq!(note.y, 5);
         assert_eq!(note.content, "Hello World");
-        assert_eq!(note.selected, true);
         assert_eq!(note.color, Color::Red);
     }
 
     #[test]
     fn test_get_dimensions_empty_content() {
-        let note = Note::new(0, 0, "".to_string(), false, Color::White);
+        let note = Note::new(0, 0, "".to_string(), Color::White);
         let (width, height) = note.get_dimensions();
         
         assert_eq!(width, 21);
@@ -28,7 +27,7 @@ mod tests {
 
     #[test]
     fn test_get_dimensions_single_line() {
-        let note = Note::new(0, 0, "Hello".to_string(), false, Color::White);
+        let note = Note::new(0, 0, "Hello".to_string(), Color::White);
         let (width, height) = note.get_dimensions();
         
         assert_eq!(width, 21);
@@ -37,7 +36,7 @@ mod tests {
 
     #[test]
     fn test_get_dimensions_multiline() {
-        let note = Note::new(0, 0, "Hello\nWorld\nTest".to_string(), false, Color::White);
+        let note = Note::new(0, 0, "Hello\nWorld\nTest".to_string(), Color::White);
         let (width, height) = note.get_dimensions();
         
         // 3 lines (2 newlines + 1) + 2 (border) = 5 height
@@ -47,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_get_dimensions_multiline_different_lengths() {
-        let note = Note::new(0, 0, "Hi\nThis is a looooonger line\nShort".to_string(), false, Color::White);
+        let note = Note::new(0, 0, "Hi\nThis is a looooonger line\nShort".to_string(), Color::White);
         let (width, height) = note.get_dimensions();
         
         // Longest line is "This is a looooonger line" = 25 chars + 2 (border) + 1 (cursor) = 28 width
@@ -57,7 +56,7 @@ mod tests {
 
     #[test]
     fn test_get_dimensions_trailing_newline() {
-        let note = Note::new(0, 0, "Hello\nWorld\n".to_string(), false, Color::White);
+        let note = Note::new(0, 0, "Hello\nWorld\n".to_string(), Color::White);
         let (width, height) = note.get_dimensions();
         
         // 2 newlines + 1 = 3 lines, + 2 (border) = 5 height
@@ -67,7 +66,7 @@ mod tests {
 
     #[test]
     fn test_get_connection_point_right() {
-        let note = Note::new(10, 20, "Test\nContent".to_string(), false, Color::White);
+        let note = Note::new(10, 20, "Test\nContent".to_string(), Color::White);
         let (x, y) = note.get_connection_point(Side::Right);
         
         let (width, height) = note.get_dimensions();
@@ -81,7 +80,7 @@ mod tests {
 
     #[test]
     fn test_get_connection_point_left() {
-        let note = Note::new(10, 20, "Test\nContent".to_string(), false, Color::White);
+        let note = Note::new(10, 20, "Test\nContent".to_string(), Color::White);
         let (x, y) = note.get_connection_point(Side::Left);
         
         let (_, height) = note.get_dimensions();
@@ -94,7 +93,7 @@ mod tests {
 
     #[test]
     fn test_get_connection_point_top() {
-        let note = Note::new(10, 20, "Test\nContent".to_string(), false, Color::White);
+        let note = Note::new(10, 20, "Test\nContent".to_string(), Color::White);
         let (x, y) = note.get_connection_point(Side::Top);
         
         let (width, _) = note.get_dimensions();
@@ -108,7 +107,7 @@ mod tests {
 
     #[test]
     fn test_get_connection_point_bottom() {
-        let note = Note::new(10, 20, "Test\nContent".to_string(), false, Color::White);
+        let note = Note::new(10, 20, "Test\nContent".to_string(), Color::White);
         let (x, y) = note.get_connection_point(Side::Bottom);
         
         let (width, height) = note.get_dimensions();
@@ -123,7 +122,7 @@ mod tests {
     #[test]
     fn test_get_connection_point_minimum_size() {
         // Test with a very small note to ensure minimum size constraints are applied
-        let note = Note::new(0, 0, "Hi".to_string(), false, Color::White);
+        let note = Note::new(0, 0, "Hi".to_string(), Color::White);
         
         // Right side connection
         let (x_right, _) = note.get_connection_point(Side::Right);
@@ -134,7 +133,7 @@ mod tests {
 
     #[test]
     fn test_note_with_unicode_content() {
-        let note = Note::new(0, 0, "Sample note text!! 📝✨🎯💡🔥🎨".to_string(), false, Color::White);
+        let note = Note::new(0, 0, "Sample note text!! 📝✨🎯💡🔥🎨".to_string(), Color::White);
         let (width, height) = note.get_dimensions();
         
         // "Sample note text!! 📝✨🎯💡🔥🎨" = 25 chars + 2 (border) + 1 (cursor) = 28 width
@@ -144,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_connection_points_all_sides() {
-        let note = Note::new(100, 200, "Large\nNote\nContent\nHere".to_string(), false, Color::Blue);
+        let note = Note::new(100, 200, "Large\nNote\nContent\nHere".to_string(), Color::Blue);
         
         let right = note.get_connection_point(Side::Right);
         let left = note.get_connection_point(Side::Left);

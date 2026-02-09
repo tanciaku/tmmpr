@@ -59,7 +59,7 @@ impl MapState {
 
         let (note_x, note_y) = self.viewport.center();
 
-        let id = self.notes_state.add(note_x, note_y, String::from(""), false, Color::White);
+        let id = self.notes_state.add(note_x, note_y, String::from(""), Color::White);
         self.notes_state.select(id);
         
         self.switch_to_edit_mode();

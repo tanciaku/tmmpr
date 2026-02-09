@@ -24,7 +24,7 @@ fn create_test_map_state() -> MapState {
 fn test_backspace_at_beginning() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     cursor_pos_beginning(&mut map_state.notes_state);
     
@@ -39,7 +39,7 @@ fn test_backspace_at_beginning() {
 fn test_backspace_in_middle() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3); // Cursor after "Hel"
     
@@ -54,7 +54,7 @@ fn test_backspace_in_middle() {
 fn test_backspace_at_end() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5); // Cursor at end
     
@@ -69,7 +69,7 @@ fn test_backspace_at_end() {
 fn test_backspace_single_character() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("A"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("A"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(1);
     
@@ -84,7 +84,7 @@ fn test_backspace_single_character() {
 fn test_backspace_with_newlines() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // Cursor at start of "World"
     
@@ -99,7 +99,7 @@ fn test_backspace_with_newlines() {
 fn test_backspace_unicode() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello 世界"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello 世界"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(7); // After "Hello 世"
     
@@ -114,7 +114,7 @@ fn test_backspace_unicode() {
 fn test_backspace_multiple_times() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5);
     
@@ -137,7 +137,7 @@ fn test_remove_at_end() {
 
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5); // Cursor at end
     
@@ -152,7 +152,7 @@ fn test_remove_at_end() {
 fn test_remove_in_middle() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // Cursor at 'l'
     
@@ -167,7 +167,7 @@ fn test_remove_in_middle() {
 fn test_remove_at_beginning() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0); // Cursor at beginning
     
@@ -182,7 +182,7 @@ fn test_remove_at_beginning() {
 fn test_remove_empty_content() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from(""), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
     
@@ -197,7 +197,7 @@ fn test_remove_empty_content() {
 fn test_remove_single_character() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("A"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("A"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
     
@@ -212,7 +212,7 @@ fn test_remove_single_character() {
 fn test_remove_with_newlines() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5); // Cursor at newline
     
@@ -227,7 +227,7 @@ fn test_remove_with_newlines() {
 fn test_remove_unicode() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello 世界"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello 世界"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // At '世'
     
@@ -242,7 +242,7 @@ fn test_remove_unicode() {
 fn test_remove_cursor_adjustment() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("AB"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("AB"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(1); // At 'B'
     
@@ -257,7 +257,7 @@ fn test_remove_cursor_adjustment() {
 fn test_remove_multiple_times() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
     
@@ -277,7 +277,7 @@ fn test_remove_multiple_times() {
 fn test_insert_at_beginning() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
     
@@ -292,7 +292,7 @@ fn test_insert_at_beginning() {
 fn test_insert_in_middle() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // After "He"
     
@@ -306,7 +306,7 @@ fn test_insert_in_middle() {
 fn test_insert_at_end() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5);
     
@@ -320,7 +320,7 @@ fn test_insert_at_end() {
 fn test_insert_into_empty() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from(""), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
     
@@ -334,7 +334,7 @@ fn test_insert_into_empty() {
 fn test_insert_newline() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5);
     
@@ -348,7 +348,7 @@ fn test_insert_newline() {
 fn test_insert_unicode() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello "), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello "), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6);
     
@@ -362,7 +362,7 @@ fn test_insert_unicode() {
 fn test_insert_special_characters() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Test"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(4);
     
@@ -380,7 +380,7 @@ fn test_insert_can_exit_flag() {
     let mut map_state = create_test_map_state();
     map_state.persistence.mark_clean(); // Start with true
     
-    map_state.notes_state.add(10, 10, String::from("Test"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
     
@@ -394,7 +394,7 @@ fn test_insert_can_exit_flag() {
 fn test_insert_multiple_chars() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from(""), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
     
@@ -415,7 +415,7 @@ fn test_insert_multiple_chars() {
 fn test_move_up_on_first_line() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3); // On first line
     
@@ -429,7 +429,7 @@ fn test_move_up_on_first_line() {
 fn test_move_up_to_same_column() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // On 'r' in "World"
     
@@ -443,7 +443,7 @@ fn test_move_up_to_same_column() {
 fn test_move_up_snap_to_shorter_line() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hi\nLonger line"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hi\nLonger line"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(10); // On 'r' in "Longer"
     
@@ -457,7 +457,7 @@ fn test_move_up_snap_to_shorter_line() {
 fn test_move_up_from_third_line() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("First\nSecond\nThird"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("First\nSecond\nThird"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(14); // On 'h' in "Third"
     
@@ -471,7 +471,7 @@ fn test_move_up_from_third_line() {
 fn test_move_up_at_line_start() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // At start of "World"
     
@@ -485,7 +485,7 @@ fn test_move_up_at_line_start() {
 fn test_move_up_at_line_end() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(11); // At end of "World"
     
@@ -499,7 +499,7 @@ fn test_move_up_at_line_end() {
 fn test_move_up_empty_lines() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\n\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\n\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(7); // At start of "World"
     
@@ -513,7 +513,7 @@ fn test_move_up_empty_lines() {
 fn test_move_up_with_multiple_empty_lines() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("A\n\n\nB"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("A\n\n\nB"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(4); // At 'B'
     
@@ -527,7 +527,7 @@ fn test_move_up_with_multiple_empty_lines() {
 fn test_move_up_single_line() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3);
     
@@ -541,7 +541,7 @@ fn test_move_up_single_line() {
 fn test_move_up_varying_line_lengths() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Short\nThis is a longer line\nMed"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Short\nThis is a longer line\nMed"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(30); // On 'd' in "Med"
     
@@ -559,7 +559,7 @@ fn test_move_up_varying_line_lengths() {
 fn test_move_down_on_last_line() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // On second line
     
@@ -573,7 +573,7 @@ fn test_move_down_on_last_line() {
 fn test_move_down_to_same_column() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // On 'l' in "Hello"
     
@@ -587,7 +587,7 @@ fn test_move_down_to_same_column() {
 fn test_move_down_snap_to_shorter_line() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Longer line\nHi"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Longer line\nHi"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(7); // On 'l' in "line"
     
@@ -601,7 +601,7 @@ fn test_move_down_snap_to_shorter_line() {
 fn test_move_down_from_first_line() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("First\nSecond\nThird"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("First\nSecond\nThird"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // On 'r' in "First"
     
@@ -615,7 +615,7 @@ fn test_move_down_from_first_line() {
 fn test_move_down_at_line_start() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0); // At start of "Hello"
     
@@ -629,7 +629,7 @@ fn test_move_down_at_line_start() {
 fn test_move_down_at_line_end() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5); // At end of "Hello"
     
@@ -643,7 +643,7 @@ fn test_move_down_at_line_end() {
 fn test_move_down_empty_lines() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello\n\nWorld"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello\n\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3); // On 'l' in "Hello"
     
@@ -657,7 +657,7 @@ fn test_move_down_empty_lines() {
 fn test_move_down_with_multiple_empty_lines() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("A\n\n\nB"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("A\n\n\nB"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0); // At 'A'
     
@@ -671,7 +671,7 @@ fn test_move_down_with_multiple_empty_lines() {
 fn test_move_down_single_line() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3);
     
@@ -685,7 +685,7 @@ fn test_move_down_single_line() {
 fn test_move_down_varying_line_lengths() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Med\nThis is a longer line\nShort"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Med\nThis is a longer line\nShort"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // On 'd' in "Med"
     
@@ -699,7 +699,7 @@ fn test_move_down_varying_line_lengths() {
 fn test_move_down_to_last_line() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("First\nSecond\nThird"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("First\nSecond\nThird"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // On 'c' in "Second"
     
@@ -717,7 +717,7 @@ fn test_move_down_to_last_line() {
 fn test_edit_workflow_insert_and_backspace() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from(""), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
     
@@ -743,7 +743,7 @@ fn test_edit_workflow_insert_and_backspace() {
 fn test_edit_workflow_navigation_and_editing() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Line 1\nLine 2\nLine 3"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Line 1\nLine 2\nLine 3"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
     
@@ -769,7 +769,7 @@ fn test_cursor_movement_up_and_down() {
     // Line 0: "AAA" (indices 0,1,2)
     // Line 1: "BBBBB" (indices 4,5,6,7,8)
     // Line 2: "CC" (indices 10,11)
-    map_state.notes_state.add(10, 10, String::from("AAA\nBBBBB\nCC"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("AAA\nBBBBB\nCC"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // On third 'B' in middle line (column 2)
     
@@ -790,7 +790,7 @@ fn test_cursor_movement_up_and_down() {
 fn test_multiline_editing() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Hello"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5);
     

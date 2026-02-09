@@ -84,9 +84,9 @@ impl NotesState {
     }
 
     /// Creates a new note, returns its id
-    pub fn add(&mut self, x: usize, y: usize, text: String, selected: bool, color: Color) -> usize {
+    pub fn add(&mut self, x: usize, y: usize, text: String, color: Color) -> usize {
         let id = self.next_note_id_counter;
-        self.notes.insert(id, Note::new(x, y, text, selected, color));
+        self.notes.insert(id, Note::new(x, y, text, color));
         self.render_order.push(id);
         self.next_note_id_counter += 1;
         id
@@ -127,22 +127,13 @@ impl NotesState {
         let pos = self.render_order.iter().position(|&x| x == id).unwrap();
         let item = self.render_order.remove(pos);
         self.render_order.push(item);
-
-        let note = self.notes.get_mut(&id).unwrap();
-        note.selected = true;
     }
 
     /// Panics if no note is selected.
     pub fn deselect(&mut self) {
-        let selected_note_id = self.selected_note_id
+        let _ = self.selected_note_id
             .take()
             .expect("Bug: deselect() called with no note selected");
-
-        let note = self.notes
-            .get_mut(&selected_note_id)
-            .expect("Bug: selected_note_id references non-existent note");
-
-        note.selected = false;
     }
     
     /// Finds the note closest to the given coordinates

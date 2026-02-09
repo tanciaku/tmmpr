@@ -24,7 +24,7 @@ fn create_key_event(code: KeyCode) -> KeyEvent {
 #[test]
 fn test_delete_kh_escape_switches_to_visual() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("Note 0"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
     map_state.notes_state.select(0);
     map_state.current_mode = Mode::Delete;
 
@@ -39,7 +39,7 @@ fn test_delete_kh_escape_switches_to_visual() {
 fn test_delete_single_note() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(50, 25, String::from("Test Note"), true, Color::White);
+    map_state.notes_state.add(50, 25, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.current_mode = Mode::Delete;
 
@@ -58,9 +58,9 @@ fn test_delete_note_with_multiple_notes() {
     let mut map_state = create_test_map_state();
     
     // Add multiple notes
-    map_state.notes_state.add(10, 10, String::from("Note 0"), false, Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), true, Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
+    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
+    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
     
     map_state.notes_state.select(1);
     map_state.current_mode = Mode::Delete;
@@ -87,9 +87,9 @@ fn test_delete_note_with_multiple_notes() {
 fn test_delete_note_with_multiple_connections() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Note 0"), false, Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), true, Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
+    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
+    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
     
     map_state.notes_state.select(1);
     
@@ -165,8 +165,8 @@ fn test_delete_note_with_multiple_connections() {
 fn test_delete_note_as_connection_target() {
     let mut map_state = create_test_map_state();
     
-    map_state.notes_state.add(10, 10, String::from("Note 0"), true, Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
+    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
     
     map_state.notes_state.select(0); // Select note that is the target
     
@@ -210,8 +210,8 @@ fn test_delete_note_as_connection_source() {
     let mut map_state = create_test_map_state();
     
     // Add two notes
-    map_state.notes_state.add(10, 10, String::from("Note 0"), true, Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
+    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
     
     map_state.notes_state.select(0); // Select note that is the source
     
@@ -255,7 +255,7 @@ fn test_delete_kh_other_keys_ignored() {
     let mut map_state = create_test_map_state();
     
     // Add a note
-    map_state.notes_state.add(50, 25, String::from("Test Note"), true, Color::White);
+    map_state.notes_state.add(50, 25, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.current_mode = Mode::Delete;
 
@@ -290,9 +290,9 @@ fn test_delete_note_render_order() {
     let mut map_state = create_test_map_state();
     
     // Add notes with the selected note at different positions in render order
-    map_state.notes_state.add(10, 10, String::from("Note 0"), false, Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), false, Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), true, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
+    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
+    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
     
     // Test deleting first note in render order
     map_state.notes_state.select(2);
@@ -313,9 +313,9 @@ fn test_delete_note_last_in_render_order() {
     let mut map_state = create_test_map_state();
     
     // Add notes
-    map_state.notes_state.add(10, 10, String::from("Note 0"), false, Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), false, Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), true, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
+    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
+    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
     
     // Test deleting last note in render order
     map_state.notes_state.select(2);
@@ -335,7 +335,7 @@ fn test_delete_note_clears_and_redraws() {
     map_state.ui_state.mark_redrawn();
     
     // Add a note
-    map_state.notes_state.add(50, 25, String::from("Test Note"), true, Color::White);
+    map_state.notes_state.add(50, 25, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.current_mode = Mode::Delete;
 
@@ -348,7 +348,7 @@ fn test_delete_note_clears_and_redraws() {
 #[test]
 fn test_escape_clears_and_redraws() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("Note 0"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
     map_state.notes_state.select(0);
     map_state.ui_state.mark_redrawn();
     map_state.current_mode = Mode::Delete;

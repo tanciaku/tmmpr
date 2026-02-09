@@ -674,7 +674,6 @@ fn test_add_note() {
     assert_eq!(note.x, 100 + 80/2); // view_pos.x + screen_width/2 = 140
     assert_eq!(note.y, 50 + 40/2);  // view_pos.y + screen_height/2 = 70
     assert_eq!(note.content, "");
-    assert_eq!(note.selected, true);
     assert_eq!(note.color, Color::White);
     
     // Check render order
@@ -739,7 +738,7 @@ fn test_select_note_with_single_note() {
     map_state.current_mode = Mode::Normal;
     
     // Add a note
-    map_state.notes_state.add(50, 25, String::from("Test"), false, Color::White);
+    map_state.notes_state.add(50, 25, String::from("Test"), Color::White);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
 
@@ -763,9 +762,9 @@ fn test_select_closest_note_to_center() {
     
     // Screen center is at (50, 25)
     // Add three notes at different distances from center
-    map_state.notes_state.add(10, 10, String::from("Far"), false, Color::White);     // Distance: 40 + 15 = 55
-    map_state.notes_state.add(45, 20, String::from("Close"), false, Color::White);   // Distance: 5 + 5 = 10
-    map_state.notes_state.add(80, 40, String::from("Medium"), false, Color::White);  // Distance: 30 + 15 = 45
+    map_state.notes_state.add(10, 10, String::from("Far"), Color::White);     // Distance: 40 + 15 = 55
+    map_state.notes_state.add(45, 20, String::from("Close"), Color::White);   // Distance: 5 + 5 = 10
+    map_state.notes_state.add(80, 40, String::from("Medium"), Color::White);  // Distance: 30 + 15 = 45
 
     let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')), &mock_fs);
 
@@ -782,9 +781,9 @@ fn test_select_note_updates_render_order() {
     map_state.current_mode = Mode::Normal;
     
     // Add multiple notes
-    map_state.notes_state.add(10, 10, String::from("Note 0"), false, Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), false, Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), false, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
+    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
+    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
     
     // Set viewport so note 0 is closest to center
     map_state.viewport.view_pos.x = 0;

@@ -68,7 +68,7 @@ fn test_map_kh_visual_mode() {
 #[test]
 fn test_map_kh_edit_mode_non_modal() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.notes_state.add(10, 10, String::from("Test Note"), true, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.current_mode = Mode::Edit(None);
 
@@ -117,7 +117,7 @@ fn test_map_kh_edit_mode_modal_normal() {
 #[test]
 fn test_map_kh_edit_mode_modal_insert() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.notes_state.add(10, 10, String::from("Test Note"), true, Color::White);
+    map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.current_mode = Mode::Edit(Some(ModalEditMode::Insert));
 
@@ -236,7 +236,7 @@ fn test_mode_switching_behavior() {
         let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
 
         // For when testing Edit Mode
-        map_state.notes_state.add(10, 10, String::from("Test Note"), true, Color::White);
+        map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
         map_state.notes_state.select(0);
 
         map_state.current_mode = mode;

@@ -183,16 +183,21 @@ pub fn draw_connection(path: Vec<Point>, in_progress: bool, color: Color, frame:
 
 /// Draws the connection point character at the specified side of a note.
 /// `is_editing`: true when drawing connection being created/edited
-pub fn draw_connecting_character(note: &Note, side: Side, is_editing: bool, color: Color, frame: &mut Frame, map_state: &MapState) {
+
+// use connection from and to id's for the argument
+
+pub fn draw_connecting_character(note: &Note, note_id: usize, side: Side, is_editing: bool, color: Color, frame: &mut Frame, map_state: &MapState) {
     // Visual style varies based on mode: thick for Visual, double for Edit, plain otherwise
-    let connection_charset = if note.selected || is_editing {
-        match map_state.current_mode {
-            Mode::Visual | Mode::VisualMove | Mode::VisualConnect => &THICK_JUNCTIONS,
-            Mode::Edit(_) => &DOUBLE_JUNCTIONS,
-            _ => &PLAIN_JUNCTIONS,
+    let connection_charset = match map_state.notes_state.selected_note_id() {
+        Some(selected_note_id) if selected_note_id == note_id || is_editing => {
+            match map_state.current_mode {
+                Mode::Normal => unreachable!("Bug: cannot be in Normal Mode with a selected note"),
+                Mode::Visual | Mode::VisualMove | Mode::VisualConnect => &THICK_JUNCTIONS,
+                Mode::Edit(_) => &DOUBLE_JUNCTIONS,
+                Mode::Delete => &PLAIN_JUNCTIONS,
+            }
         }
-    } else {
-        &PLAIN_JUNCTIONS
+        _ => &PLAIN_JUNCTIONS,
     };
 
     let connection_point_character = match side {

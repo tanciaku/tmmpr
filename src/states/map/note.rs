@@ -11,19 +11,17 @@ pub struct Note {
     pub x: usize,
     pub y: usize,
     pub content: String,
-    pub selected: bool,
     /// Custom serialization needed to convert between ratatui's Color and a persistable format
     #[serde(with = "crate::utils")]
     pub color: Color,
 }
 
 impl Note {
-    pub fn new(x: usize, y: usize, content: String, selected: bool, color: Color) -> Note {
+    pub fn new(x: usize, y: usize, content: String, color: Color) -> Note {
         Note {
             x,
             y,
             content,
-            selected,
             color,
         }
     }

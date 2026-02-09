@@ -69,26 +69,28 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                     borders |= Borders::BOTTOM;
                 }
 
-                let border_color = if note.selected {
-                    match map_state.current_mode {
-                        Mode::Normal => Color::White,
-                        Mode::Visual | Mode::VisualMove | Mode::VisualConnect => Color::Yellow,
-                        Mode::Edit(_) => Color::Blue,
-                        Mode::Delete => Color::Red,
+                let border_color = match map_state.notes_state.selected_note_id() {
+                    Some(selected_note_id) if selected_note_id == note_id => {
+                        match map_state.current_mode {
+                            Mode::Normal => unreachable!("Bug: cannot be in Normal Mode with a selected note"),
+                            Mode::Visual | Mode::VisualMove | Mode::VisualConnect => Color::Yellow,
+                            Mode::Edit(_) => Color::Blue,
+                            Mode::Delete => Color::Red,
+                        }
                     }
-                } else {
-                    note.color
+                    _ => note.color,
                 };
 
-                let border_type = if note.selected {
-                    match map_state.current_mode {
-                        Mode::Normal => BorderType::Plain,
-                        Mode::Visual | Mode::VisualMove | Mode::VisualConnect => BorderType::Thick,
-                        Mode::Edit(_) => BorderType::Double,
-                        Mode::Delete => BorderType::Rounded,
+                let border_type = match map_state.notes_state.selected_note_id() {
+                    Some(selected_note_id) if selected_note_id == note_id => {
+                        match map_state.current_mode {
+                            Mode::Normal => unreachable!("Bug: cannot be in Normal Mode with a selected note"),
+                            Mode::Visual | Mode::VisualMove | Mode::VisualConnect => BorderType::Thick,
+                            Mode::Edit(_) => BorderType::Double,
+                            Mode::Delete => BorderType::Rounded,
+                        }
                     }
-                } else {
-                    BorderType::Plain
+                    _ => BorderType::Plain,
                 };
 
                 let block = Block::default()
@@ -146,9 +148,9 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 let connection_vec = map_state.connections_state.get_connections_for_note(note_id);
                 for connection in connection_vec {
                     if note_id == connection.from_id {
-                        draw_connecting_character(note, connection.from_side, false, border_color, frame, map_state);
+                        draw_connecting_character(note, connection.from_id, connection.from_side, false, border_color, frame, map_state);
                     } else {
-                        draw_connecting_character(note, connection.to_side.unwrap(), false, border_color, frame, map_state);
+                        draw_connecting_character(note, connection.to_id.unwrap(), connection.to_side.unwrap(), false, border_color, frame, map_state);
                     }
                 }
             }
@@ -159,11 +161,11 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
     if let Some(connection) = &map_state.connections_state.focused_connection {
     
         if let Some(start_note) = map_state.notes_state.notes().get(&connection.from_id){
-            draw_connecting_character(start_note, connection.from_side, true, Color::Yellow, frame, map_state);
+            draw_connecting_character(start_note, connection.from_id, connection.from_side, true, Color::Yellow, frame, map_state);
 
             if let Some(end_note_id) = connection.to_id {
                 if let Some(end_note) = map_state.notes_state.notes().get(&end_note_id) {
-                    draw_connecting_character(end_note, connection.to_side.unwrap(), true, Color::Yellow, frame, map_state);
+                    draw_connecting_character(end_note, end_note_id, connection.to_side.unwrap(), true, Color::Yellow, frame, map_state);
                 }
             }
         }
