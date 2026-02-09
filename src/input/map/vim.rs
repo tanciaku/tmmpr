@@ -17,17 +17,36 @@ pub fn switch_to_modal_insert_mode(map_state: &mut MapState) {
 
 /// Panics if no note is selected.
 pub fn cursor_pos_end(notes_state: &mut NotesState) {
-    let note = notes_state.expect_selected_note(); 
-    notes_state.set_cursor_pos(note.content.len() - 1);
+    let note = notes_state.expect_selected_note();
+
+    let last_char_pos = note.content
+        .char_indices()
+        .last()
+        .map(|(idx, _)| idx)
+        .unwrap_or(0);
+
+    notes_state.set_cursor_pos(last_char_pos);
 }
 
-// TODO: consideration for non-ASCII
 /// Panics if no note is selected.
 pub fn move_cursor_right_norm(notes_state: &mut NotesState) {
     let note = notes_state.expect_selected_note();
     let cursor_pos = notes_state.cursor_pos();
+
+    let last_char_pos = note.content
+        .char_indices()
+        .last()
+        .map(|(idx, _)| idx)
+        .unwrap_or(0);
+
+    let new_pos = note.content[cursor_pos..]
+        .char_indices()
+        .nth(1)
+        .map(|(idx, _)| cursor_pos + idx)
+        .unwrap_or(cursor_pos);
+
     // Stop before last char to match vim's normal mode behavior
-    notes_state.set_cursor_pos((cursor_pos + 1).min(note.content.len() - 1));
+    notes_state.set_cursor_pos(new_pos.min(last_char_pos));
 }
 
 /// Panics if no note is selected.
