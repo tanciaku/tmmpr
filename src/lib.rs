@@ -10,17 +10,11 @@
 //!
 //! ## Library Usage
 //!
-//! The `graph` module provides core data structures for node graphs:
-//! ```rust
-//! use tmmpr::graph::{Note, Point, calculate_path};
-//! ```
+//! TODO
 //!
 //! Other modules are internal and subject to change.
 
-pub mod graph {
-    pub use crate::states::map::{Note, Side};
-    pub use crate::utils::geometry::{Point, calculate_path};
-}
+pub mod graph;
 
 #[doc(hidden)]
 pub mod app;
