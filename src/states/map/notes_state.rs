@@ -155,6 +155,6 @@ impl NotesState {
     /// If no note is selected.
     pub fn set_cursor_pos(&mut self, pos: usize) {
         let note = self.expect_selected_note();
-        self.cursor_pos = pos.min(note.content.chars().count());
+        self.cursor_pos = pos.min(note.content.len());
     }
 }

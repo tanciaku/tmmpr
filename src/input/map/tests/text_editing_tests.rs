@@ -101,7 +101,7 @@ fn test_backspace_unicode() {
     
     map_state.notes_state.add(10, 10, String::from("Hello 世界"), Color::White);
     map_state.notes_state.select(0);
-    map_state.notes_state.set_cursor_pos(7); // After "Hello 世"
+    map_state.notes_state.set_cursor_pos(9); // After "Hello 世"
     
     backspace_char(&mut map_state);
     
@@ -355,7 +355,7 @@ fn test_insert_unicode() {
     insert_char(&mut map_state, '世');
     
     assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello 世");
-    assert_eq!(map_state.notes_state.cursor_pos(), 7);
+    assert_eq!(map_state.notes_state.cursor_pos(), 9);
 }
 
 #[test]

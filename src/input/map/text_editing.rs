@@ -43,13 +43,18 @@ pub fn backspace_char(map_state: &mut MapState) {
 
     if cursor_pos > 0 {
         let note = map_state.notes_state.expect_selected_note_mut();
-        let mut chars: Vec<char> = note.content.chars().collect();
-        
-        // Backspace deletes the character *before* the cursor
-        chars.remove(cursor_pos - 1);
-        note.content = chars.into_iter().collect();
-        
-        map_state.notes_state.set_cursor_pos(cursor_pos - 1);
+
+        // Find the byte start of the character immediately before the cursor
+        let prev_char_byte_pos = note.content[..cursor_pos]
+            .char_indices()
+            .next_back()
+            .map(|(idx, _)| idx)
+            .unwrap_or(0);
+
+        // Remove the bytes of that character
+        note.content.drain(prev_char_byte_pos..cursor_pos);
+
+        map_state.notes_state.set_cursor_pos(prev_char_byte_pos);
     }
 }
 
@@ -61,12 +66,8 @@ pub fn insert_char(map_state: &mut MapState, c: char) {
     let cursor_pos = map_state.notes_state.cursor_pos();
     let note = map_state.notes_state.expect_selected_note_mut();
 
-    // Use char_indices to handle multi-byte UTF-8 characters correctly
-    if let Some((byte_pos, _)) = note.content.char_indices().nth(cursor_pos) {
-        note.content.insert(byte_pos, c);
-    } else {
-        note.content.push(c);
-    }
+    // cursor_pos is a byte index on a char boundary, so insert directly
+    note.content.insert(cursor_pos, c);
 
     move_cursor_right(&mut map_state.notes_state);
 }
@@ -80,24 +81,30 @@ pub fn move_cursor_up(notes_state: &mut NotesState) {
     let mut previous_line_start = 0;
 
     for line in note.content.lines() {
-        if current_line_start + line.chars().count() >= cursor_pos {
+        // Use byte length: '\n' is always 1 byte so +1 is correct
+        if current_line_start + line.len() >= cursor_pos {
             break;
         }
         previous_line_start = current_line_start;
-        current_line_start += line.chars().count() + 1; // +1 for newline
+        current_line_start += line.len() + 1; // +1 for '\n'
     }
 
     if current_line_start == 0 { return } // Already on first line
 
-    let index_in_the_current_line = cursor_pos - current_line_start;
-    let previous_line_length = current_line_start - previous_line_start - 1;
+    // Char count of current line prefix gives the visual column
+    let col = note.content[current_line_start..cursor_pos].chars().count();
 
-    // Preserve horizontal position when moving up, or snap to line end if shorter
-    if previous_line_length > index_in_the_current_line {
-        notes_state.set_cursor_pos(previous_line_start + index_in_the_current_line);
-    } else {
-        notes_state.set_cursor_pos(previous_line_start + previous_line_length);
-    }
+    let previous_line = &note.content[previous_line_start..current_line_start - 1];
+
+    // Find the byte position in the previous line at the target column,
+    // clamping to the line end if it's shorter
+    let new_pos = previous_line
+        .char_indices()
+        .nth(col)
+        .map(|(idx, _)| previous_line_start + idx)
+        .unwrap_or(previous_line_start + previous_line.len());
+
+    notes_state.set_cursor_pos(new_pos);
 }
 
 /// Panics if no note is selected.
@@ -109,29 +116,34 @@ pub fn move_cursor_down(notes_state: &mut NotesState) {
     let mut next_line_start = 0;
 
     for line in note.content.lines() {
-        if next_line_start + line.chars().count() >= cursor_pos {
+        // Use byte length: '\n' is always 1 byte so +1 is correct
+        if next_line_start + line.len() >= cursor_pos {
             current_line_start = next_line_start;
-            next_line_start += line.chars().count() + 1; // +1 for newline
+            next_line_start += line.len() + 1; // +1 for '\n'
             break;
         }
         current_line_start = next_line_start;
-        next_line_start += line.chars().count() + 1;
+        next_line_start += line.len() + 1;
     }
 
     if next_line_start > note.content.len() { return } // Already on last line
 
-    let index_in_the_current_line = cursor_pos - current_line_start;
+    // Char count of current line prefix gives the visual column
+    let col = note.content[current_line_start..cursor_pos].chars().count();
 
-    let remaining_content = &note.content[next_line_start..];
-    let next_line_length = match remaining_content.find('\n') {
-        Some(newline_pos) => newline_pos,
-        None => remaining_content.len(), // Last line has no trailing newline
+    let next_line = &note.content[next_line_start..];
+    let next_line = match next_line.find('\n') {
+        Some(newline_pos) => &next_line[..newline_pos],
+        None => next_line, // Last line has no trailing newline
     };
 
-    // Preserve horizontal position when moving down, or snap to line end if shorter
-    if next_line_length > index_in_the_current_line {
-        notes_state.set_cursor_pos(next_line_start + index_in_the_current_line);
-    } else {
-        notes_state.set_cursor_pos(next_line_start + next_line_length);
-    }
+    // Find the byte position in the next line at the target column,
+    // clamping to the line end if it's shorter
+    let new_pos = next_line
+        .char_indices()
+        .nth(col)
+        .map(|(idx, _)| next_line_start + idx)
+        .unwrap_or(next_line_start + next_line.len());
+
+    notes_state.set_cursor_pos(new_pos);
 }
