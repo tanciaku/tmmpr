@@ -1,6 +1,7 @@
 use std::io::stdout;
 
 use crossterm::{cursor::SetCursorStyle, execute};
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::states::{MapState, map::{Mode, NotesState}};
 
@@ -19,13 +20,13 @@ pub fn switch_to_modal_insert_mode(map_state: &mut MapState) {
 pub fn cursor_pos_end(notes_state: &mut NotesState) {
     let note = notes_state.expect_selected_note();
 
-    let last_char_pos = note.content
-        .char_indices()
+    let last_grapheme_pos = note.content
+        .grapheme_indices(true)
         .last()
         .map(|(idx, _)| idx)
         .unwrap_or(0);
 
-    notes_state.set_cursor_pos(last_char_pos);
+    notes_state.set_cursor_pos(last_grapheme_pos);
 }
 
 /// Panics if no note is selected.
@@ -33,20 +34,20 @@ pub fn move_cursor_right_norm(notes_state: &mut NotesState) {
     let note = notes_state.expect_selected_note();
     let cursor_pos = notes_state.cursor_pos();
 
-    let last_char_pos = note.content
-        .char_indices()
+    let last_grapheme_pos = note.content
+        .grapheme_indices(true)
         .last()
         .map(|(idx, _)| idx)
         .unwrap_or(0);
 
     let new_pos = note.content[cursor_pos..]
-        .char_indices()
+        .grapheme_indices(true)
         .nth(1)
         .map(|(idx, _)| cursor_pos + idx)
         .unwrap_or(cursor_pos);
 
-    // Stop before last char to match vim's normal mode behavior
-    notes_state.set_cursor_pos(new_pos.min(last_char_pos));
+    // Stop before last grapheme to match vim's normal mode behavior
+    notes_state.set_cursor_pos(new_pos.min(last_grapheme_pos));
 }
 
 /// Panics if no note is selected.
@@ -54,10 +55,10 @@ pub fn append(map_state: &mut MapState) {
     let cursor_pos = map_state.notes_state.cursor_pos();
     let note = map_state.notes_state.expect_selected_note();
 
-    // Advance by the byte length of the character at cursor_pos so the new
-    // position is always on a valid char boundary, even for multi-byte chars.
+    // Advance by the byte length of the grapheme cluster at cursor_pos so the
+    // new position is always on a valid char boundary, even for multi-byte clusters.
     let new_pos = note.content[cursor_pos..]
-        .char_indices()
+        .grapheme_indices(true)
         .nth(1)
         .map(|(idx, _)| cursor_pos + idx)
         .unwrap_or(note.content.len());
@@ -191,25 +192,25 @@ pub fn remove_char(map_state: &mut MapState) {
         return;
     }
 
-    // Find the byte end of the character at cursor_pos (cursor_pos is a byte index).
-    let char_end = note.content[cursor_pos..]
-        .char_indices()
+    // Find the byte end of the grapheme cluster at cursor_pos
+    let grapheme_end = note.content[cursor_pos..]
+        .grapheme_indices(true)
         .nth(1)
         .map(|(idx, _)| cursor_pos + idx)
         .unwrap_or(note.content.len());
 
-    note.content.drain(cursor_pos..char_end);
+    note.content.drain(cursor_pos..grapheme_end);
 
-    // In normal mode the cursor must not sit past the last character.
+    // In normal mode the cursor must not sit past the last grapheme cluster.
     let new_cursor_pos = if note.content.is_empty() {
         0
     } else {
-        let last_char_start = note.content
-            .char_indices()
+        let last_grapheme_start = note.content
+            .grapheme_indices(true)
             .last()
             .map(|(idx, _)| idx)
             .unwrap_or(0);
-        cursor_pos.min(last_char_start)
+        cursor_pos.min(last_grapheme_start)
     };
 
     map_state.notes_state.set_cursor_pos(new_cursor_pos);

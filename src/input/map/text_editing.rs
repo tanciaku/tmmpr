@@ -1,3 +1,5 @@
+use unicode_segmentation::UnicodeSegmentation;
+
 use crate::states::{MapState, map::NotesState};
 
 pub fn cursor_pos_beginning(notes_state: &mut NotesState) {
@@ -10,13 +12,13 @@ pub fn move_cursor_left(notes_state: &mut NotesState) {
     let cursor_pos = notes_state.cursor_pos();
 
     if cursor_pos > 0 {
-        // Find the byte index of the previous character
+        // Find the byte index of the previous grapheme cluster
         let new_pos = note.content[..cursor_pos]
-            .char_indices()
+            .grapheme_indices(true)
             .next_back()
             .map(|(idx, _)| idx)
             .unwrap_or(0);
-        
+
         notes_state.set_cursor_pos(new_pos);
     }
 }
@@ -27,7 +29,7 @@ pub fn move_cursor_right(notes_state: &mut NotesState) {
     let cursor_pos = notes_state.cursor_pos();
 
     let new_pos = note.content[cursor_pos..]
-        .char_indices()
+        .grapheme_indices(true)
         .nth(1)
         .map(|(idx, _)| cursor_pos + idx)
         .unwrap_or(note.content.len());
@@ -44,9 +46,9 @@ pub fn backspace_char(map_state: &mut MapState) {
     if cursor_pos > 0 {
         let note = map_state.notes_state.expect_selected_note_mut();
 
-        // Find the byte start of the character immediately before the cursor
+        // Find the byte start of the grapheme cluster immediately before the cursor
         let prev_char_byte_pos = note.content[..cursor_pos]
-            .char_indices()
+            .grapheme_indices(true)
             .next_back()
             .map(|(idx, _)| idx)
             .unwrap_or(0);
@@ -91,15 +93,15 @@ pub fn move_cursor_up(notes_state: &mut NotesState) {
 
     if current_line_start == 0 { return } // Already on first line
 
-    // Char count of current line prefix gives the visual column
-    let col = note.content[current_line_start..cursor_pos].chars().count();
+    // Grapheme count of current line prefix gives the visual column
+    let col = note.content[current_line_start..cursor_pos].graphemes(true).count();
 
     let previous_line = &note.content[previous_line_start..current_line_start - 1];
 
     // Find the byte position in the previous line at the target column,
     // clamping to the line end if it's shorter
     let new_pos = previous_line
-        .char_indices()
+        .grapheme_indices(true)
         .nth(col)
         .map(|(idx, _)| previous_line_start + idx)
         .unwrap_or(previous_line_start + previous_line.len());
@@ -128,8 +130,8 @@ pub fn move_cursor_down(notes_state: &mut NotesState) {
 
     if next_line_start > note.content.len() { return } // Already on last line
 
-    // Char count of current line prefix gives the visual column
-    let col = note.content[current_line_start..cursor_pos].chars().count();
+    // Grapheme count of current line prefix gives the visual column
+    let col = note.content[current_line_start..cursor_pos].graphemes(true).count();
 
     let next_line = &note.content[next_line_start..];
     let next_line = match next_line.find('\n') {
@@ -140,7 +142,7 @@ pub fn move_cursor_down(notes_state: &mut NotesState) {
     // Find the byte position in the next line at the target column,
     // clamping to the line end if it's shorter
     let new_pos = next_line
-        .char_indices()
+        .grapheme_indices(true)
         .nth(col)
         .map(|(idx, _)| next_line_start + idx)
         .unwrap_or(next_line_start + next_line.len());

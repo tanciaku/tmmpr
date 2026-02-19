@@ -10,6 +10,7 @@ pub struct NotesState {
     selected_note_id: Option<usize>,
     /// Z-index ordering for note rendering (back to front)
     render_order: Vec<usize>,
+    /// Byte index of the cursor position within the selected note's content
     cursor_pos: usize,
 }
 
