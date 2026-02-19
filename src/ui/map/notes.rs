@@ -5,6 +5,7 @@ use ratatui::{
     style::Color,
     widgets::{Block, Borders, Clear, Paragraph, BorderType},
 };
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     states::{
@@ -114,10 +115,10 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
 
                         let cursor_x_relative = match text_before_cursor.rfind('\n') {
                             Some(c) => {
-                                text_before_cursor[c+1..map_state.notes_state.cursor_pos()].chars().count()
+                                text_before_cursor[c+1..].graphemes(true).count()
                             }
                             None => {
-                                text_before_cursor[0..map_state.notes_state.cursor_pos()].chars().count()
+                                text_before_cursor.graphemes(true).count()
                             }
                         };
 
