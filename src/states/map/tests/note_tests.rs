@@ -136,8 +136,8 @@ mod tests {
         let note = Note::new(0, 0, "Sample note text!! 📝✨🎯💡🔥🎨".to_string(), Color::White);
         let (width, height) = note.get_dimensions();
         
-        // "Sample note text!! 📝✨🎯💡🔥🎨" = 25 chars + 2 (border) + 1 (cursor) = 28 width
-        assert_eq!(width, 28);
+        // "Sample note text!! 📝✨🎯💡🔥🎨" = 31 chars + 2 (border) + 1 (cursor) = 34 width
+        assert_eq!(width, 34);
         assert_eq!(height, 4);
     }
 

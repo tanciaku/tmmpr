@@ -1,5 +1,6 @@
 use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
+use unicode_width::UnicodeWidthStr;
 use super::enums::Side;
 
 /// A node on the mind map canvas with position, content, and visual styling.
@@ -35,7 +36,7 @@ impl Note {
         
         let width = self.content
             .lines()
-            .map(|line| line.chars().count())
+            .map(|line| line.width())
             .max()
             .unwrap_or(0) as u16;
         
