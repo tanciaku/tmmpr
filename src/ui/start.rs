@@ -64,7 +64,7 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
 
     
     let start_menu = vec![
-        Line::from("tmmpr  v0.1.0").alignment(Alignment::Center),
+        Line::from("tmmpr  v0.1.1").alignment(Alignment::Center),
         Line::from(""),
         Line::from(""),
         Line::from(""),
