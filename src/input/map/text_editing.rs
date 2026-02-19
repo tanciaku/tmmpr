@@ -12,7 +12,6 @@ pub fn move_cursor_left(notes_state: &mut NotesState) {
     let cursor_pos = notes_state.cursor_pos();
 
     if cursor_pos > 0 {
-        // Find the byte index of the previous grapheme cluster
         let new_pos = note.content[..cursor_pos]
             .grapheme_indices(true)
             .next_back()
@@ -46,14 +45,12 @@ pub fn backspace_char(map_state: &mut MapState) {
     if cursor_pos > 0 {
         let note = map_state.notes_state.expect_selected_note_mut();
 
-        // Find the byte start of the grapheme cluster immediately before the cursor
         let prev_char_byte_pos = note.content[..cursor_pos]
             .grapheme_indices(true)
             .next_back()
             .map(|(idx, _)| idx)
             .unwrap_or(0);
 
-        // Remove the bytes of that character
         note.content.drain(prev_char_byte_pos..cursor_pos);
 
         map_state.notes_state.set_cursor_pos(prev_char_byte_pos);
@@ -82,13 +79,13 @@ pub fn move_cursor_up(notes_state: &mut NotesState) {
     let mut current_line_start = 0;
     let mut previous_line_start = 0;
 
+    // '\n' is always 1 byte in UTF-8, so line.len() + 1 is the correct byte stride
     for line in note.content.lines() {
-        // Use byte length: '\n' is always 1 byte so +1 is correct
         if current_line_start + line.len() >= cursor_pos {
             break;
         }
         previous_line_start = current_line_start;
-        current_line_start += line.len() + 1; // +1 for '\n'
+        current_line_start += line.len() + 1;
     }
 
     if current_line_start == 0 { return } // Already on first line
@@ -117,11 +114,11 @@ pub fn move_cursor_down(notes_state: &mut NotesState) {
     let mut current_line_start = 0;
     let mut next_line_start = 0;
 
+    // '\n' is always 1 byte in UTF-8, so line.len() + 1 is the correct byte stride
     for line in note.content.lines() {
-        // Use byte length: '\n' is always 1 byte so +1 is correct
         if next_line_start + line.len() >= cursor_pos {
             current_line_start = next_line_start;
-            next_line_start += line.len() + 1; // +1 for '\n'
+            next_line_start += line.len() + 1;
             break;
         }
         current_line_start = next_line_start;

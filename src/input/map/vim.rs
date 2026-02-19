@@ -67,19 +67,10 @@ pub fn append(map_state: &mut MapState) {
     switch_to_modal_insert_mode(map_state);
 }
 
-/// Jumps cursor forward to the beginning of the next word (vim 'w' behavior).
-///
-/// Iterates grapheme clusters from the current cursor position:
-///   1. Skip the current non-whitespace graphemes (current word).
-///   2. Skip any whitespace graphemes (spaces / newlines).
-///   3. Land on the first grapheme of the next word.
+/// Jumps cursor forward to the beginning of the next word (vim `w` behavior).
+/// Treats spaces and newlines as word delimiters; crosses line boundaries.
 ///
 /// If no next word exists the cursor stays at the last grapheme.
-///
-/// # Examples
-/// - `"hello world"` → jumps from 'h' to 'w'
-/// - `"hello   world"` → skips multiple spaces
-/// - `"hello\nworld"` → crosses line boundaries
 ///
 /// # Panics
 /// If no note is selected.
@@ -91,24 +82,20 @@ pub fn jump_forward_a_word(notes_state: &mut NotesState) {
         return;
     }
 
-    // Walk grapheme clusters from cursor_pos.
-    // `idx` is a byte offset relative to `cursor_pos`.
+    // `idx` from grapheme_indices is relative to the tail slice, not the full string.
     let tail = &note.content[cursor_pos..];
     let mut graphemes = tail.grapheme_indices(true);
 
-    // Phase 1: skip the current word (non-whitespace graphemes).
-    // We advance at least one grapheme so we always make progress.
+    // Phase 1: skip non-whitespace. Always advance at least one grapheme to make progress.
     let mut advanced = false;
     for (idx, g) in graphemes.by_ref() {
         let is_ws = g == " " || g == "\n";
         if is_ws && advanced {
-            // We've left the current word and hit whitespace — stop here
-            // and let phase 2 consume the whitespace.
-            // Re-inject this grapheme by peeking; we already consumed it,
-            // so track its byte offset directly.
+            // The iterator already consumed this whitespace grapheme,
+            // use its byte offset directly to start phase 2.
             let ws_start = cursor_pos + idx;
 
-            // Phase 2: skip whitespace.
+            // Phase 2: skip whitespace to the next word start.
             let after_ws = note.content[ws_start..]
                 .grapheme_indices(true)
                 .find(|(_, g)| *g != " " && *g != "\n")
@@ -123,7 +110,7 @@ pub fn jump_forward_a_word(notes_state: &mut NotesState) {
         advanced = true;
     }
 
-    // Reached end of content without finding a next word — stay at last grapheme.
+    // No next word found; clamp to last grapheme.
     let last = note.content
         .grapheme_indices(true)
         .last()
@@ -132,15 +119,11 @@ pub fn jump_forward_a_word(notes_state: &mut NotesState) {
     notes_state.set_cursor_pos(last);
 }
 
-/// Jumps cursor backward to the beginning of the previous word (vim 'b' behavior).
-/// 
-/// If cursor is mid-word, jumps to the start of current word. If at word start,
-/// jumps to the start of previous word. Treats spaces and newlines as delimiters.
-/// 
-/// # Examples
-/// - `"hello world"` (cursor on 'r') → jumps to 'w'
-/// - `"hello world"` (cursor on 'w') → jumps to 'h'  
-/// - `"hello   world"` → skips consecutive spaces
+/// Jumps cursor backward to the beginning of the previous word (vim `b` behavior).
+///
+/// If the cursor is mid-word, lands on the start of the current word.
+/// If already at a word boundary, skips back to the start of the previous word.
+/// Treats spaces and newlines as delimiters; skips consecutive whitespace.
 ///
 /// # Panics
 /// If no note is selected.
@@ -152,8 +135,7 @@ pub fn jump_back_a_word(notes_state: &mut NotesState) {
         return;
     }
 
-    // Check if the character immediately before the cursor is whitespace.
-    // cursor_pos is a byte index, so slice to it and read the last char.
+    // cursor_pos is a byte index; read the char immediately before it.
     let at_word_beginning = note.content[..cursor_pos]
         .chars()
         .next_back()
@@ -169,7 +151,6 @@ pub fn jump_back_a_word(notes_state: &mut NotesState) {
     notes_state.set_cursor_pos(target_pos);
 }
 
-/// Finds the start of the current word when cursor is mid-word.
 fn find_current_word_start(note: &crate::states::map::Note, cursor_pos: usize) -> usize {
     let text_before_cursor = &note.content[..cursor_pos];
     let last_delimiter_pos = text_before_cursor.rfind(|c: char| c == ' ' || c == '\n');
@@ -180,26 +161,25 @@ fn find_current_word_start(note: &crate::states::map::Note, cursor_pos: usize) -
     }
 }
 
-/// Finds the start of the previous word when cursor is at word beginning.
+/// Finds the start of the previous word when the cursor is at a word boundary.
 ///
-/// Two-phase algorithm: skip backward over whitespace, then find word start.
-/// All positions are byte indices.
+/// All positions are byte indices into `note.content`.
 fn find_previous_word_start(note: &crate::states::map::Note, cursor_pos: usize) -> usize {
     if cursor_pos == 0 {
         return 0;
     }
 
-    // Phase 1: skip backward over whitespace to find the end of the previous word.
+    // Skip backward over whitespace to find where the previous word ends.
     let text_before = &note.content[..cursor_pos];
     let word_end = text_before.trim_end_matches(|c: char| c == ' ' || c == '\n').len();
 
     if word_end == 0 {
-        return 0; // Only whitespace before cursor
+        return 0;
     }
 
-    // Phase 2: find the last delimiter before the word to locate its start.
     match note.content[..word_end].rfind(|c: char| c == ' ' || c == '\n') {
-        Some(pos) => pos + 1, // +1 skips the delimiter byte (space/newline are single-byte)
+        // +1 skips the delimiter itself (space/newline are always single-byte in UTF-8).
+        Some(pos) => pos + 1,
         None => 0,
     }
 }
@@ -215,7 +195,7 @@ pub fn remove_char(map_state: &mut MapState) {
         return;
     }
 
-    // Find the byte end of the grapheme cluster at cursor_pos
+    // A grapheme cluster can span multiple bytes, so find its true end byte.
     let grapheme_end = note.content[cursor_pos..]
         .grapheme_indices(true)
         .nth(1)
