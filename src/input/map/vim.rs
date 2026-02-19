@@ -68,12 +68,16 @@ pub fn append(map_state: &mut MapState) {
 }
 
 /// Jumps cursor forward to the beginning of the next word (vim 'w' behavior).
-/// 
-/// Treats spaces and newlines as word delimiters. Handles consecutive whitespace
-/// and bounds checking.
-/// 
+///
+/// Iterates grapheme clusters from the current cursor position:
+///   1. Skip the current non-whitespace graphemes (current word).
+///   2. Skip any whitespace graphemes (spaces / newlines).
+///   3. Land on the first grapheme of the next word.
+///
+/// If no next word exists the cursor stays at the last grapheme.
+///
 /// # Examples
-/// - `"hello world"` → jumps from 'h' to 'w'  
+/// - `"hello world"` → jumps from 'h' to 'w'
 /// - `"hello   world"` → skips multiple spaces
 /// - `"hello\nworld"` → crosses line boundaries
 ///
@@ -86,27 +90,46 @@ pub fn jump_forward_a_word(notes_state: &mut NotesState) {
     if note.content.is_empty() {
         return;
     }
-        
-    let mut space_pos = note.content[cursor_pos..].find(' ');
 
-    // Skip consecutive spaces to find start of next word
-    if let Some(pos) = space_pos {
-        if let Some(new_pos) = note.content[cursor_pos + pos..].find(|c| {c != ' '}) {
-            // Adjust by -1 to allow consistent +1 offset in match arms below
-            space_pos = Some(pos + new_pos - 1);
+    // Walk grapheme clusters from cursor_pos.
+    // `idx` is a byte offset relative to `cursor_pos`.
+    let tail = &note.content[cursor_pos..];
+    let mut graphemes = tail.grapheme_indices(true);
+
+    // Phase 1: skip the current word (non-whitespace graphemes).
+    // We advance at least one grapheme so we always make progress.
+    let mut advanced = false;
+    for (idx, g) in graphemes.by_ref() {
+        let is_ws = g == " " || g == "\n";
+        if is_ws && advanced {
+            // We've left the current word and hit whitespace — stop here
+            // and let phase 2 consume the whitespace.
+            // Re-inject this grapheme by peeking; we already consumed it,
+            // so track its byte offset directly.
+            let ws_start = cursor_pos + idx;
+
+            // Phase 2: skip whitespace.
+            let after_ws = note.content[ws_start..]
+                .grapheme_indices(true)
+                .find(|(_, g)| *g != " " && *g != "\n")
+                .map(|(i, _)| ws_start + i);
+
+            if let Some(target) = after_ws {
+                notes_state.set_cursor_pos(target);
+            }
+            // If no non-ws follows, stay put (already at last word).
+            return;
         }
+        advanced = true;
     }
 
-    let newline_pos = note.content[cursor_pos..].find('\n');
-
-    let target_pos = match (space_pos, newline_pos) {
-        (Some(s), Some(n)) => cursor_pos + s.min(n) + 1,
-        (Some(s), None) => cursor_pos + s + 1,
-        (None, Some(n)) => cursor_pos + n + 1,
-        (None, None) => note.content.len() - 1,
-    };
-
-    notes_state.set_cursor_pos(target_pos.min(note.content.len() - 1));
+    // Reached end of content without finding a next word — stay at last grapheme.
+    let last = note.content
+        .grapheme_indices(true)
+        .last()
+        .map(|(i, _)| i)
+        .unwrap_or(0);
+    notes_state.set_cursor_pos(last);
 }
 
 /// Jumps cursor backward to the beginning of the previous word (vim 'b' behavior).

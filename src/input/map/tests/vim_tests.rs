@@ -219,9 +219,9 @@ fn test_jump_forward_a_word_space_before_newline() {
 
     jump_forward_a_word(&mut map_state.notes_state);
 
-    // Should jump to position 6 (the space comes first at pos 5, +1 = 6 which is the newline)
+    // Should jump to position 7 (the space comes first at pos 5, then newline at pos 6)
     // The function finds the nearest delimiter and jumps past it
-    assert_eq!(map_state.notes_state.cursor_pos(), 6);
+    assert_eq!(map_state.notes_state.cursor_pos(), 7);
 }
 
 #[test]
