@@ -5,6 +5,7 @@ edition = "2024"
 description = "terminal mind mapper"
 license = "MIT"
 repository = "https://github.com/tanciaku/tmmpr"
+documentation = "https://docs.rs/tmmpr"
 keywords = ["tui", "terminal", "ratatui", "mindmap", "mind-map"]
 
 [dependencies]
