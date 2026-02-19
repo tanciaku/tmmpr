@@ -91,6 +91,16 @@ cargo install tmmpr
 paru -S tmmpr
 ```
 
+### With Nix / NixOS
+
+```shell
+# Run without installing
+nix run github:tanciaku/tmmpr
+
+# Install to your profile
+nix profile install github:tanciaku/tmmpr
+```
+
 ### From Source
 
 ```shell
