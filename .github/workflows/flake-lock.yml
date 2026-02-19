@@ -1,0 +1,28 @@
+name: Update flake.lock
+
+on:
+  push:
+    paths:
+      - 'flake.nix'
+  workflow_dispatch:
+
+jobs:
+  update-flake-lock:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v14
+
+      - name: Update flake.lock
+        run: nix flake update
+
+      - name: Commit flake.lock
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update flake.lock"
+          file_pattern: flake.lock
