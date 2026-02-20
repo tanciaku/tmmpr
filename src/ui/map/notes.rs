@@ -79,7 +79,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                             Mode::Delete => Color::Red,
                         }
                     }
-                    _ => note.color,
+                    _ => note.data.color,
                 };
 
                 let border_type = match map_state.notes_state.selected_note_id() {
@@ -99,7 +99,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                     .border_style(border_color)
                     .border_type(border_type);
 
-                let text_widget = Paragraph::new(note.content.as_str())
+                let text_widget = Paragraph::new(note.data.content.as_str())
                     .scroll((vertical_scroll, horizontal_scroll))
                     .block(block);
 
@@ -109,7 +109,7 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
 
                 if let Some(selected_note) = &map_state.notes_state.selected_note_id() {
                     if matches!(map_state.mode, Mode::Edit | Mode::EditNormal | Mode::EditInsert) && note_id == *selected_note {
-                        let text_before_cursor = &note.content[..map_state.notes_state.cursor_pos()];
+                        let text_before_cursor = &note.data.content[..map_state.notes_state.cursor_pos()];
 
                         let cursor_y_relative = text_before_cursor.matches('\n').count();
 

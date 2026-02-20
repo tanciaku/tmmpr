@@ -110,8 +110,8 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
             } else {
                 if let Some(note) = map_state.notes_state.notes().get(selected_note_id) {
                     current_color_text = String::from("Selected note color: ");
-                    current_color_name = get_color_name_in_string(note.color);
-                    current_color = note.color;
+                    current_color_name = get_color_name_in_string(note.data.color);
+                    current_color = note.data.color;
                 }
             }
         }

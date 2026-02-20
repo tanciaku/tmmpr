@@ -31,7 +31,7 @@ fn test_backspace_at_beginning() {
     backspace_char(&mut map_state);
     
     // Should not change anything when cursor is at position 0
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello");
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
@@ -46,7 +46,7 @@ fn test_backspace_in_middle() {
     backspace_char(&mut map_state);
     
     // Should remove the 'l' before the cursor
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Helo");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Helo");
     assert_eq!(map_state.notes_state.cursor_pos(), 2);
 }
 
@@ -61,7 +61,7 @@ fn test_backspace_at_end() {
     backspace_char(&mut map_state);
     
     // Should remove the last character
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hell");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hell");
     assert_eq!(map_state.notes_state.cursor_pos(), 4);
 }
 
@@ -76,7 +76,7 @@ fn test_backspace_single_character() {
     backspace_char(&mut map_state);
     
     // Should result in empty string
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "");
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
@@ -91,7 +91,7 @@ fn test_backspace_with_newlines() {
     backspace_char(&mut map_state);
     
     // Should remove the newline character
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "HelloWorld");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "HelloWorld");
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
 }
 
@@ -106,7 +106,7 @@ fn test_backspace_unicode() {
     backspace_char(&mut map_state);
     
     // Should remove the Chinese character '世'
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello 界");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello 界");
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
 
@@ -122,7 +122,7 @@ fn test_backspace_multiple_times() {
     backspace_char(&mut map_state);
     backspace_char(&mut map_state);
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "He");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "He");
     assert_eq!(map_state.notes_state.cursor_pos(), 2);
 }
 
@@ -144,7 +144,7 @@ fn test_remove_at_end() {
     remove_char(&mut map_state);
     
     // Should not remove anything when cursor is at end
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello");
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
 }
 
@@ -159,7 +159,7 @@ fn test_remove_in_middle() {
     remove_char(&mut map_state);
     
     // Should remove the 'l' at the cursor
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Helo");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Helo");
     assert_eq!(map_state.notes_state.cursor_pos(), 2); // Cursor stays in place
 }
 
@@ -174,7 +174,7 @@ fn test_remove_at_beginning() {
     remove_char(&mut map_state);
     
     // Should remove the first character
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "ello");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "ello");
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
@@ -189,7 +189,7 @@ fn test_remove_empty_content() {
     remove_char(&mut map_state);
     
     // Should do nothing on empty content
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "");
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
@@ -204,7 +204,7 @@ fn test_remove_single_character() {
     remove_char(&mut map_state);
     
     // Should result in empty string
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "");
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
@@ -219,7 +219,7 @@ fn test_remove_with_newlines() {
     remove_char(&mut map_state);
     
     // Should remove the newline character
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "HelloWorld");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "HelloWorld");
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
 }
 
@@ -234,7 +234,7 @@ fn test_remove_unicode() {
     remove_char(&mut map_state);
     
     // Should remove the Chinese character '世'
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello 界");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello 界");
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
 
@@ -249,7 +249,7 @@ fn test_remove_cursor_adjustment() {
     remove_char(&mut map_state);
     
     // Should remove 'B' and adjust cursor
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "A");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "A");
     assert_eq!(map_state.notes_state.cursor_pos(), 0); // Cursor moved back
 }
 
@@ -265,7 +265,7 @@ fn test_remove_multiple_times() {
     remove_char(&mut map_state); // Remove 'e'
     remove_char(&mut map_state); // Remove 'l'
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "lo");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "lo");
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
@@ -283,7 +283,7 @@ fn test_insert_at_beginning() {
     
     insert_char(&mut map_state, 'X');
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "XHello");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "XHello");
     assert_eq!(map_state.notes_state.cursor_pos(), 1);
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
@@ -298,7 +298,7 @@ fn test_insert_in_middle() {
     
     insert_char(&mut map_state, 'X');
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "HeXllo");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "HeXllo");
     assert_eq!(map_state.notes_state.cursor_pos(), 3);
 }
 
@@ -312,7 +312,7 @@ fn test_insert_at_end() {
     
     insert_char(&mut map_state, '!');
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello!");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello!");
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
 
@@ -326,7 +326,7 @@ fn test_insert_into_empty() {
     
     insert_char(&mut map_state, 'A');
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "A");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "A");
     assert_eq!(map_state.notes_state.cursor_pos(), 1);
 }
 
@@ -340,7 +340,7 @@ fn test_insert_newline() {
     
     insert_char(&mut map_state, '\n');
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello\n");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello\n");
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
 
@@ -354,7 +354,7 @@ fn test_insert_unicode() {
     
     insert_char(&mut map_state, '世');
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello 世");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello 世");
     assert_eq!(map_state.notes_state.cursor_pos(), 9);
 }
 
@@ -371,7 +371,7 @@ fn test_insert_special_characters() {
     insert_char(&mut map_state, '@');
     insert_char(&mut map_state, '#');
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Test !@#");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Test !@#");
     assert_eq!(map_state.notes_state.cursor_pos(), 8);
 }
 
@@ -403,7 +403,7 @@ fn test_insert_multiple_chars() {
         insert_char(&mut map_state, ch);
     }
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello");
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
 }
 
@@ -728,14 +728,14 @@ fn test_edit_workflow_insert_and_backspace() {
     insert_char(&mut map_state, 'l');
     insert_char(&mut map_state, 'o');
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello");
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
     
     // Backspace twice
     backspace_char(&mut map_state);
     backspace_char(&mut map_state);
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hel");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hel");
     assert_eq!(map_state.notes_state.cursor_pos(), 3);
 }
 
@@ -753,12 +753,12 @@ fn test_edit_workflow_navigation_and_editing() {
     
     // Insert an 'X'
     insert_char(&mut map_state, 'X');
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Line 1\nXLine 2\nLine 3");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Line 1\nXLine 2\nLine 3");
     assert_eq!(map_state.notes_state.cursor_pos(), 8); // Cursor moved after insert
     
     // Backspace to remove the 'X'
     backspace_char(&mut map_state);
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Line 1\nLine 2\nLine 3");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Line 1\nLine 2\nLine 3");
 }
 
 #[test]
@@ -802,12 +802,12 @@ fn test_multiline_editing() {
     insert_char(&mut map_state, 'l');
     insert_char(&mut map_state, 'd');
     
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello\nWorld");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello\nWorld");
     
     // Navigate back up and edit
     move_cursor_up(&mut map_state.notes_state);
     assert_eq!(map_state.notes_state.cursor_pos(), 5); // End of "Hello"
     
     insert_char(&mut map_state, '!');
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().content, "Hello!\nWorld");
+    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello!\nWorld");
 }

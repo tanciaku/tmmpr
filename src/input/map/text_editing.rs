@@ -12,7 +12,7 @@ pub fn move_cursor_left(notes_state: &mut NotesState) {
     let cursor_pos = notes_state.cursor_pos();
 
     if cursor_pos > 0 {
-        let new_pos = note.content[..cursor_pos]
+        let new_pos = note.data.content[..cursor_pos]
             .grapheme_indices(true)
             .next_back()
             .map(|(idx, _)| idx)
@@ -27,11 +27,11 @@ pub fn move_cursor_right(notes_state: &mut NotesState) {
     let note = notes_state.expect_selected_note();
     let cursor_pos = notes_state.cursor_pos();
 
-    let new_pos = note.content[cursor_pos..]
+    let new_pos = note.data.content[cursor_pos..]
         .grapheme_indices(true)
         .nth(1)
         .map(|(idx, _)| cursor_pos + idx)
-        .unwrap_or(note.content.len());
+        .unwrap_or(note.data.content.len());
 
     notes_state.set_cursor_pos(new_pos);
 }
@@ -45,13 +45,13 @@ pub fn backspace_char(map_state: &mut MapState) {
     if cursor_pos > 0 {
         let note = map_state.notes_state.expect_selected_note_mut();
 
-        let prev_char_byte_pos = note.content[..cursor_pos]
+        let prev_char_byte_pos = note.data.content[..cursor_pos]
             .grapheme_indices(true)
             .next_back()
             .map(|(idx, _)| idx)
             .unwrap_or(0);
 
-        note.content.drain(prev_char_byte_pos..cursor_pos);
+        note.data.content.drain(prev_char_byte_pos..cursor_pos);
 
         map_state.notes_state.set_cursor_pos(prev_char_byte_pos);
     }
@@ -66,7 +66,7 @@ pub fn insert_char(map_state: &mut MapState, c: char) {
     let note = map_state.notes_state.expect_selected_note_mut();
 
     // cursor_pos is a byte index on a char boundary, so insert directly
-    note.content.insert(cursor_pos, c);
+    note.data.content.insert(cursor_pos, c);
 
     move_cursor_right(&mut map_state.notes_state);
 }
@@ -80,7 +80,7 @@ pub fn move_cursor_up(notes_state: &mut NotesState) {
     let mut previous_line_start = 0;
 
     // '\n' is always 1 byte in UTF-8, so line.len() + 1 is the correct byte stride
-    for line in note.content.lines() {
+    for line in note.data.content.lines() {
         if current_line_start + line.len() >= cursor_pos {
             break;
         }
@@ -91,9 +91,9 @@ pub fn move_cursor_up(notes_state: &mut NotesState) {
     if current_line_start == 0 { return } // Already on first line
 
     // Grapheme count of current line prefix gives the visual column
-    let col = note.content[current_line_start..cursor_pos].graphemes(true).count();
+    let col = note.data.content[current_line_start..cursor_pos].graphemes(true).count();
 
-    let previous_line = &note.content[previous_line_start..current_line_start - 1];
+    let previous_line = &note.data.content[previous_line_start..current_line_start - 1];
 
     // Find the byte position in the previous line at the target column,
     // clamping to the line end if it's shorter
@@ -115,7 +115,7 @@ pub fn move_cursor_down(notes_state: &mut NotesState) {
     let mut next_line_start = 0;
 
     // '\n' is always 1 byte in UTF-8, so line.len() + 1 is the correct byte stride
-    for line in note.content.lines() {
+    for line in note.data.content.lines() {
         if next_line_start + line.len() >= cursor_pos {
             current_line_start = next_line_start;
             next_line_start += line.len() + 1;
@@ -125,12 +125,12 @@ pub fn move_cursor_down(notes_state: &mut NotesState) {
         next_line_start += line.len() + 1;
     }
 
-    if next_line_start > note.content.len() { return } // Already on last line
+    if next_line_start > note.data.content.len() { return } // Already on last line
 
     // Grapheme count of current line prefix gives the visual column
-    let col = note.content[current_line_start..cursor_pos].graphemes(true).count();
+    let col = note.data.content[current_line_start..cursor_pos].graphemes(true).count();
 
-    let next_line = &note.content[next_line_start..];
+    let next_line = &note.data.content[next_line_start..];
     let next_line = match next_line.find('\n') {
         Some(newline_pos) => &next_line[..newline_pos],
         None => next_line, // Last line has no trailing newline

@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use ratatui::style::Color;
+use crate::{graph::Node, states::map::NoteData};
+
 use super::note::Note;
 
 #[derive(PartialEq, Debug)]
@@ -84,9 +86,9 @@ impl NotesState {
     }
 
     /// Creates a new note, returns its id
-    pub fn add(&mut self, x: usize, y: usize, text: String, color: Color) -> usize {
+    pub fn add(&mut self, x: usize, y: usize, content: String, color: Color) -> usize {
         let id = self.next_note_id_counter;
-        self.notes.insert(id, Note::new(x, y, text, color));
+        self.notes.insert(id, Node::new(x, y, NoteData { content, color }));
         self.render_order.push(id);
         self.next_note_id_counter += 1;
         id
@@ -156,6 +158,6 @@ impl NotesState {
     /// If no note is selected.
     pub fn set_cursor_pos(&mut self, pos: usize) {
         let note = self.expect_selected_note();
-        self.cursor_pos = pos.min(note.content.len());
+        self.cursor_pos = pos.min(note.data.content.len());
     }
 }

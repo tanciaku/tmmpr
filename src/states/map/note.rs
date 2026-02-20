@@ -2,39 +2,38 @@ use ratatui::style::Color;
 use serde::{Serialize, Deserialize};
 use unicode_width::UnicodeWidthStr;
 use super::enums::Side;
+use crate::graph::Node;
 
-/// A node on the mind map canvas with position, content, and visual styling.
-///
-/// Notes are the fundamental building blocks of the mind map. Each note occupies
-/// a position on an infinite 2D plane and can be connected to other notes.
+/// The app-specific payload stored inside a graph node.
 #[derive(PartialEq, Serialize, Deserialize, Clone, Debug)]
-pub struct Note {
-    pub x: usize,
-    pub y: usize,
+pub struct NoteData {
     pub content: String,
-    /// Custom serialization needed to convert between ratatui's Color and a persistable format
     #[serde(with = "crate::utils")]
     pub color: Color,
 }
 
-impl Note {
-    pub fn new(x: usize, y: usize, content: String, color: Color) -> Note {
-        Note {
-            x,
-            y,
-            content,
-            color,
-        }
+impl NoteData {
+    pub fn new(content: String, color: Color) -> Self {
+        Self { content, color }
     }
+}
 
+/// A note is a graph node whose data is NoteData.
+pub type Note = Node<NoteData>;
+
+pub fn new_note(x: usize, y: usize, content: String, color: Color) -> Note {
+    Node::new(x, y, NoteData::new(content, color))
+}
+
+impl Note {
     /// Returns the rendered dimensions (width, height) including 2-cell border padding.
     ///
     /// Height is calculated by counting newlines rather than using `lines()` to
     /// preserve trailing empty lines that would otherwise be ignored.
     pub fn get_dimensions(&self) -> (u16, u16) {
-        let height = (1 + self.content.matches('\n').count()) as u16;
+        let height = (1 + self.data.content.matches('\n').count()) as u16;
         
-        let width = self.content
+        let width = self.data.content
             .lines()
             .map(|line| line.width())
             .max()

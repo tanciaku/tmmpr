@@ -673,8 +673,8 @@ fn test_add_note() {
     let note = &map_state.notes_state.notes()[&0];
     assert_eq!(note.x, 100 + 80/2); // view_pos.x + screen_width/2 = 140
     assert_eq!(note.y, 50 + 40/2);  // view_pos.y + screen_height/2 = 70
-    assert_eq!(note.content, "");
-    assert_eq!(note.color, Color::White);
+    assert_eq!(note.data.content, "");
+    assert_eq!(note.data.color, Color::White);
     
     // Check render order
     assert_eq!(*map_state.notes_state.render_order(), vec![0]);

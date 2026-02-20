@@ -99,14 +99,14 @@ fn test_visual_cycle_note_color() {
     map_state.notes_state.select(0);
     map_state.mode = Mode::Visual;
 
-    let original_color = map_state.notes_state.notes().get(&0).unwrap().color;
+    let original_color = map_state.notes_state.notes().get(&0).unwrap().data.color;
     
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.persistence.has_unsaved_changes, true); // Should mark as dirty
     
-    let new_color = map_state.notes_state.notes().get(&0).unwrap().color;
+    let new_color = map_state.notes_state.notes().get(&0).unwrap().data.color;
     assert_ne!(original_color, new_color); // Color should have changed
 }
 

@@ -1,13 +1,13 @@
 use ratatui::style::Color;
 
 use crate::{
-    states::map::{Note, Side},
+    states::map::{Note, Side, new_note},
     utils::geometry::{Point, calculate_path, get_offset_point},
 };
 
 // Helper functions for creating test data
 fn create_test_note(x: usize, y: usize, content: &str) -> Note {
-    Note::new(x, y, content.to_string(), Color::White)
+    new_note(x, y, content.to_string(), Color::White)
 }
 
 // --- Tests for get_offset_point ---

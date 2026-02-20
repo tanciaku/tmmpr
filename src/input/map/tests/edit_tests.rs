@@ -90,7 +90,7 @@ fn test_insert_char_non_modal() {
     assert_eq!(map_state.notes_state.cursor_pos(), 3); // Should advance cursor
     
     if let Some(note) = map_state.notes_state.notes().get(&0) {
-        assert_eq!(note.content, "HeXllo");
+        assert_eq!(note.data.content, "HeXllo");
     }
 }
 
@@ -111,7 +111,7 @@ fn test_insert_enter_character() {
     assert_eq!(map_state.notes_state.cursor_pos(), 3); // Should advance cursor
     
     if let Some(note) = map_state.notes_state.notes().get(&0) {
-        assert_eq!(note.content, "He\nllo");
+        assert_eq!(note.data.content, "He\nllo");
     }
 }
 
@@ -132,7 +132,7 @@ fn test_backspace_char() {
     assert_eq!(map_state.notes_state.cursor_pos(), 2); // Should move cursor back
     
     if let Some(note) = map_state.notes_state.notes().get(&0) {
-        assert_eq!(note.content, "Helo");
+        assert_eq!(note.data.content, "Helo");
     }
 }
 
@@ -153,7 +153,7 @@ fn test_backspace_at_beginning() {
     assert_eq!(map_state.notes_state.cursor_pos(), 0); // Should stay at beginning
     
     if let Some(note) = map_state.notes_state.notes().get(&0) {
-        assert_eq!(note.content, "Hello"); // Should be unchanged
+        assert_eq!(note.data.content, "Hello"); // Should be unchanged
     }
 }
 
@@ -384,7 +384,7 @@ fn test_modal_normal_remove_char() {
     assert_eq!(result, AppAction::Continue);
     
     if let Some(note) = map_state.notes_state.notes().get(&0) {
-        assert_eq!(note.content, "Helo"); // Should remove the 'l' at position 2
+        assert_eq!(note.data.content, "Helo"); // Should remove the 'l' at position 2
     }
 }
 
@@ -487,7 +487,7 @@ fn test_unhandled_keys_ignored() {
 
     for key in test_keys {
         let original_cursor = map_state.notes_state.cursor_pos();
-        let original_content = map_state.notes_state.notes().get(&0).unwrap().content.clone();
+        let original_content = map_state.notes_state.notes().get(&0).unwrap().data.content.clone();
         
         let result = map_edit_kh(&mut map_state, create_key_event(key));
         
@@ -495,7 +495,7 @@ fn test_unhandled_keys_ignored() {
         assert_eq!(map_state.notes_state.cursor_pos(), original_cursor); // Should not change cursor
         
         if let Some(note) = map_state.notes_state.notes().get(&0) {
-            assert_eq!(note.content, original_content); // Should not change content
+            assert_eq!(note.data.content, original_content); // Should not change content
         }
     }
 }
@@ -522,7 +522,7 @@ fn test_modal_normal_unhandled_keys_ignored() {
 
     for key in test_keys {
         let original_cursor = map_state.notes_state.cursor_pos();
-        let original_content = map_state.notes_state.notes().get(&0).unwrap().content.clone();
+        let original_content = map_state.notes_state.notes().get(&0).unwrap().data.content.clone();
         let original_mode = map_state.mode;
         
         let result = map_edit_kh(&mut map_state, create_key_event(key));
@@ -532,7 +532,7 @@ fn test_modal_normal_unhandled_keys_ignored() {
         assert_eq!(map_state.mode, original_mode); // Should not change mode
         
         if let Some(note) = map_state.notes_state.notes().get(&0) {
-            assert_eq!(note.content, original_content); // Should not change content
+            assert_eq!(note.data.content, original_content); // Should not change content
         }
     }
 }
@@ -554,7 +554,7 @@ fn test_empty_note_content_handling() {
     assert_eq!(map_state.notes_state.cursor_pos(), 1);
     
     if let Some(note) = map_state.notes_state.notes().get(&0) {
-        assert_eq!(note.content, "H");
+        assert_eq!(note.data.content, "H");
     }
 }
 

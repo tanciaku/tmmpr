@@ -176,7 +176,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         KeyCode::Char('e') => {
             let note = map_state.notes_state.expect_selected_note_mut();
 
-            note.color = cycle_color(note.color);
+            note.data.color = cycle_color(note.data.color);
             map_state.persistence.mark_dirty();
         }
 

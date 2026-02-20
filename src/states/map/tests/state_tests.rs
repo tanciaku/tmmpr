@@ -4,7 +4,7 @@ use ratatui::style::Color;
 use crate::{
     states::{
         MapState,
-        map::{Connection, Mode, Note, Side}
+        map::{Connection, Mode, Side, new_note}
     },
     utils::{
         IoErrorKind,
@@ -38,7 +38,7 @@ fn test_add_note() {
     map_state.add_note();
 
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, Note::new(50, 25, String::from(""), Color::White))]));
+    assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, new_note(50, 25, "".to_string(), Color::White))]));
     assert_eq!(*map_state.notes_state.render_order(), vec![0]);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     assert_eq!(map_state.mode, Mode::Edit);
@@ -55,9 +55,9 @@ fn test_add_several_notes() {
 
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
     assert_eq!(*map_state.notes_state.notes(), HashMap::from([
-        (0, Note::new(50, 25, String::from(""), Color::White)),
-        (1, Note::new(50, 25, String::from(""), Color::White)),
-        (2, Note::new(50, 25, String::from(""), Color::White)),
+        (0, new_note(50, 25, "".to_string(), Color::White)),
+        (1, new_note(50, 25, "".to_string(), Color::White)),
+        (2, new_note(50, 25, "".to_string(), Color::White)),
     ]));
     assert_eq!(*map_state.notes_state.render_order(), vec![0, 1, 2]);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(2));
@@ -72,7 +72,7 @@ fn test_add_note_diff_viewpos() {
     map_state.add_note();
 
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, Note::new(145, 120, String::from(""), Color::White))]));
+    assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, new_note(145, 120, "".to_string(), Color::White))]));
     assert_eq!(*map_state.notes_state.render_order(), vec![0]);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     assert_eq!(map_state.mode, Mode::Edit);

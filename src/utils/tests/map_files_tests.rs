@@ -304,8 +304,8 @@ fn test_save_map_file_preserves_note_properties() {
     let loaded_note = loaded_data.notes.get(&0).unwrap();
     assert_eq!(loaded_note.x, 100);
     assert_eq!(loaded_note.y, 200);
-    assert_eq!(loaded_note.content, "Important Note");
-    assert_eq!(loaded_note.color, Color::Cyan);
+    assert_eq!(loaded_note.data.content, "Important Note");
+    assert_eq!(loaded_note.data.color, Color::Cyan);
 }
 
 #[test]
@@ -415,8 +415,8 @@ fn test_load_map_file_loads_note_properties() {
         let loaded_note = loaded_state.notes_state.notes().get(&0).unwrap();
         assert_eq!(loaded_note.x, 123);
         assert_eq!(loaded_note.y, 456);
-        assert_eq!(loaded_note.content, "Specific Note");
-        assert_eq!(loaded_note.color, Color::Magenta);
+        assert_eq!(loaded_note.data.content, "Specific Note");
+        assert_eq!(loaded_note.data.color, Color::Magenta);
     }
 }
 
@@ -596,9 +596,9 @@ fn test_load_map_file_with_many_notes() {
         assert_eq!(loaded_state.notes_state.next_note_id_counter(), 50);
         
         // Spot check a few notes
-        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().content, "Note 0");
-        assert_eq!(loaded_state.notes_state.notes().get(&25).unwrap().content, "Note 25");
-        assert_eq!(loaded_state.notes_state.notes().get(&49).unwrap().content, "Note 49");
+        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().data.content, "Note 0");
+        assert_eq!(loaded_state.notes_state.notes().get(&25).unwrap().data.content, "Note 25");
+        assert_eq!(loaded_state.notes_state.notes().get(&49).unwrap().data.content, "Note 49");
     }
 }
 
@@ -661,9 +661,9 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
         
         // Check notes
         assert_eq!(loaded_state.notes_state.notes().len(), 3);
-        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().content, "First");
-        assert_eq!(loaded_state.notes_state.notes().get(&1).unwrap().content, "Second");
-        assert_eq!(loaded_state.notes_state.notes().get(&2).unwrap().content, "Third");
+        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().data.content, "First");
+        assert_eq!(loaded_state.notes_state.notes().get(&1).unwrap().data.content, "Second");
+        assert_eq!(loaded_state.notes_state.notes().get(&2).unwrap().data.content, "Third");
         
         // Check render order preserved
         assert_eq!(*loaded_state.notes_state.render_order(), vec![0, 1, 2]);
@@ -707,7 +707,7 @@ fn test_roundtrip_create_save_load() {
     if let Screen::Map(loaded_state) = &fresh_app.screen {
         assert_eq!(loaded_state.notes_state.next_note_id_counter(), 1);
         assert_eq!(loaded_state.notes_state.notes().len(), 1);
-        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().content, "Created Note");
+        assert_eq!(loaded_state.notes_state.notes().get(&0).unwrap().data.content, "Created Note");
         assert_eq!(loaded_state.viewport.view_pos.x, 50);
     }
 }
