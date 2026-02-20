@@ -241,7 +241,7 @@ The application is fully functional for its core purpose - creating, organizing,
 ### 🚧 Known Limitations
 
 **Code Quality:**
-- Code structure and approaches need refactoring throughout the application
+- Code structure and approaches could use refactoring throughout the application
 
 **Edit Mode (Vim-style):**
 - Normal mode is very limited compared to vim
@@ -250,20 +250,12 @@ The application is fully functional for its core purpose - creating, organizing,
 
 ### 🗺️ Roadmap
 
-**Current Focus:**
-- Improving codebase quality and structure
-- Foundational improvements will enable cleaner feature development
-
 **Upcoming Features:**
 - Library API for node graph functionality (programmatic usage)
 - Enhanced Edit Mode (fixing block cursor issue, expanded vim commands, visual selection, better text operations)
 - Export functionality (convert maps to other formats like markdown)
 - Import functionality (templates and config files for recurring structures)
 - Image support
-
-**Note:** New feature proposals are welcome, but work on them will be deferred until after the current quality improvements are complete.
-
-**Feedback on priorities is welcome!** Open an issue or discussion to share suggestions.
 
 ## ⚙️ Settings
 
