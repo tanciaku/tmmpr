@@ -1,10 +1,6 @@
 
 use ratatui::{
-    Frame,
-    layout::{Alignment, Constraint, Direction, Layout, Position, Margin},
-    style::{Stylize, Color, Style},
-    widgets::{Block, Clear, Paragraph, List, ListItem},
-    text::{Span, Line},
+    Frame, layout::{Alignment, Constraint, Direction, Layout, Margin, Position}, style::{Color, Style, Stylize}, text::{Line, Span}, widgets::{Block, Clear, List, ListItem, Paragraph, Wrap}
 };
 
 use crate::{
@@ -290,7 +286,7 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
                 Constraint::Min(2),
                 Constraint::Length(5),
                 Constraint::Length(2),
-                Constraint::Length(3),
+                Constraint::Length(4),
                 Constraint::Length(1),
                 Constraint::Length(1),
                 Constraint::Length(1),
@@ -302,7 +298,7 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Min(2),
-                Constraint::Length(50),
+                Constraint::Length(60),
                 Constraint::Min(2),
             ])
             .split(input_prompt_lines_area[3]);
@@ -324,14 +320,16 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         // Safe unwrap: backups_path is always Some while input_prompt is true
         let user_input_path = Paragraph::new(Line::from(
             settings_state.settings.settings().backups_path.as_ref().unwrap().as_str()))
-            .block(Block::bordered());
+            .block(Block::bordered())
+            .wrap(Wrap { trim: false });
         frame.render_widget(user_input_path, input_prompt_input_area[1]);
 
-        // Position cursor at end of input text (+1 to skip left border)
-        let cursor_x = input_prompt_input_area[1].x 
-                        + settings_state.settings.settings().backups_path.as_ref().unwrap().len() as u16
-                        + 1;
-        let cursor_y = input_prompt_input_area[1].y + 1;
+        // Account for wrapping: inner width is 58 (60 - 2 borders)
+        let inner_width = 58usize;
+        let path_len = settings_state.settings.settings().backups_path.as_ref().unwrap().len();
+        // +1 offset accounts for border width
+        let cursor_x = input_prompt_input_area[1].x + (path_len % inner_width) as u16 + 1;
+        let cursor_y = input_prompt_input_area[1].y + (path_len / inner_width) as u16 + 1;
         frame.set_cursor_position(Position::new(cursor_x, cursor_y));
 
         if let Some(err) = &settings_state.input_prompt_err {

@@ -23,8 +23,8 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
                 if let Some(path) = &mut start_state.input_path_string {
                     match key.code {
                         KeyCode::Char(c) => {
-                            // Limit to 46 chars to fit UI display width
-                            if path.len() < 46 {
+                            // Limit to 114 (58 and 56 for rows) chars to fit UI display width
+                            if path.len() < 114 {
                                 path.push(c);
                             }
                         }
@@ -42,8 +42,8 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
                 if let Some(map_name) = &mut start_state.input_path_name {
                     match key.code {
                         KeyCode::Char(c) => {
-                            // Limit to 46 chars to fit UI display width
-                            if map_name.len() < 46 {
+                            // Limit to 56 chars to fit UI display width
+                            if map_name.len() < 56 {
                                 map_name.push(c);
                             }
                         }

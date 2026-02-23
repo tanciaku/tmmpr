@@ -212,7 +212,7 @@ mod tests {
         let mut state = create_test_start_state();
         let mock_fs = MockFileSystem::new();
         state.input_path = true;
-        state.input_path_string = Some("a".repeat(46)); // Already at max length
+        state.input_path_string = Some("a".repeat(114)); // Already at max length
         state.input_path_name = Some(String::new());
         state.focused_input_box = FocusedInputBox::InputBox1;
 
@@ -220,9 +220,9 @@ mod tests {
         let result = start_kh(&mut state, key, &mock_fs);
 
         assert_eq!(result, AppAction::Continue);
-        // Should still be 46 characters, no new character added
-        assert_eq!(state.input_path_string.as_ref().unwrap().len(), 46);
-        assert_eq!(state.input_path_string, Some("a".repeat(46)));
+        // Should still be 114 characters, no new character added
+        assert_eq!(state.input_path_string.as_ref().unwrap().len(), 114);
+        assert_eq!(state.input_path_string, Some("a".repeat(114)));
     }
 
     #[test]

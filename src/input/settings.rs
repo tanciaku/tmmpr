@@ -63,8 +63,8 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn F
                 settings_state.input_prompt_err = None;
             }
             KeyCode::Char(c) => {
-                // Limit to 46 chars to fit UI display width
-                if settings.backups_path.as_ref().unwrap().len() < 46 {
+                // Limit to 114 (58 and 56 for rows) chars to fit UI display width
+                if settings.backups_path.as_ref().unwrap().len() < 114 {
                     settings.backups_path.as_mut().unwrap().push(c);
                 }
             }
