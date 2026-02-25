@@ -7,12 +7,50 @@ use crate::{
     app::{App, Screen},
     states::{
         MapState,
-        map::{Connection, ConnectionsState, Note, NotesState, Notification, ViewPos},
+        map::{Connection, ConnectionsState, Note, NoteData, NotesState, Notification, ViewPos},
     },
     utils::{
         IoErrorKind, filesystem::{FileSystem, RealFileSystem}, get_color_from_string, get_color_name_in_string, handle_on_load_backup_with_fs, read_json_data, write_json_data
     },
+    graph::Node,
 };
+
+/// Backward-compatible note deserializer.
+/// Accepts both the old flat format (`content`/`color` at top level)
+/// and the new nestedd format (`data: { content, color }`).
+#[derive(Deserialize)]
+struct LegacyNote {
+    pub x: usize,
+    pub y: usize,
+    // new format
+    pub data: Option<NoteData>,
+    // old flat format
+    pub content: Option<String>,
+    pub color: Option<String>,
+}
+
+impl From<LegacyNote> for Note {
+    fn from(l: LegacyNote) -> Note {
+        let note_data = l.data.unwrap_or_else(|| NoteData {
+            content: l.content.unwrap_or_default(),
+            color: l.color
+                .as_deref()
+                .map(crate::utils::get_color_from_string)
+                .unwrap_or(Color::White),
+        });
+        Node::new(l.x, l.y, note_data)
+    }
+}
+
+/// Deserializes a `HashMap<usize, Note>` by first going through `LegacyNote`,
+/// accepting both old flat and new nested JSON formats.
+fn deserialize_notes<'de, D>(deserializer: D) -> Result<HashMap<usize, Note>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw: HashMap<usize, LegacyNote> = HashMap::deserialize(deserializer)?;
+    Ok(raw.into_iter().map(|(k, v)| (k, Note::from(v))).collect())
+}
 
 /// Serializable representation of map state for JSON persistence.
 /// 
@@ -23,6 +61,7 @@ pub struct MapData {
     pub view_pos: ViewPos,
     #[serde(alias = "next_note_id")]
     pub next_note_id_counter: usize,
+    #[serde(deserialize_with = "deserialize_notes")]
     pub notes: HashMap<usize, Note>,
     pub render_order: Vec<usize>,
     pub connections: Vec<Connection>,
