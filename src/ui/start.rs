@@ -2,7 +2,7 @@ use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Position},
     style::{Color, Style},
-    widgets::{Block, Clear, Paragraph, List, ListItem},
+    widgets::{Block, Clear, Paragraph, List, ListItem, Wrap},
     text::{Span, Line},
 };
 
@@ -96,14 +96,14 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Fill(1),
-                Constraint::Length(20),
+                Constraint::Length(23),
                 Constraint::Fill(1),
             ]).split(frame.area()); 
         let input_menu_area = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![
                 Constraint::Fill(1),
-                Constraint::Length(70),
+                Constraint::Length(80),
                 Constraint::Fill(1),
             ]).split(input_menu_area[1]);
         
@@ -114,7 +114,7 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
                 Constraint::Min(2),
                 Constraint::Length(1),
                 Constraint::Length(1),
-                Constraint::Length(3),
+                Constraint::Length(4),
                 Constraint::Length(2),
                 Constraint::Length(1),
                 Constraint::Length(3),
@@ -127,14 +127,14 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
             .direction(Direction::Horizontal)
             .constraints(vec![
                 Constraint::Fill(1),
-                Constraint::Length(50),
+                Constraint::Length(60),
                 Constraint::Fill(1),
             ]).split(input_menu_areas[3]);
         let input_box_area_2 = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![
                 Constraint::Fill(1),
-                Constraint::Length(50),
+                Constraint::Length(60),
                 Constraint::Fill(1),
             ]).split(input_menu_areas[6]);
 
@@ -158,7 +158,9 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
         let input_box_2_block = FocusedInputBox::InputBox2.get_style(&start_state.focused_input_box);
 
         if let Some(input_path_string) = &start_state.input_path_string {
-            let input_box_1 = Paragraph::new(Line::from(input_path_string.as_str())).block(input_box_1_block);
+            let input_box_1 = Paragraph::new(Line::from(input_path_string.as_str()))
+                .block(input_box_1_block)
+                .wrap(Wrap { trim: false });
             frame.render_widget(input_box_1, input_box_area_1[1]);
         }
         if let Some(input_path_name) = &start_state.input_path_name {
@@ -170,9 +172,12 @@ pub fn render_start(frame: &mut Frame, start_state: &mut StartState) {
         match start_state.focused_input_box {
             FocusedInputBox::InputBox1 => {
                 if let Some(input_path_string) = &start_state.input_path_string {
+                    // Account for wrapping: inner width is 58 (60 - 2 borders)
+                    let inner_width = 58usize;
+                    let len = input_path_string.len();
                     // +1 offset accounts for border width
-                    let x = input_box_area_1[1].x + input_path_string.len() as u16 + 1;
-                    let y = input_box_area_1[1].y + 1;
+                    let x = input_box_area_1[1].x + (len % inner_width) as u16 + 1;
+                    let y = input_box_area_1[1].y + (len / inner_width) as u16 + 1;
 
                     frame.set_cursor_position(Position::new(x, y));
                 }

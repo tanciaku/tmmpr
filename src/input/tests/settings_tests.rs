@@ -235,8 +235,8 @@ fn test_input_prompt_char_typing_max_length() {
     let mock_fs = MockFileSystem::new();
     let mut state = create_default_settings_state();
     state.input_prompt = true;
-    // Create a string that's exactly 46 characters long
-    let long_string = "a".repeat(46);
+    // Create a string that's exactly 114 characters long
+    let long_string = "a".repeat(114);
     state.settings.settings_mut().backups_path = Some(long_string.clone());
     
     let key_event = create_key_event(KeyCode::Char('x'));

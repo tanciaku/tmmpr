@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Path inputs now support longer paths (up to 114 chars) with text wrapping
+
 ## [0.1.1] - 2026-02-19
 
 ### Fixed
