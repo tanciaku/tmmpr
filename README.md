@@ -15,7 +15,7 @@ _A simple, lightweight mind mapping application that runs in your terminal_
 ![CI](https://github.com/tanciaku/tmmpr/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/tanciaku/tmmpr/branch/main/graph/badge.svg)](https://codecov.io/gh/tanciaku/tmmpr)
 
-> ⚠️ **Work in Progress** — This project is functional and usable, but actively being improved. Expect rough edges, incomplete features, and ongoing refactoring. Feedback and contributions are welcome!
+> ⚠️ **Development Pause** — I'll be taking a break from active development for personal reasons, likely for a couple of months. The project is functional in its current state — expect some rough edges, but it works well for its core purpose. I intend to resume development afterward and will address open issues and PRs at that time. Feedback and contributions are still welcome!
 
 [Installation](#-installation) • [Usage](#-usage) • [Features](#-features) • [Keybindings](#-keybindings) • [Status & Roadmap](#-project-status--roadmap)
 
@@ -237,6 +237,8 @@ You'll be greeted with a start screen where you can:
 ### Current State
 
 The application is fully functional for its core purpose - creating, organizing, and managing mind maps in the terminal. Most features work as intended.
+
+> 🛑 **Development Pause** — I'll be taking a break from active development for personal reasons, likely for a couple of months. The project is functional in its current state. I intend to resume development afterward and will address open issues and PRs at that time.
 
 ### 🚧 Known Limitations
 
