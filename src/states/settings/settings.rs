@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Local};
 use crate::states::{
     map::Side,
-    settings::{BackupsInterval, RuntimeBackupsInterval, cycle_side}
+    settings::{BackupsInterval, RuntimeBackupsInterval, cycle_side},
 };
+use chrono::{DateTime, Local};
+use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct Settings {
@@ -13,7 +13,7 @@ pub struct Settings {
     pub save_interval: Option<usize>,
     /// How often to create backups when loading a map file
     pub backups_interval: Option<BackupsInterval>,
-    pub backups_path: Option<String>, 
+    pub backups_path: Option<String>,
     /// Tracks last backup timestamp per map file path
     pub backup_dates: HashMap<String, DateTime<Local>>,
     /// How often to create backups during an active editing session
@@ -46,7 +46,7 @@ impl Settings {
             Some(30) => Some(60),
             Some(60) => None,
             _ => unreachable!(),
-        }; 
+        };
     }
 
     /// Cycles through backup intervals for map loading backups
@@ -66,8 +66,8 @@ impl Settings {
             Some(RuntimeBackupsInterval::Hourly) => Some(RuntimeBackupsInterval::Every2Hours),
             Some(RuntimeBackupsInterval::Every2Hours) => Some(RuntimeBackupsInterval::Every4Hours),
             Some(RuntimeBackupsInterval::Every4Hours) => Some(RuntimeBackupsInterval::Every6Hours),
-            Some(RuntimeBackupsInterval::Every6Hours) => Some(RuntimeBackupsInterval::Every12Hours), 
-            Some(RuntimeBackupsInterval::Every12Hours) => Some(RuntimeBackupsInterval::Hourly), 
+            Some(RuntimeBackupsInterval::Every6Hours) => Some(RuntimeBackupsInterval::Every12Hours),
+            Some(RuntimeBackupsInterval::Every12Hours) => Some(RuntimeBackupsInterval::Hourly),
             None => unreachable!(), // cannot cycle if runtime backups are disabled
         }
     }

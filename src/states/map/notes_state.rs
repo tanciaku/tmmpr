@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use ratatui::style::Color;
 use super::note::Note;
+use ratatui::style::Color;
+use std::collections::HashMap;
 
 #[derive(PartialEq, Debug)]
 pub struct NotesState {
@@ -58,15 +58,17 @@ impl NotesState {
 
     /// Panics if no note is currently selected
     pub fn expect_selected_note_id(&self) -> usize {
-        self.selected_note_id.expect("Bug: selected_note_id() called with no note selected")
+        self.selected_note_id
+            .expect("Bug: selected_note_id() called with no note selected")
     }
 
     /// Panics if no note is currently selected or if the selected note ID
     /// references a non-existent note.
     pub fn expect_selected_note(&self) -> &Note {
-        let selected_note_id = self.selected_note_id
+        let selected_note_id = self
+            .selected_note_id
             .expect("Bug: get_selected_note() called with no note selected");
-    
+
         self.notes
             .get(&selected_note_id)
             .expect("Bug: selected_note_id references non-existent note")
@@ -75,9 +77,10 @@ impl NotesState {
     /// Panics if no note is currently selected or if the selected note ID
     /// references a non-existent note.
     pub fn expect_selected_note_mut(&mut self) -> &mut Note {
-        let selected_note_id = self.selected_note_id
+        let selected_note_id = self
+            .selected_note_id
             .expect("Bug: get_selected_note_mut() called with no note selected");
-    
+
         self.notes
             .get_mut(&selected_note_id)
             .expect("Bug: selected_note_id references non-existent note")
@@ -91,7 +94,7 @@ impl NotesState {
         self.next_note_id_counter += 1;
         id
     }
- 
+
     /// Removes a note by ID and updates the render order
     pub fn remove(&mut self, id: usize) {
         self.notes.remove(&id);
@@ -99,7 +102,7 @@ impl NotesState {
         if let Some(pos) = self.render_order.iter().position(|&x| x == id) {
             self.render_order.remove(pos);
         }
-        
+
         self.selected_note_id = None;
     }
 
@@ -131,17 +134,19 @@ impl NotesState {
 
     /// Panics if no note is selected.
     pub fn deselect(&mut self) {
-        let _ = self.selected_note_id
+        let _ = self
+            .selected_note_id
             .take()
             .expect("Bug: deselect() called with no note selected");
     }
-    
+
     /// Finds the note closest to the given coordinates
     pub fn find_closest_note(&self, x: usize, y: usize) -> Option<usize> {
-        self.notes().iter()
+        self.notes()
+            .iter()
             .min_by_key(|(_, note)| {
-                let distance = (note.x as isize - x as isize).abs()
-                           + (note.y as isize - y as isize).abs();
+                let distance =
+                    (note.x as isize - x as isize).abs() + (note.y as isize - y as isize).abs();
                 distance as usize
             })
             .map(|(id, _)| *id)

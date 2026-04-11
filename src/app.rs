@@ -1,6 +1,6 @@
 //! Core application state and screen management.
 
-use crate::states::{StartState, MapState, SettingsState};
+use crate::states::{MapState, SettingsState, StartState};
 
 pub struct App {
     /// Set to `false` to exit the main loop.
@@ -11,7 +11,7 @@ pub struct App {
 impl App {
     pub fn new() -> App {
         App {
-            running: true, 
+            running: true,
             screen: Screen::Start(StartState::new()),
         }
     }
@@ -19,7 +19,6 @@ impl App {
     pub fn quit(&mut self) {
         self.running = false;
     }
-
 }
 
 /// Application screens. Each variant holds its own state to avoid

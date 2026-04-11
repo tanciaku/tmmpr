@@ -1,11 +1,13 @@
-use std::path::PathBuf;
 use ratatui::style::Color;
+use std::path::PathBuf;
 
 use crate::{
     input::map::vim::{
-        jump_back_a_word, jump_forward_a_word, switch_to_modal_insert_mode, switch_to_modal_normal_mode
+        jump_back_a_word, jump_forward_a_word, switch_to_modal_insert_mode,
+        switch_to_modal_normal_mode,
     },
-    states::{MapState, map::Mode}, utils::test_utils::MockFileSystem,
+    states::{MapState, map::Mode},
+    utils::test_utils::MockFileSystem,
 };
 
 fn create_test_map_state() -> MapState {
@@ -114,7 +116,9 @@ fn test_switch_to_modal_insert_mode_already_in_modal_insert() {
 #[test]
 fn test_jump_forward_a_word_empty_content() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from(""), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -127,7 +131,9 @@ fn test_jump_forward_a_word_empty_content() {
 #[test]
 fn test_jump_forward_a_word_simple_two_words() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -140,7 +146,9 @@ fn test_jump_forward_a_word_simple_two_words() {
 #[test]
 fn test_jump_forward_a_word_multiple_spaces() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello   world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello   world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -153,7 +161,9 @@ fn test_jump_forward_a_word_multiple_spaces() {
 #[test]
 fn test_jump_forward_a_word_with_newline() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello\nworld"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello\nworld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -166,7 +176,9 @@ fn test_jump_forward_a_word_with_newline() {
 #[test]
 fn test_jump_forward_a_word_no_more_words() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -180,7 +192,9 @@ fn test_jump_forward_a_word_no_more_words() {
 #[test]
 fn test_jump_forward_a_word_already_at_end() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(10); // At 'd', the last character
 
@@ -193,7 +207,9 @@ fn test_jump_forward_a_word_already_at_end() {
 #[test]
 fn test_jump_forward_a_word_multiple_jumps() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("the quick brown fox"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("the quick brown fox"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -213,7 +229,9 @@ fn test_jump_forward_a_word_multiple_jumps() {
 #[test]
 fn test_jump_forward_a_word_space_before_newline() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello \nworld"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello \nworld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -227,7 +245,9 @@ fn test_jump_forward_a_word_space_before_newline() {
 #[test]
 fn test_jump_forward_a_word_from_middle_of_word() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // At 'l' in "hello"
 
@@ -240,7 +260,9 @@ fn test_jump_forward_a_word_from_middle_of_word() {
 #[test]
 fn test_jump_forward_a_word_single_character_word() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("a b c"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("a b c"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -254,7 +276,12 @@ fn test_jump_forward_a_word_single_character_word() {
 #[test]
 fn test_jump_forward_a_word_multiline_text() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("first line\nsecond line\nthird"), Color::White);
+    map_state.notes_state.add(
+        10,
+        10,
+        String::from("first line\nsecond line\nthird"),
+        Color::White,
+    );
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -272,7 +299,9 @@ fn test_jump_forward_a_word_multiline_text() {
 #[test]
 fn test_jump_back_a_word_empty_content() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from(""), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -285,7 +314,9 @@ fn test_jump_back_a_word_empty_content() {
 #[test]
 fn test_jump_back_a_word_already_at_beginning() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -298,7 +329,9 @@ fn test_jump_back_a_word_already_at_beginning() {
 #[test]
 fn test_jump_back_a_word_simple_two_words() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // At 'w' in "world"
 
@@ -311,7 +344,9 @@ fn test_jump_back_a_word_simple_two_words() {
 #[test]
 fn test_jump_back_a_word_from_middle_of_word() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // At 'r' in "world"
 
@@ -324,7 +359,9 @@ fn test_jump_back_a_word_from_middle_of_word() {
 #[test]
 fn test_jump_back_a_word_from_end_of_word() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(10); // At 'd' in "world"
 
@@ -337,7 +374,9 @@ fn test_jump_back_a_word_from_end_of_word() {
 #[test]
 fn test_jump_back_a_word_multiple_spaces() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello   world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello   world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // At 'w' in "world"
 
@@ -350,7 +389,9 @@ fn test_jump_back_a_word_multiple_spaces() {
 #[test]
 fn test_jump_back_a_word_with_newline() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello\nworld"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello\nworld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // At 'w' in "world"
 
@@ -363,7 +404,9 @@ fn test_jump_back_a_word_with_newline() {
 #[test]
 fn test_jump_back_a_word_multiple_jumps() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("the quick brown fox"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("the quick brown fox"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(18); // At 'x' in "fox"
 
@@ -383,7 +426,9 @@ fn test_jump_back_a_word_multiple_jumps() {
 #[test]
 fn test_jump_back_a_word_from_space_between_words() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5); // At space between "hello" and "world"
 
@@ -396,7 +441,9 @@ fn test_jump_back_a_word_from_space_between_words() {
 #[test]
 fn test_jump_back_a_word_single_character_words() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("a b c"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("a b c"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(4); // At 'c'
 
@@ -410,7 +457,12 @@ fn test_jump_back_a_word_single_character_words() {
 #[test]
 fn test_jump_back_a_word_multiline_text() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("first line\nsecond line\nthird"), Color::White);
+    map_state.notes_state.add(
+        10,
+        10,
+        String::from("first line\nsecond line\nthird"),
+        Color::White,
+    );
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(27); // At 'd' in "third"
 
@@ -427,7 +479,9 @@ fn test_jump_back_a_word_multiline_text() {
 #[test]
 fn test_jump_back_a_word_whitespace_at_beginning() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("  hello world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("  hello world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // At 'w' in "world"
 
@@ -440,7 +494,9 @@ fn test_jump_back_a_word_whitespace_at_beginning() {
 #[test]
 fn test_jump_back_a_word_only_whitespace_before() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("   word"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("   word"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3); // At 'w'
 
@@ -453,7 +509,9 @@ fn test_jump_back_a_word_only_whitespace_before() {
 #[test]
 fn test_jump_back_a_word_mixed_whitespace() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello \n world"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello \n world"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // At 'w' in "world" (position 8)
 
@@ -470,7 +528,9 @@ fn test_jump_back_a_word_mixed_whitespace() {
 #[test]
 fn test_jump_forward_then_back() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world test"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world test"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
 
@@ -484,7 +544,9 @@ fn test_jump_forward_then_back() {
 #[test]
 fn test_jump_back_then_forward() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("hello world test"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("hello world test"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(12); // 't' in "test"
 
@@ -499,10 +561,10 @@ fn test_jump_back_then_forward() {
 fn test_navigation_through_complex_text() {
     let mut map_state = create_test_map_state();
     map_state.notes_state.add(
-        10, 
-        10, 
-        String::from("This is a\ntest of word\nnavigation functionality"), 
-        Color::White
+        10,
+        10,
+        String::from("This is a\ntest of word\nnavigation functionality"),
+        Color::White,
     );
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);

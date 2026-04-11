@@ -1,18 +1,14 @@
-use std::{io::stdout, path::PathBuf};
 use crossterm::{cursor::SetCursorStyle, execute};
 use ratatui::style::Color;
+use std::{io::stdout, path::PathBuf};
 
 use crate::{
     states::{
-        map::{
-            ConnectionsState, Mode, NotesState, PersistenceState,
-            UIState, ViewportState
-        },
+        map::{ConnectionsState, Mode, NotesState, PersistenceState, UIState, ViewportState},
         settings::{Settings, SettingsType, get_settings_with_fs},
     },
-    utils::{IoErrorKind, FileSystem, handle_runtime_backup, save_map_file}
+    utils::{FileSystem, IoErrorKind, handle_runtime_backup, save_map_file},
 };
-
 
 /// Core state for the map view where users create and edit notes and connections.
 ///
@@ -59,9 +55,11 @@ impl MapState {
 
         let (note_x, note_y) = self.viewport.center();
 
-        let id = self.notes_state.add(note_x, note_y, String::from(""), Color::White);
+        let id = self
+            .notes_state
+            .add(note_x, note_y, String::from(""), Color::White);
         self.notes_state.select(id);
-        
+
         self.switch_to_edit_mode();
     }
 
@@ -69,7 +67,7 @@ impl MapState {
     ///
     /// Block cursor provides visual feedback that modal editing is active (vim-style).
     pub fn switch_to_edit_mode(&mut self) {
-        if self.settings.edit_modal { 
+        if self.settings.edit_modal {
             let _ = execute!(stdout(), SetCursorStyle::SteadyBlock);
             self.mode = Mode::EditNormal;
         } else {
@@ -82,8 +80,11 @@ impl MapState {
     /// Uses Manhattan distance from viewport center to note top-left corner.
     pub fn select_note(&mut self) {
         let (screen_center_x, screen_center_y) = self.viewport.center();
-        
-        if let Some(id) = self.notes_state.find_closest_note(screen_center_x, screen_center_y) {
+
+        if let Some(id) = self
+            .notes_state
+            .find_closest_note(screen_center_x, screen_center_y)
+        {
             self.notes_state.select(id);
             self.mode = Mode::Visual;
         }
@@ -92,7 +93,7 @@ impl MapState {
     /// Handles periodic auto-save operations based on configured intervals.
     pub fn auto_save_if_needed(&mut self) {
         if let Some(interval) = self.settings.save_interval {
-            if self.persistence.should_save(interval) { 
+            if self.persistence.should_save(interval) {
                 let map_file_path = self.persistence.file_write_path.clone();
                 let _ = save_map_file(self, &map_file_path); // No notification for auto-save
                 self.persistence.reset_save_timer();

@@ -3,7 +3,7 @@ use ratatui::{
     layout::Position,
     prelude::Rect,
     style::Color,
-    widgets::{Block, Borders, Clear, Paragraph, BorderType},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph},
 };
 use unicode_width::UnicodeWidthStr;
 
@@ -26,7 +26,9 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
             let (note_width, note_height) = note.get_dimensions();
 
             // Convert canvas coordinates to screen space (can be negative if off-screen)
-            let (p_x, p_y) = map_state.viewport.to_screen_coords(note.x as isize, note.y as isize);
+            let (p_x, p_y) = map_state
+                .viewport
+                .to_screen_coords(note.x as isize, note.y as isize);
             let note_rect = SignedRect {
                 x: p_x,
                 y: p_y,
@@ -71,26 +73,26 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 }
 
                 let border_color = match map_state.notes_state.selected_note_id() {
-                    Some(selected_note_id) if selected_note_id == note_id => {
-                        match map_state.mode {
-                            Mode::Normal => unreachable!("Bug: cannot be in Normal Mode with a selected note"),
-                            Mode::Visual | Mode::VisualMove | Mode::VisualConnect => Color::Yellow,
-                            Mode::Edit | Mode::EditNormal | Mode::EditInsert  => Color::Blue,
-                            Mode::Delete => Color::Red,
+                    Some(selected_note_id) if selected_note_id == note_id => match map_state.mode {
+                        Mode::Normal => {
+                            unreachable!("Bug: cannot be in Normal Mode with a selected note")
                         }
-                    }
+                        Mode::Visual | Mode::VisualMove | Mode::VisualConnect => Color::Yellow,
+                        Mode::Edit | Mode::EditNormal | Mode::EditInsert => Color::Blue,
+                        Mode::Delete => Color::Red,
+                    },
                     _ => note.color,
                 };
 
                 let border_type = match map_state.notes_state.selected_note_id() {
-                    Some(selected_note_id) if selected_note_id == note_id => {
-                        match map_state.mode {
-                            Mode::Normal => unreachable!("Bug: cannot be in Normal Mode with a selected note"),
-                            Mode::Visual | Mode::VisualMove | Mode::VisualConnect => BorderType::Thick,
-                            Mode::Edit | Mode::EditNormal | Mode::EditInsert => BorderType::Double,
-                            Mode::Delete => BorderType::Rounded,
+                    Some(selected_note_id) if selected_note_id == note_id => match map_state.mode {
+                        Mode::Normal => {
+                            unreachable!("Bug: cannot be in Normal Mode with a selected note")
                         }
-                    }
+                        Mode::Visual | Mode::VisualMove | Mode::VisualConnect => BorderType::Thick,
+                        Mode::Edit | Mode::EditNormal | Mode::EditInsert => BorderType::Double,
+                        Mode::Delete => BorderType::Rounded,
+                    },
                     _ => BorderType::Plain,
                 };
 
@@ -108,36 +110,36 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 frame.render_widget(text_widget, note_area);
 
                 if let Some(selected_note) = &map_state.notes_state.selected_note_id() {
-                    if matches!(map_state.mode, Mode::Edit | Mode::EditNormal | Mode::EditInsert) && note_id == *selected_note {
-                        let text_before_cursor = &note.content[..map_state.notes_state.cursor_pos()];
+                    if matches!(
+                        map_state.mode,
+                        Mode::Edit | Mode::EditNormal | Mode::EditInsert
+                    ) && note_id == *selected_note
+                    {
+                        let text_before_cursor =
+                            &note.content[..map_state.notes_state.cursor_pos()];
 
                         let cursor_y_relative = text_before_cursor.matches('\n').count();
 
                         let cursor_x_relative = match text_before_cursor.rfind('\n') {
-                            Some(c) => {
-                                text_before_cursor[c+1..].width()
-                            }
-                            None => {
-                                text_before_cursor.width()
-                            }
+                            Some(c) => text_before_cursor[c + 1..].width(),
+                            None => text_before_cursor.width(),
                         };
 
                         // Only show cursor if it's within the scrolled visible area
                         // (note_area.height - 2) accounts for top and bottom borders
-                        if cursor_y_relative >= vertical_scroll as usize 
-                           && cursor_y_relative <= (note_area.height - 2) as usize {
-
-                            let final_cursor_x = note_area.x as usize
-                                + 1
-                                + cursor_x_relative
+                        if cursor_y_relative >= vertical_scroll as usize
+                            && cursor_y_relative <= (note_area.height - 2) as usize
+                        {
+                            let final_cursor_x = note_area.x as usize + 1 + cursor_x_relative
                                 - horizontal_scroll as usize;
 
-                            let final_cursor_y = note_area.y as usize
-                                + 1
-                                + cursor_y_relative
+                            let final_cursor_y = note_area.y as usize + 1 + cursor_y_relative
                                 - vertical_scroll as usize;
 
-                            frame.set_cursor_position(Position::new(final_cursor_x as u16, final_cursor_y as u16));
+                            frame.set_cursor_position(Position::new(
+                                final_cursor_x as u16,
+                                final_cursor_y as u16,
+                            ));
                         }
                     }
                 }
@@ -146,12 +148,30 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
                 // notes with higher z-index. Only done for visible notes as an optimization.
                 // NOTE: Multiple connections to the same side will redraw the character,
                 // but this has negligible performance impact
-                let connection_vec = map_state.connections_state.get_connections_for_note(note_id);
+                let connection_vec = map_state
+                    .connections_state
+                    .get_connections_for_note(note_id);
                 for connection in connection_vec {
                     if note_id == connection.from_id {
-                        draw_connecting_character(note, connection.from_id, connection.from_side, false, border_color, frame, map_state);
+                        draw_connecting_character(
+                            note,
+                            connection.from_id,
+                            connection.from_side,
+                            false,
+                            border_color,
+                            frame,
+                            map_state,
+                        );
                     } else {
-                        draw_connecting_character(note, connection.to_id.unwrap(), connection.to_side.unwrap(), false, border_color, frame, map_state);
+                        draw_connecting_character(
+                            note,
+                            connection.to_id.unwrap(),
+                            connection.to_side.unwrap(),
+                            false,
+                            border_color,
+                            frame,
+                            map_state,
+                        );
                     }
                 }
             }
@@ -160,13 +180,28 @@ pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
 
     // Highlight connection endpoints while user is creating a new connection
     if let Some(connection) = &map_state.connections_state.focused_connection {
-    
-        if let Some(start_note) = map_state.notes_state.notes().get(&connection.from_id){
-            draw_connecting_character(start_note, connection.from_id, connection.from_side, true, Color::Yellow, frame, map_state);
+        if let Some(start_note) = map_state.notes_state.notes().get(&connection.from_id) {
+            draw_connecting_character(
+                start_note,
+                connection.from_id,
+                connection.from_side,
+                true,
+                Color::Yellow,
+                frame,
+                map_state,
+            );
 
             if let Some(end_note_id) = connection.to_id {
                 if let Some(end_note) = map_state.notes_state.notes().get(&end_note_id) {
-                    draw_connecting_character(end_note, end_note_id, connection.to_side.unwrap(), true, Color::Yellow, frame, map_state);
+                    draw_connecting_character(
+                        end_note,
+                        end_note_id,
+                        connection.to_side.unwrap(),
+                        true,
+                        Color::Yellow,
+                        frame,
+                        map_state,
+                    );
                 }
             }
         }

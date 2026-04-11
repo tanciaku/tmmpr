@@ -1,9 +1,15 @@
-use std::path::PathBuf;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::Color;
+use std::path::PathBuf;
 
 use crate::{
-    app::Screen, input::{AppAction, map::normal::map_normal_kh}, states::{MapState, map::{DiscardMenuType, Mode}}, utils::test_utils::MockFileSystem
+    app::Screen,
+    input::{AppAction, map::normal::map_normal_kh},
+    states::{
+        MapState,
+        map::{DiscardMenuType, Mode},
+    },
+    utils::test_utils::MockFileSystem,
 };
 
 fn create_test_map_state() -> MapState {
@@ -47,7 +53,11 @@ fn test_toggle_help_screen_with_question_mark() {
     map_state.mode = Mode::Normal;
     map_state.ui_state.hide_help();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('?')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('?')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.ui_state.help_screen, Some(1));
@@ -75,7 +85,11 @@ fn test_close_help_screen_with_question_mark() {
     map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(1);
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('?')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('?')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.ui_state.help_screen, None);
@@ -117,7 +131,11 @@ fn test_help_next_page_with_l() {
     map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(2);
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('l')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('l')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.ui_state.help_screen, Some(3));
@@ -173,7 +191,11 @@ fn test_help_previous_page_with_h() {
     map_state.mode = Mode::Normal;
     map_state.ui_state.show_help(3);
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('h')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('h')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.ui_state.help_screen, Some(2));
@@ -204,7 +226,11 @@ fn test_help_screen_blocks_other_input() {
     map_state.viewport.view_pos.y = 10;
 
     // Try to move viewport - should be blocked by help screen
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('j')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('j')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     // Viewport should not have moved
@@ -237,7 +263,11 @@ fn test_discard_menu_confirm_to_start_screen() {
     map_state.mode = Mode::Normal;
     map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('q')),
+        &mock_fs,
+    );
 
     match result {
         AppAction::Switch(Screen::Start(_)) => {
@@ -253,9 +283,15 @@ fn test_discard_menu_confirm_to_settings_screen() {
     let mut map_state = create_test_map_state();
     map_state.mode = Mode::Normal;
     map_state.persistence.file_write_path = PathBuf::from("/test/map.json");
-    map_state.ui_state.show_discard_menu(DiscardMenuType::Settings);
+    map_state
+        .ui_state
+        .show_discard_menu(DiscardMenuType::Settings);
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('q')),
+        &mock_fs,
+    );
 
     match result {
         AppAction::Switch(Screen::Settings(_)) => {
@@ -275,14 +311,21 @@ fn test_discard_menu_blocks_other_input() {
     map_state.viewport.view_pos.y = 10;
 
     // Try to move viewport - should be blocked
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('j')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('j')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     // Viewport should not have moved
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 10);
     // Still showing discard menu
-    assert_eq!(map_state.ui_state.confirm_discard_menu, Some(DiscardMenuType::Start));
+    assert_eq!(
+        map_state.ui_state.confirm_discard_menu,
+        Some(DiscardMenuType::Start)
+    );
 }
 
 // ==================== EXIT/QUIT TESTS ====================
@@ -294,7 +337,11 @@ fn test_quit_when_can_exit_is_true() {
     map_state.mode = Mode::Normal;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('q')),
+        &mock_fs,
+    );
 
     match result {
         AppAction::Switch(Screen::Start(_)) => {
@@ -311,10 +358,17 @@ fn test_quit_when_can_exit_is_false_shows_discard_menu() {
     map_state.mode = Mode::Normal;
     map_state.persistence.mark_dirty();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('q')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('q')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.ui_state.confirm_discard_menu, Some(DiscardMenuType::Start));
+    assert_eq!(
+        map_state.ui_state.confirm_discard_menu,
+        Some(DiscardMenuType::Start)
+    );
     assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
@@ -327,7 +381,11 @@ fn test_save_map_file() {
     map_state.mode = Mode::Normal;
     map_state.persistence.file_write_path = PathBuf::from("/test/my_map.json");
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('s')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('s')),
+        &mock_fs,
+    );
 
     match result {
         AppAction::SaveMapFile(path) => {
@@ -347,7 +405,11 @@ fn test_open_settings_when_can_exit_is_true() {
     map_state.persistence.mark_clean();
     map_state.persistence.file_write_path = PathBuf::from("/test/map.json");
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('o')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('o')),
+        &mock_fs,
+    );
 
     match result {
         AppAction::Switch(Screen::Settings(_)) => {
@@ -364,10 +426,17 @@ fn test_open_settings_when_can_exit_is_false_shows_discard_menu() {
     map_state.mode = Mode::Normal;
     map_state.persistence.mark_dirty();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('o')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('o')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
-    assert_eq!(map_state.ui_state.confirm_discard_menu, Some(DiscardMenuType::Settings));
+    assert_eq!(
+        map_state.ui_state.confirm_discard_menu,
+        Some(DiscardMenuType::Settings)
+    );
     assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
 }
 
@@ -382,7 +451,11 @@ fn test_move_viewport_left_with_h() {
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('h')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('h')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 9);
@@ -413,7 +486,11 @@ fn test_move_viewport_left_saturates_at_zero() {
     map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.x = 0;
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('h')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('h')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 0); // Should not underflow
@@ -427,7 +504,11 @@ fn test_move_viewport_left_by_5_with_shift_h() {
     map_state.viewport.view_pos.x = 20;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('H')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('H')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 15);
@@ -442,7 +523,11 @@ fn test_move_viewport_left_by_5_with_shift_arrow() {
     map_state.viewport.view_pos.x = 20;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event_with_mods(KeyCode::Left, KeyModifiers::SHIFT), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event_with_mods(KeyCode::Left, KeyModifiers::SHIFT),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 15);
@@ -458,7 +543,11 @@ fn test_move_viewport_down_with_j() {
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('j')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('j')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 10);
@@ -489,7 +578,11 @@ fn test_move_viewport_down_by_5_with_shift_j() {
     map_state.viewport.view_pos.y = 20;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('J')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('J')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 25);
@@ -504,7 +597,11 @@ fn test_move_viewport_down_by_5_with_shift_arrow() {
     map_state.viewport.view_pos.y = 20;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event_with_mods(KeyCode::Down, KeyModifiers::SHIFT), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event_with_mods(KeyCode::Down, KeyModifiers::SHIFT),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 25);
@@ -520,7 +617,11 @@ fn test_move_viewport_up_with_k() {
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('k')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('k')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 10);
@@ -550,7 +651,11 @@ fn test_move_viewport_up_saturates_at_zero() {
     map_state.mode = Mode::Normal;
     map_state.viewport.view_pos.y = 0;
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('k')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('k')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 0); // Should not underflow
@@ -564,7 +669,11 @@ fn test_move_viewport_up_by_5_with_shift_k() {
     map_state.viewport.view_pos.y = 20;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('K')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('K')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 15);
@@ -579,7 +688,11 @@ fn test_move_viewport_up_by_5_with_shift_arrow() {
     map_state.viewport.view_pos.y = 20;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event_with_mods(KeyCode::Up, KeyModifiers::SHIFT), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event_with_mods(KeyCode::Up, KeyModifiers::SHIFT),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.y, 15);
@@ -595,7 +708,11 @@ fn test_move_viewport_right_with_l() {
     map_state.viewport.view_pos.y = 10;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('l')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('l')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 11);
@@ -626,7 +743,11 @@ fn test_move_viewport_right_by_5_with_shift_l() {
     map_state.viewport.view_pos.x = 20;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('L')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('L')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 25);
@@ -641,7 +762,11 @@ fn test_move_viewport_right_by_5_with_shift_arrow() {
     map_state.viewport.view_pos.x = 20;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event_with_mods(KeyCode::Right, KeyModifiers::SHIFT), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event_with_mods(KeyCode::Right, KeyModifiers::SHIFT),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.viewport.view_pos.x, 25);
@@ -661,33 +786,40 @@ fn test_add_note() {
     map_state.viewport.screen_height = 40;
     map_state.persistence.mark_clean();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('a')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('a')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
-    
+
     // Check that a note was added
     assert_eq!(map_state.notes_state.notes().len(), 1);
     assert!(map_state.notes_state.notes().contains_key(&0));
-    
+
     // Check note is at center of screen
     let note = &map_state.notes_state.notes()[&0];
-    assert_eq!(note.x, 100 + 80/2); // view_pos.x + screen_width/2 = 140
-    assert_eq!(note.y, 50 + 40/2);  // view_pos.y + screen_height/2 = 70
+    assert_eq!(note.x, 100 + 80 / 2); // view_pos.x + screen_width/2 = 140
+    assert_eq!(note.y, 50 + 40 / 2); // view_pos.y + screen_height/2 = 70
     assert_eq!(note.content, "");
     assert_eq!(note.color, Color::White);
-    
+
     // Check render order
     assert_eq!(*map_state.notes_state.render_order(), vec![0]);
-    
+
     // Check selected note
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
-    
+
     // Check mode switched to Edit
-    assert!(matches!(map_state.mode, Mode::Edit | Mode::EditNormal | Mode::EditInsert));
-    
+    assert!(matches!(
+        map_state.mode,
+        Mode::Edit | Mode::EditNormal | Mode::EditInsert
+    ));
+
     // Check can_exit is false
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    
+
     // Check next_note_id incremented
     assert_eq!(map_state.notes_state.next_note_id_counter(), 1);
 }
@@ -699,15 +831,27 @@ fn test_add_multiple_notes() {
     map_state.mode = Mode::Normal;
 
     // Add first note
-    let _result1 = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('a')), &mock_fs);
+    let _result1 = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('a')),
+        &mock_fs,
+    );
     map_state.mode = Mode::Normal; // Reset mode
-    
+
     // Add second note
-    let _result2 = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('a')), &mock_fs);
+    let _result2 = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('a')),
+        &mock_fs,
+    );
     map_state.mode = Mode::Normal; // Reset mode
-    
+
     // Add third note
-    let _result3 = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('a')), &mock_fs);
+    let _result3 = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('a')),
+        &mock_fs,
+    );
 
     assert_eq!(map_state.notes_state.notes().len(), 3);
     assert!(map_state.notes_state.notes().contains_key(&0));
@@ -724,7 +868,11 @@ fn test_select_note_with_no_notes() {
     let mut map_state = create_test_map_state();
     map_state.mode = Mode::Normal;
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('v')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note_id(), None);
@@ -736,13 +884,19 @@ fn test_select_note_with_single_note() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
     map_state.mode = Mode::Normal;
-    
+
     // Add a note
-    map_state.notes_state.add(50, 25, String::from("Test"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Test"), Color::White);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('v')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
@@ -759,14 +913,24 @@ fn test_select_closest_note_to_center() {
     map_state.viewport.view_pos.y = 0;
     map_state.viewport.screen_width = 100;
     map_state.viewport.screen_height = 50;
-    
+
     // Screen center is at (50, 25)
     // Add three notes at different distances from center
-    map_state.notes_state.add(10, 10, String::from("Far"), Color::White);     // Distance: 40 + 15 = 55
-    map_state.notes_state.add(45, 20, String::from("Close"), Color::White);   // Distance: 5 + 5 = 10
-    map_state.notes_state.add(80, 40, String::from("Medium"), Color::White);  // Distance: 30 + 15 = 45
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Far"), Color::White); // Distance: 40 + 15 = 55
+    map_state
+        .notes_state
+        .add(45, 20, String::from("Close"), Color::White); // Distance: 5 + 5 = 10
+    map_state
+        .notes_state
+        .add(80, 40, String::from("Medium"), Color::White); // Distance: 30 + 15 = 45
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('v')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(1)); // Note 1 is closest
@@ -779,19 +943,29 @@ fn test_select_note_updates_render_order() {
     let mock_fs = MockFileSystem::new();
     let mut map_state = create_test_map_state();
     map_state.mode = Mode::Normal;
-    
+
     // Add multiple notes
-    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
-    
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Note 0"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Note 1"), Color::White);
+    map_state
+        .notes_state
+        .add(80, 40, String::from("Note 2"), Color::White);
+
     // Set viewport so note 0 is closest to center
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
     map_state.viewport.screen_width = 20;
     map_state.viewport.screen_height = 20;
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('v')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('v')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
@@ -808,7 +982,11 @@ fn test_unhandled_keys_still_trigger_redraw() {
     map_state.mode = Mode::Normal;
     map_state.ui_state.mark_redrawn();
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('z')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('z')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.ui_state.needs_clear_and_redraw, true);
@@ -820,7 +998,11 @@ fn test_normal_mode_continues() {
     let mut map_state = create_test_map_state();
     map_state.mode = Mode::Normal;
 
-    let result = map_normal_kh(&mut map_state, create_key_event(KeyCode::Char('h')), &mock_fs);
+    let result = map_normal_kh(
+        &mut map_state,
+        create_key_event(KeyCode::Char('h')),
+        &mock_fs,
+    );
 
     assert_eq!(result, AppAction::Continue);
 }

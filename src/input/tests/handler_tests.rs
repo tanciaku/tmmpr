@@ -1,10 +1,11 @@
-use std::path::PathBuf;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, KeyEventKind};
+use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::style::Color;
+use std::path::PathBuf;
 
 use crate::{
     input::handler::{AppAction, map_kh},
-    states::{MapState, map::Mode}, utils::test_utils::MockFileSystem,
+    states::{MapState, map::Mode},
+    utils::test_utils::MockFileSystem,
 };
 
 fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
@@ -16,7 +17,7 @@ fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
 fn test_map_kh_normal_mode() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.mode = Mode::Normal;
-    
+
     // Create a test key event (we're testing the dispatch, not the actual handler)
     let key_event = KeyEvent {
         code: KeyCode::Char('j'),
@@ -24,17 +25,20 @@ fn test_map_kh_normal_mode() {
         kind: KeyEventKind::Press,
         state: crossterm::event::KeyEventState::NONE,
     };
-    
+
     // The actual behavior depends on map_normal_kh implementation
     // Here we're just testing that the function dispatches correctly without panicking
     let result = map_kh(&mut map_state, key_event);
-    
+
     // We can't predict the exact result since it depends on the map_normal_kh implementation
     // But we can ensure the function executes without panicking
     match result {
-        AppAction::Continue | AppAction::Quit | AppAction::Switch(_) | 
-        AppAction::CreateMapFile(_) | AppAction::SaveMapFile(_) | 
-        AppAction::LoadMapFile(_) => {
+        AppAction::Continue
+        | AppAction::Quit
+        | AppAction::Switch(_)
+        | AppAction::CreateMapFile(_)
+        | AppAction::SaveMapFile(_)
+        | AppAction::LoadMapFile(_) => {
             // Any of these are valid responses
             assert!(true);
         }
@@ -45,21 +49,24 @@ fn test_map_kh_normal_mode() {
 fn test_map_kh_visual_mode() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.mode = Mode::Visual;
-    
+
     let key_event = KeyEvent {
         code: KeyCode::Char('v'),
         modifiers: KeyModifiers::NONE,
         kind: KeyEventKind::Press,
         state: crossterm::event::KeyEventState::NONE,
     };
-    
+
     let result = map_kh(&mut map_state, key_event);
-    
+
     // Test that the function executes without panicking
     match result {
-        AppAction::Continue | AppAction::Quit | AppAction::Switch(_) | 
-        AppAction::CreateMapFile(_) | AppAction::SaveMapFile(_) | 
-        AppAction::LoadMapFile(_) => {
+        AppAction::Continue
+        | AppAction::Quit
+        | AppAction::Switch(_)
+        | AppAction::CreateMapFile(_)
+        | AppAction::SaveMapFile(_)
+        | AppAction::LoadMapFile(_) => {
             assert!(true);
         }
     }
@@ -68,7 +75,9 @@ fn test_map_kh_visual_mode() {
 #[test]
 fn test_map_kh_edit_mode_non_modal() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.mode = Mode::Edit;
 
@@ -83,9 +92,12 @@ fn test_map_kh_edit_mode_non_modal() {
 
     // Test that the function executes without panicking
     match result {
-        AppAction::Continue | AppAction::Quit | AppAction::Switch(_) | 
-        AppAction::CreateMapFile(_) | AppAction::SaveMapFile(_) | 
-        AppAction::LoadMapFile(_) => {
+        AppAction::Continue
+        | AppAction::Quit
+        | AppAction::Switch(_)
+        | AppAction::CreateMapFile(_)
+        | AppAction::SaveMapFile(_)
+        | AppAction::LoadMapFile(_) => {
             assert!(true);
         }
     }
@@ -106,9 +118,12 @@ fn test_map_kh_edit_mode_modal_normal() {
     let result = map_kh(&mut map_state, key_event);
 
     match result {
-        AppAction::Continue | AppAction::Quit | AppAction::Switch(_) | 
-        AppAction::CreateMapFile(_) | AppAction::SaveMapFile(_) | 
-        AppAction::LoadMapFile(_) => {
+        AppAction::Continue
+        | AppAction::Quit
+        | AppAction::Switch(_)
+        | AppAction::CreateMapFile(_)
+        | AppAction::SaveMapFile(_)
+        | AppAction::LoadMapFile(_) => {
             assert!(true);
         }
     }
@@ -117,7 +132,9 @@ fn test_map_kh_edit_mode_modal_normal() {
 #[test]
 fn test_map_kh_edit_mode_modal_insert() {
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
-    map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.mode = Mode::EditInsert;
 
@@ -131,9 +148,12 @@ fn test_map_kh_edit_mode_modal_insert() {
     let result = map_kh(&mut map_state, key_event);
 
     match result {
-        AppAction::Continue | AppAction::Quit | AppAction::Switch(_) | 
-        AppAction::CreateMapFile(_) | AppAction::SaveMapFile(_) | 
-        AppAction::LoadMapFile(_) => {
+        AppAction::Continue
+        | AppAction::Quit
+        | AppAction::Switch(_)
+        | AppAction::CreateMapFile(_)
+        | AppAction::SaveMapFile(_)
+        | AppAction::LoadMapFile(_) => {
             assert!(true);
         }
     }
@@ -154,9 +174,12 @@ fn test_map_kh_delete_mode() {
     let result = map_kh(&mut map_state, key_event);
 
     match result {
-        AppAction::Continue | AppAction::Quit | AppAction::Switch(_) | 
-        AppAction::CreateMapFile(_) | AppAction::SaveMapFile(_) | 
-        AppAction::LoadMapFile(_) => {
+        AppAction::Continue
+        | AppAction::Quit
+        | AppAction::Switch(_)
+        | AppAction::CreateMapFile(_)
+        | AppAction::SaveMapFile(_)
+        | AppAction::LoadMapFile(_) => {
             assert!(true);
         }
     }
@@ -223,7 +246,7 @@ fn test_mode_switching_behavior() {
     // Test that we can create different mode combinations for testing
     let modes = vec![
         Mode::Normal,
-        Mode::Visual, 
+        Mode::Visual,
         Mode::VisualMove,
         Mode::VisualConnect,
         Mode::Edit,
@@ -236,7 +259,9 @@ fn test_mode_switching_behavior() {
         let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
 
         // For when testing Edit Mode
-        map_state.notes_state.add(10, 10, String::from("Test Note"), Color::White);
+        map_state
+            .notes_state
+            .add(10, 10, String::from("Test Note"), Color::White);
         map_state.notes_state.select(0);
 
         map_state.mode = mode;
@@ -272,7 +297,14 @@ fn test_map_kh_maintains_state_integrity() {
     // The mode might change depending on the key, but the state should remain valid
     // We're testing that the function doesn't leave the state in an invalid condition
     match map_state.mode {
-        Mode::Normal | Mode::Visual | Mode::VisualMove | Mode::VisualConnect | Mode::Edit | Mode::EditNormal | Mode::EditInsert | Mode::Delete => {
+        Mode::Normal
+        | Mode::Visual
+        | Mode::VisualMove
+        | Mode::VisualConnect
+        | Mode::Edit
+        | Mode::EditNormal
+        | Mode::EditInsert
+        | Mode::Delete => {
             // All valid modes
             assert!(true);
         }

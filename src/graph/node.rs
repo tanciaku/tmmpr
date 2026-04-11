@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 /// A node in a graph with position and arbitrary data.
-/// 
+///
 /// # Coordinates
 /// This library uses `usize` for coordinates, representing positions in a positive coordinate space.
-/// 
+///
 /// # Type Parameters
 /// * `T` - The type of data stored in this node
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]

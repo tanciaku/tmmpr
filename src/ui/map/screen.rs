@@ -1,11 +1,8 @@
-use ratatui::{
-    Frame,
-    widgets::Clear,
-};
+use ratatui::{Frame, widgets::Clear};
 
 use crate::{
     states::MapState,
-    ui::{render_bar, render_connections, render_map_help_page, render_notes}
+    ui::{render_bar, render_connections, render_map_help_page, render_notes},
 };
 
 pub fn render_map(frame: &mut Frame, map_state: &mut MapState) {

@@ -2,12 +2,12 @@
 //! to control the application's state and behavior.
 
 mod handler;
-mod start;
-mod settings; 
 mod map;
+mod settings;
+mod start;
 #[cfg(test)]
 mod tests;
 
-pub use start::start_kh;
+pub use handler::{AppAction, handle_events};
 pub use settings::settings_kh;
-pub use handler::{handle_events, AppAction};
+pub use start::start_kh;

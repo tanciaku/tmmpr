@@ -3,8 +3,10 @@ use std::io::stdout;
 use crossterm::{cursor::SetCursorStyle, execute};
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::states::{MapState, map::{Mode, NotesState}};
-
+use crate::states::{
+    MapState,
+    map::{Mode, NotesState},
+};
 
 pub fn switch_to_modal_normal_mode(map_state: &mut MapState) {
     let _ = execute!(stdout(), SetCursorStyle::SteadyBlock);
@@ -20,7 +22,8 @@ pub fn switch_to_modal_insert_mode(map_state: &mut MapState) {
 pub fn cursor_pos_end(notes_state: &mut NotesState) {
     let note = notes_state.expect_selected_note();
 
-    let last_grapheme_pos = note.content
+    let last_grapheme_pos = note
+        .content
         .grapheme_indices(true)
         .last()
         .map(|(idx, _)| idx)
@@ -34,7 +37,8 @@ pub fn move_cursor_right_norm(notes_state: &mut NotesState) {
     let note = notes_state.expect_selected_note();
     let cursor_pos = notes_state.cursor_pos();
 
-    let last_grapheme_pos = note.content
+    let last_grapheme_pos = note
+        .content
         .grapheme_indices(true)
         .last()
         .map(|(idx, _)| idx)
@@ -111,7 +115,8 @@ pub fn jump_forward_a_word(notes_state: &mut NotesState) {
     }
 
     // No next word found; clamp to last grapheme.
-    let last = note.content
+    let last = note
+        .content
         .grapheme_indices(true)
         .last()
         .map(|(i, _)| i)
@@ -130,7 +135,7 @@ pub fn jump_forward_a_word(notes_state: &mut NotesState) {
 pub fn jump_back_a_word(notes_state: &mut NotesState) {
     let note = notes_state.expect_selected_note();
     let cursor_pos = notes_state.cursor_pos();
-    
+
     if note.content.is_empty() || cursor_pos == 0 {
         return;
     }
@@ -154,7 +159,7 @@ pub fn jump_back_a_word(notes_state: &mut NotesState) {
 fn find_current_word_start(note: &crate::states::map::Note, cursor_pos: usize) -> usize {
     let text_before_cursor = &note.content[..cursor_pos];
     let last_delimiter_pos = text_before_cursor.rfind(|c: char| c == ' ' || c == '\n');
-    
+
     match last_delimiter_pos {
         Some(pos) => pos + 1,
         None => 0,
@@ -171,7 +176,9 @@ fn find_previous_word_start(note: &crate::states::map::Note, cursor_pos: usize) 
 
     // Skip backward over whitespace to find where the previous word ends.
     let text_before = &note.content[..cursor_pos];
-    let word_end = text_before.trim_end_matches(|c: char| c == ' ' || c == '\n').len();
+    let word_end = text_before
+        .trim_end_matches(|c: char| c == ' ' || c == '\n')
+        .len();
 
     if word_end == 0 {
         return 0;
@@ -208,7 +215,8 @@ pub fn remove_char(map_state: &mut MapState) {
     let new_cursor_pos = if note.content.is_empty() {
         0
     } else {
-        let last_grapheme_start = note.content
+        let last_grapheme_start = note
+            .content
             .grapheme_indices(true)
             .last()
             .map(|(idx, _)| idx)

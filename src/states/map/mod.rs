@@ -1,21 +1,21 @@
-mod state;
-mod note;
-mod geometry;
-mod enums;
-mod viewport;
-mod notes_state;
 mod connections_state;
+mod enums;
+mod geometry;
+mod note;
+mod notes_state;
 mod persistence;
-mod ui_state;
+mod state;
 #[cfg(test)]
 mod tests;
+mod ui_state;
+mod viewport;
 
-pub use state::*;
-pub use note::*;
-pub use geometry::*;
-pub use enums::*;
-pub use viewport::*;
-pub use notes_state::*;
 pub use connections_state::*;
+pub use enums::*;
+pub use geometry::*;
+pub use note::*;
+pub use notes_state::*;
 pub use persistence::*;
+pub use state::*;
 pub use ui_state::*;
+pub use viewport::*;

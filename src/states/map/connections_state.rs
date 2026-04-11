@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use ratatui::style::Color;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use super::enums::Side;
 
@@ -21,11 +21,11 @@ pub struct Connection {
     pub color: Color,
 }
 /// Manages the bidirectional relationship between connections and notes.
-/// 
+///
 /// Maintains two synchronized data structures:
 /// - `connections`: The authoritative list of all connections
 /// - `connection_index`: Fast lookup from note ID to connection indices
-/// 
+///
 /// This encapsulation ensures the index is always consistent with the connections vector.
 #[derive(PartialEq, Debug)]
 struct ConnectionManager {
@@ -42,13 +42,14 @@ impl ConnectionManager {
             connection_index: HashMap::new(),
         }
     }
-    
+
     /// Creates a manager from existing data, rebuilding the index.
     /// Used when loading from disk.
     fn from_connections(connections: Vec<Connection>) -> Self {
         let mut manager = Self::new();
         for connection in connections {
-            if connection.to_id.is_some() { // Validate
+            if connection.to_id.is_some() {
+                // Validate
                 manager.add(connection);
             }
         }
@@ -59,19 +60,23 @@ impl ConnectionManager {
     /// Returns the index where the connection was added.
     fn add(&mut self, connection: Connection) -> usize {
         let index = self.connections.len();
-        
+
         self.connections.push(connection);
-        
+
         self.connection_index
             .entry(connection.from_id)
             .or_default()
             .push(index);
-        
+
         self.connection_index
-            .entry(connection.to_id.expect("connections should always have an endpoint"))
+            .entry(
+                connection
+                    .to_id
+                    .expect("connections should always have an endpoint"),
+            )
             .or_default()
             .push(index);
-        
+
         index
     }
 
@@ -79,13 +84,13 @@ impl ConnectionManager {
     /// This is O(n) because we must fix indices after removal.
     fn remove(&mut self, index: usize) -> Connection {
         let connection = self.connections.remove(index);
-        
+
         for indices in self.connection_index.values_mut() {
             if let Some(pos) = indices.iter().position(|&i| i == index) {
                 indices.remove(pos);
             }
         }
-        
+
         for indices in self.connection_index.values_mut() {
             for idx in indices.iter_mut() {
                 if *idx > index {
@@ -93,7 +98,7 @@ impl ConnectionManager {
                 }
             }
         }
-        
+
         connection
     }
 
@@ -102,12 +107,12 @@ impl ConnectionManager {
     fn remove_all_for_note(&mut self, note_id: usize) -> usize {
         // Get all indices to remove (make a copy because we'll be mutating)
         let indices_to_remove: Vec<usize> = self.get_indices_for_note(note_id).to_vec();
-        
+
         // Remove in reverse order so indices stay valid during iteration
         for &index in indices_to_remove.iter().rev() {
             self.remove(index);
         }
-        
+
         indices_to_remove.len()
     }
 
@@ -169,7 +174,7 @@ impl ConnectionsState {
     pub fn connection_index(&self) -> &HashMap<usize, Vec<usize>> {
         self.manager.connection_index()
     }
-    
+
     // For deserialization
     pub fn from_connections(connections: Vec<Connection>) -> Self {
         Self {
@@ -205,7 +210,7 @@ impl ConnectionsState {
     pub fn remove_all_for_note(&mut self, note_id: usize) -> usize {
         self.manager.remove_all_for_note(note_id)
     }
-    
+
     pub fn remove_note(&mut self, note_id: usize) {
         self.manager.remove_note(note_id);
     }

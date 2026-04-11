@@ -1,9 +1,7 @@
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use serde::{Serialize, Deserialize};
 
-use crate::{
-    utils::{IoErrorKind, read_json_data, write_json_data, filesystem::FileSystem},
-};
+use crate::utils::{IoErrorKind, filesystem::FileSystem, read_json_data, write_json_data};
 
 /// Stores up to 3 most recently opened map files.
 /// Uses PathBuf for owned data that persists across the application lifecycle.
@@ -16,7 +14,7 @@ pub struct RecentPaths {
 
 impl RecentPaths {
     pub fn new() -> RecentPaths {
-        RecentPaths { 
+        RecentPaths {
             recent_path_1: None,
             recent_path_2: None,
             recent_path_3: None,
@@ -32,13 +30,13 @@ impl RecentPaths {
     }
 
     pub fn contains_path(&self, path: &Path) -> bool {
-        self.recent_path_1.as_deref() == Some(path) ||
-        self.recent_path_2.as_deref() == Some(path) ||
-        self.recent_path_3.as_deref() == Some(path)
+        self.recent_path_1.as_deref() == Some(path)
+            || self.recent_path_2.as_deref() == Some(path)
+            || self.recent_path_3.as_deref() == Some(path)
     }
 
     /// Persists recent paths to `~/.config/tmmpr/recent_paths.json`.
-    /// 
+    ///
     /// Errors are silently ignored: this function is only called after successful
     /// initialization by `get_recent_paths_with_fs`, which ensures the config directory
     /// exists and is writable. If saving fails, recent paths simply won't persist.
@@ -48,7 +46,9 @@ impl RecentPaths {
             None => return,
         };
 
-        let recent_paths_file_path = home_path.join(".config/tmmpr/recent_paths").with_extension("json");
+        let recent_paths_file_path = home_path
+            .join(".config/tmmpr/recent_paths")
+            .with_extension("json");
 
         let _ = write_json_data(&recent_paths_file_path, &self);
     }
@@ -56,7 +56,7 @@ impl RecentPaths {
 
 /// Loads recent paths from `~/.config/tmmpr/recent_paths.json`, creating an empty file
 /// if it doesn't exist.
-/// 
+///
 /// Returns an error if the config directory cannot be created or accessed, which disables
 /// recent paths functionality for the session. Uses FileSystem abstraction for testability.
 pub fn get_recent_paths_with_fs(fs: &dyn FileSystem) -> Result<RecentPaths, IoErrorKind> {
@@ -68,7 +68,7 @@ pub fn get_recent_paths_with_fs(fs: &dyn FileSystem) -> Result<RecentPaths, IoEr
     let config_dir_path = home_path.join(".config/tmmpr/");
 
     if let Err(_) = fs.create_dir_all(&config_dir_path) {
-        return Err(IoErrorKind::DirCreate)
+        return Err(IoErrorKind::DirCreate);
     };
 
     let recent_paths_file_path = config_dir_path.join("recent_paths").with_extension("json");

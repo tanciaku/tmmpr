@@ -1,9 +1,10 @@
-use std::path::PathBuf;
 use crate::{
     input::AppAction,
-    states::start::{FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths_with_fs}, utils::{FileSystem, RealFileSystem},
-    utils::IoErrorKind
+    states::start::{FocusedInputBox, RecentPaths, SelectedStartButton, get_recent_paths_with_fs},
+    utils::IoErrorKind,
+    utils::{FileSystem, RealFileSystem},
 };
+use std::path::PathBuf;
 
 #[derive(PartialEq, Debug)]
 pub struct StartState {
@@ -36,7 +37,7 @@ impl StartState {
             recent_paths: get_recent_paths_with_fs(fs),
         }
     }
-    
+
     pub fn clear_and_redraw(&mut self) {
         self.needs_clear_and_redraw = true;
     }
@@ -48,7 +49,7 @@ impl StartState {
             _ => {}
         }
     }
-    
+
     fn button_list_go_up(&mut self) {
         self.selected_button = match self.selected_button {
             SelectedStartButton::CreateSelect => SelectedStartButton::CreateSelect,
@@ -68,7 +69,7 @@ impl StartState {
     }
 
     /// Handles path submission from either recent files or manual input.
-    /// 
+    ///
     /// For recent paths: validates existence before loading.
     /// For manual input: constructs full path from home dir + user input (e.g. maps/map_0),
     /// creates necessary directories, then loads or creates the map file.
@@ -96,7 +97,7 @@ impl StartState {
                     Some(path) => path,
                     None => {
                         self.handle_submit_error(IoErrorKind::DirFind);
-                        return AppAction::Continue
+                        return AppAction::Continue;
                     }
                 };
 
@@ -104,7 +105,7 @@ impl StartState {
 
                 if let Err(_) = fs.create_dir_all(&map_path) {
                     self.handle_submit_error(IoErrorKind::DirCreate);
-                    return AppAction::Continue
+                    return AppAction::Continue;
                 };
 
                 let map_file_path = map_path.join(name).with_extension("json");
@@ -117,7 +118,7 @@ impl StartState {
             }
         }
     }
-    
+
     /// Resets input fields and displays an error message when path submission fails
     pub fn handle_submit_error(&mut self, err_msg: IoErrorKind) {
         self.input_path_string = Some(String::new());

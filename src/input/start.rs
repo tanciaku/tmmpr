@@ -1,13 +1,18 @@
 //! Start screen input handling
 
-use crate::{input::AppAction, states::{StartState, start::{FocusedInputBox, SelectedStartButton}}, utils::FileSystem};
+use crate::{
+    input::AppAction,
+    states::{
+        StartState,
+        start::{FocusedInputBox, SelectedStartButton},
+    },
+    utils::FileSystem,
+};
 use crossterm::event::{KeyCode, KeyEvent};
-
 
 pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSystem) -> AppAction {
     // Input mode has different keybindings - handle separately from start menu navigation
     if start_state.input_path {
-
         match key.code {
             KeyCode::Esc => {
                 start_state.input_path = false;
@@ -52,7 +57,7 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
                         }
                         KeyCode::Enter => {
                             start_state.clear_and_redraw();
-                            return start_state.submit_path_with_fs(None, fs)
+                            return start_state.submit_path_with_fs(None, fs);
                         }
                         _ => {}
                     }
@@ -61,11 +66,10 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
         }
 
         start_state.clear_and_redraw();
-        return AppAction::Continue
+        return AppAction::Continue;
     }
 
     match key.code {
-
         KeyCode::Char('q') => return AppAction::Quit,
 
         KeyCode::Char('k') => start_state.navigate_start_buttons("k"),
@@ -74,17 +78,15 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
         KeyCode::Char('j') => start_state.navigate_start_buttons("j"),
         KeyCode::Down => start_state.navigate_start_buttons("Down"),
 
-        KeyCode::Enter => {
-            match start_state.selected_button {
-                SelectedStartButton::CreateSelect => {
-                    start_state.input_path = true;
-                    start_state.display_err_msg = None;
-                    start_state.input_path_string = Some(String::new());
-                    start_state.input_path_name = Some(String::new());
-                }
-                _ => {}
+        KeyCode::Enter => match start_state.selected_button {
+            SelectedStartButton::CreateSelect => {
+                start_state.input_path = true;
+                start_state.display_err_msg = None;
+                start_state.input_path_string = Some(String::new());
+                start_state.input_path_name = Some(String::new());
             }
-        }
+            _ => {}
+        },
 
         _ => {}
     }
@@ -92,30 +94,28 @@ pub fn start_kh(start_state: &mut StartState, key: KeyEvent, fs: &impl FileSyste
     // Recent paths may not be available if there were errors loading them
     if let Ok(recent_paths) = &start_state.recent_paths {
         match key.code {
-            KeyCode::Enter => {
-                match start_state.selected_button {
-                    SelectedStartButton::Recent1 => {
-                        if let Some(path) = &recent_paths.recent_path_1 {
-                            return start_state.submit_path_with_fs(Some(path.to_path_buf()), fs)
-                        }
+            KeyCode::Enter => match start_state.selected_button {
+                SelectedStartButton::Recent1 => {
+                    if let Some(path) = &recent_paths.recent_path_1 {
+                        return start_state.submit_path_with_fs(Some(path.to_path_buf()), fs);
                     }
-                    SelectedStartButton::Recent2 => {
-                        if let Some(path) = &recent_paths.recent_path_2 {
-                            return start_state.submit_path_with_fs(Some(path.to_path_buf()), fs)
-                        }
-                    }
-                    SelectedStartButton::Recent3 => {
-                        if let Some(path) = &recent_paths.recent_path_3 {
-                            return start_state.submit_path_with_fs(Some(path.to_path_buf()), fs)
-                        }
-                    }
-                    _ => {}
                 }
-            }
+                SelectedStartButton::Recent2 => {
+                    if let Some(path) = &recent_paths.recent_path_2 {
+                        return start_state.submit_path_with_fs(Some(path.to_path_buf()), fs);
+                    }
+                }
+                SelectedStartButton::Recent3 => {
+                    if let Some(path) = &recent_paths.recent_path_3 {
+                        return start_state.submit_path_with_fs(Some(path.to_path_buf()), fs);
+                    }
+                }
+                _ => {}
+            },
             _ => {}
         }
     }
-    
+
     start_state.clear_and_redraw();
     AppAction::Continue
 }

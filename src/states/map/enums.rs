@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents the application's current input mode, similar to Vim.
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -39,5 +39,5 @@ pub enum Notification {
 #[derive(PartialEq, Debug)]
 pub enum DiscardMenuType {
     Start,
-    Settings
+    Settings,
 }

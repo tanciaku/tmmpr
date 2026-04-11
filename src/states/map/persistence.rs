@@ -1,4 +1,7 @@
-use std::{path::PathBuf, time::{Duration, Instant}};
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use crate::utils::get_duration_rt;
 
@@ -35,10 +38,14 @@ impl PersistenceState {
 
     /// Only auto-saves if there are unsaved changes AND the interval has elapsed
     pub fn should_save(&self, interval_seconds: usize) -> bool {
-        self.has_unsaved_changes && self.last_save.elapsed() > Duration::from_secs(interval_seconds as u64)
+        self.has_unsaved_changes
+            && self.last_save.elapsed() > Duration::from_secs(interval_seconds as u64)
     }
 
-    pub fn should_backup(&self, interval: &crate::states::settings::RuntimeBackupsInterval) -> bool {
+    pub fn should_backup(
+        &self,
+        interval: &crate::states::settings::RuntimeBackupsInterval,
+    ) -> bool {
         self.runtime_backup_timestamp.elapsed() > get_duration_rt(interval)
     }
 

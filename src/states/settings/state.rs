@@ -2,10 +2,10 @@ use std::path::PathBuf;
 
 use crate::{
     states::settings::{
-        BackupsErr, BackupsInterval, DiscardExitTo, RuntimeBackupsInterval,
-        SelectedToggle, SettingsNotification, SettingsType, get_settings_with_fs
+        BackupsErr, BackupsInterval, DiscardExitTo, RuntimeBackupsInterval, SelectedToggle,
+        SettingsNotification, SettingsType, get_settings_with_fs,
     },
-    utils::{FileSystem, RealFileSystem}
+    utils::{FileSystem, RealFileSystem},
 };
 
 /// Resolves backup path to absolute path.
@@ -14,16 +14,14 @@ pub fn resolve_backup_path<F: FileSystem>(input_path: &str, fs: &F) -> Result<Pa
     if input_path.starts_with('/') {
         Ok(PathBuf::from(input_path))
     } else {
-        let home_path = fs.get_home_dir()
-            .ok_or(BackupsErr::DirFind)?;
+        let home_path = fs.get_home_dir().ok_or(BackupsErr::DirFind)?;
         Ok(home_path.join(input_path))
     }
 }
 
 /// Validates backup directory by attempting to create it and write to it.
 pub fn validate_backup_directory<F: FileSystem>(path: &PathBuf, fs: &F) -> Result<(), BackupsErr> {
-    fs.create_dir_all(path)
-        .map_err(|_| BackupsErr::DirCreate)?;
+    fs.create_dir_all(path).map_err(|_| BackupsErr::DirCreate)?;
 
     fs.test_write_to_dir(path)
         .map_err(|_| BackupsErr::FileWrite)?;
@@ -121,7 +119,8 @@ impl SettingsState {
 
         // Store absolute path for consistency
         if !input_dir_path.starts_with('/') {
-            self.settings.settings_mut().backups_path = Some(backups_dir.to_string_lossy().to_string());
+            self.settings.settings_mut().backups_path =
+                Some(backups_dir.to_string_lossy().to_string());
         }
 
         if let Err(err) = validate_backup_directory(&backups_dir, fs) {
@@ -131,7 +130,8 @@ impl SettingsState {
 
         // Initialize backup intervals with sensible defaults
         self.settings.settings_mut().backups_interval = Some(BackupsInterval::Daily);
-        self.settings.settings_mut().runtime_backups_interval = Some(RuntimeBackupsInterval::Every2Hours);
+        self.settings.settings_mut().runtime_backups_interval =
+            Some(RuntimeBackupsInterval::Every2Hours);
 
         self.input_prompt_err = None;
         self.input_prompt = false;

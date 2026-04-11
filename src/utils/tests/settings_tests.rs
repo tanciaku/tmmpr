@@ -1,10 +1,7 @@
-use tempfile::TempDir;
 use std::fs;
+use tempfile::TempDir;
 
-use crate::{
-    states::settings::Settings,
-    utils::settings::save_settings_to_path,
-};
+use crate::{states::settings::Settings, utils::settings::save_settings_to_path};
 
 #[test]
 fn test_save_settings_to_path_creates_file_with_correct_content() {
@@ -26,7 +23,7 @@ fn test_save_settings_to_path_creates_file_with_correct_content() {
 
     // Read and verify the content
     let content = fs::read_to_string(&settings_path).unwrap();
-    
+
     // Verify it's valid JSON and contains expected fields
     assert!(content.contains("save_interval"));
     assert!(content.contains("backups_interval"));
@@ -59,11 +56,12 @@ fn test_save_settings_to_path_overwrites_existing_file() {
 #[test]
 fn test_save_settings_to_path_fails_with_invalid_path() {
     let settings = Settings::new();
-    
+
     // Try to write to a path that doesn't exist and can't be created
     // (parent directory doesn't exist)
-    let invalid_path = std::path::Path::new("/nonexistent/directory/that/does/not/exist/settings.json");
-    
+    let invalid_path =
+        std::path::Path::new("/nonexistent/directory/that/does/not/exist/settings.json");
+
     let result = save_settings_to_path(&settings, invalid_path);
 
     // Verify the operation failed
