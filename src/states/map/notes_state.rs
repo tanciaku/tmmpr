@@ -3,8 +3,6 @@ use ratatui::style::Color;
 use std::collections::HashMap;
 
 use super::note::Note;
-use ratatui::style::Color;
-use std::collections::HashMap;
 
 #[derive(PartialEq, Debug)]
 pub struct NotesState {

@@ -1,5 +1,4 @@
 use super::super::enums::Side;
-use super::super::note::Note;
 use ratatui::style::Color;
 
 #[cfg(test)]
