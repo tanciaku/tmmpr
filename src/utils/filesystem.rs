@@ -18,7 +18,6 @@ pub trait FileSystem {
 #[derive(Debug, Clone, Copy)]
 pub struct RealFileSystem;
 
-
 impl FileSystem for RealFileSystem {
     fn get_home_dir(&self) -> Option<PathBuf> {
         home::home_dir()
@@ -94,7 +93,10 @@ pub mod test_utils {
 
         fn create_dir_all(&self, _path: &PathBuf) -> Result<(), io::Error> {
             if self.fail_dir_create {
-                Err(io::Error::new(io::ErrorKind::PermissionDenied, "mock error"))
+                Err(io::Error::new(
+                    io::ErrorKind::PermissionDenied,
+                    "mock error",
+                ))
             } else {
                 Ok(())
             }
@@ -106,7 +108,10 @@ pub mod test_utils {
 
         fn test_write_to_dir(&self, _path: &PathBuf) -> Result<(), io::Error> {
             if self.fail_write_test {
-                Err(io::Error::new(io::ErrorKind::PermissionDenied, "mock error"))
+                Err(io::Error::new(
+                    io::ErrorKind::PermissionDenied,
+                    "mock error",
+                ))
             } else {
                 Ok(())
             }
@@ -118,23 +123,23 @@ pub mod test_utils {
     pub struct TempFileSystem {
         pub home_path: PathBuf,
     }
-    
+
     impl FileSystem for TempFileSystem {
         fn get_home_dir(&self) -> Option<PathBuf> {
             Some(self.home_path.clone())
         }
-        
+
         fn create_dir_all(&self, path: &PathBuf) -> Result<(), std::io::Error> {
             std::fs::create_dir_all(path)
         }
-        
+
         fn path_exists(&self, path: &PathBuf) -> bool {
             path.exists()
         }
-        
+
         fn test_write_to_dir(&self, path: &PathBuf) -> Result<(), std::io::Error> {
             tempfile::NamedTempFile::new_in(path)?;
             Ok(())
         }
-    } 
+    }
 }

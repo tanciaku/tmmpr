@@ -1,10 +1,17 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::{app::Screen, input::{AppAction, map::{help_next_page, help_previous_page, move_viewport}}, states::{MapState, SettingsState, StartState, map::DiscardMenuType}, utils::FileSystem};
-
+use crate::{
+    app::Screen,
+    input::{
+        AppAction,
+        map::{help_next_page, help_previous_page, move_viewport},
+    },
+    states::{MapState, SettingsState, StartState, map::DiscardMenuType},
+    utils::FileSystem,
+};
 
 /// Handles keyboard input for Normal Mode in the Map Screen.
-/// 
+///
 /// Help and discard confirmation menus take priority and intercept all input when shown.
 pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSystem) -> AppAction {
     // Help menu intercepts all input when visible
@@ -16,11 +23,11 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSyste
             _ => {}
         }
 
-        map_state.clear_and_redraw(); 
+        map_state.clear_and_redraw();
 
-        return AppAction::Continue
+        return AppAction::Continue;
     }
-    
+
     // Discard confirmation menu intercepts all input when triggered
     if let Some(discard_menu_type) = &map_state.ui_state.confirm_discard_menu {
         match key.code {
@@ -31,26 +38,28 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSyste
             KeyCode::Char('q') => {
                 match discard_menu_type {
                     DiscardMenuType::Start => {
-                        return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)))
+                        return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)));
                     }
                     DiscardMenuType::Settings => {
                         // Preserve file path to return to after closing settings
-                        return AppAction::Switch(
-                            Screen::Settings(SettingsState::new_with_fs(map_state.persistence.file_write_path.clone(), fs)))
+                        return AppAction::Switch(Screen::Settings(SettingsState::new_with_fs(
+                            map_state.persistence.file_write_path.clone(),
+                            fs,
+                        )));
                     }
                 }
             }
             _ => {}
         }
 
-        return AppAction::Continue
+        return AppAction::Continue;
     }
-    
+
     match key.code {
         KeyCode::Char('q') => {
             // Require saving or explicit confirmation before exiting
             if !map_state.persistence.has_unsaved_changes {
-                return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)))
+                return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)));
             } else {
                 map_state.ui_state.show_discard_menu(DiscardMenuType::Start);
                 map_state.clear_and_redraw();
@@ -59,16 +68,22 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSyste
 
         KeyCode::F(1) | KeyCode::Char('?') => map_state.ui_state.show_help(1),
 
-        KeyCode::Char('s') => return AppAction::SaveMapFile(map_state.persistence.file_write_path.clone()),
+        KeyCode::Char('s') => {
+            return AppAction::SaveMapFile(map_state.persistence.file_write_path.clone());
+        }
 
         KeyCode::Char('o') => {
             // Require saving or explicit confirmation before opening settings
             if !map_state.persistence.has_unsaved_changes {
                 // Preserve file path to return to after closing settings
-                return AppAction::Switch(
-                    Screen::Settings(SettingsState::new_with_fs(map_state.persistence.file_write_path.clone(), fs)))
+                return AppAction::Switch(Screen::Settings(SettingsState::new_with_fs(
+                    map_state.persistence.file_write_path.clone(),
+                    fs,
+                )));
             } else {
-                map_state.ui_state.show_discard_menu(DiscardMenuType::Settings);
+                map_state
+                    .ui_state
+                    .show_discard_menu(DiscardMenuType::Settings);
                 map_state.clear_and_redraw();
             }
         }
@@ -98,7 +113,7 @@ pub fn map_normal_kh(map_state: &mut MapState, key: KeyEvent, fs: &dyn FileSyste
         KeyCode::Char('a') => map_state.add_note(),
         // Selects the note closest to viewport center
         KeyCode::Char('v') => map_state.select_note(),
-    
+
         _ => {}
     }
 

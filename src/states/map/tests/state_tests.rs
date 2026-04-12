@@ -1,15 +1,16 @@
-use std::{collections::HashMap, path::PathBuf, time::{Duration, Instant}};
 use ratatui::style::Color;
+use std::{
+    collections::HashMap,
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use crate::{
     states::{
         MapState,
-        map::{Connection, Mode, Side, new_note}
+        map::{Connection, Mode, Side, new_note},
     },
-    utils::{
-        IoErrorKind,
-        test_utils::MockFileSystem,
-    },
+    utils::{IoErrorKind, test_utils::MockFileSystem},
 };
 
 fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
@@ -17,7 +18,12 @@ fn create_map_state_using_mock_filesystem(path: PathBuf) -> MapState {
     MapState::new_with_fs(path, &mock_fs)
 }
 
-fn create_test_map_state(view_pos_x: usize, view_pos_y: usize, width: usize, height: usize) -> MapState {
+fn create_test_map_state(
+    view_pos_x: usize,
+    view_pos_y: usize,
+    width: usize,
+    height: usize,
+) -> MapState {
     // Create a new MapState and set some simple test values
     let mut map_state = create_map_state_using_mock_filesystem(PathBuf::from("/test/path"));
     map_state.settings.edit_modal = false;
@@ -38,7 +44,10 @@ fn test_add_note() {
     map_state.add_note();
 
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, new_note(50, 25, "".to_string(), Color::White))]));
+    assert_eq!(
+        *map_state.notes_state.notes(),
+        HashMap::from([(0, new_note(50, 25, "".to_string(), Color::White))])
+    );
     assert_eq!(*map_state.notes_state.render_order(), vec![0]);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     assert_eq!(map_state.mode, Mode::Edit);
@@ -54,11 +63,14 @@ fn test_add_several_notes() {
     map_state.add_note();
 
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    assert_eq!(*map_state.notes_state.notes(), HashMap::from([
-        (0, new_note(50, 25, "".to_string(), Color::White)),
-        (1, new_note(50, 25, "".to_string(), Color::White)),
-        (2, new_note(50, 25, "".to_string(), Color::White)),
-    ]));
+    assert_eq!(
+        *map_state.notes_state.notes(),
+        HashMap::from([
+            (0, new_note(50, 25, "".to_string(), Color::White)),
+            (1, new_note(50, 25, "".to_string(), Color::White)),
+            (2, new_note(50, 25, "".to_string(), Color::White)),
+        ])
+    );
     assert_eq!(*map_state.notes_state.render_order(), vec![0, 1, 2]);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(2));
     assert_eq!(map_state.mode, Mode::Edit);
@@ -72,7 +84,10 @@ fn test_add_note_diff_viewpos() {
     map_state.add_note();
 
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    assert_eq!(*map_state.notes_state.notes(), HashMap::from([(0, new_note(145, 120, "".to_string(), Color::White))]));
+    assert_eq!(
+        *map_state.notes_state.notes(),
+        HashMap::from([(0, new_note(145, 120, "".to_string(), Color::White))])
+    );
     assert_eq!(*map_state.notes_state.render_order(), vec![0]);
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     assert_eq!(map_state.mode, Mode::Edit);
@@ -154,9 +169,11 @@ fn test_select_note_empty_map() {
 #[test]
 fn test_select_note_single_note() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
-    
+
     // Add a note at position (40, 20) - close to screen center (50, 25)
-    map_state.notes_state.add(40, 20, String::from("test"), Color::White);
+    map_state
+        .notes_state
+        .add(40, 20, String::from("test"), Color::White);
 
     map_state.select_note();
 
@@ -168,12 +185,18 @@ fn test_select_note_single_note() {
 #[test]
 fn test_select_note_multiple_notes() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
-    
+
     // Screen center is at (50, 25)
     // Add notes at different distances from center
-    map_state.notes_state.add(10, 10, String::from("far"), Color::White);      // Distance: 40 + 15 = 55
-    map_state.notes_state.add(45, 20, String::from("close"), Color::White);    // Distance: 5 + 5 = 10
-    map_state.notes_state.add(80, 40, String::from("medium"), Color::White);   // Distance: 30 + 15 = 45
+    map_state
+        .notes_state
+        .add(10, 10, String::from("far"), Color::White); // Distance: 40 + 15 = 55
+    map_state
+        .notes_state
+        .add(45, 20, String::from("close"), Color::White); // Distance: 5 + 5 = 10
+    map_state
+        .notes_state
+        .add(80, 40, String::from("medium"), Color::White); // Distance: 30 + 15 = 45
 
     map_state.select_note();
 
@@ -186,7 +209,7 @@ fn test_select_note_multiple_notes() {
 #[test]
 fn test_stash_connection_with_target() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
-    
+
     // Create a connection with a target
     let connection = Connection {
         from_id: 1,
@@ -202,13 +225,23 @@ fn test_stash_connection_with_target() {
     // Connection should be added to connections vector
     assert_eq!(map_state.connections_state.connections().len(), 1);
     assert_eq!(map_state.connections_state.connections()[0], connection);
-    
+
     // Connection should be added to connection_index for both from_id and to_id
-    assert!(map_state.connections_state.connection_index().contains_key(&1));
-    assert!(map_state.connections_state.connection_index().contains_key(&2));
+    assert!(
+        map_state
+            .connections_state
+            .connection_index()
+            .contains_key(&1)
+    );
+    assert!(
+        map_state
+            .connections_state
+            .connection_index()
+            .contains_key(&2)
+    );
     assert_eq!(map_state.connections_state.connection_index()[&1].len(), 1);
     assert_eq!(map_state.connections_state.connection_index()[&2].len(), 1);
-    
+
     // focused_connection should be None
     assert_eq!(map_state.connections_state.focused_connection, None);
 }
@@ -216,7 +249,7 @@ fn test_stash_connection_with_target() {
 #[test]
 fn test_stash_connection_without_target() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
-    
+
     // Create a connection without a target
     let connection = Connection {
         from_id: 1,
@@ -232,7 +265,7 @@ fn test_stash_connection_without_target() {
     // Connection should not be added to connections vector (dropped)
     assert_eq!(map_state.connections_state.connections().len(), 0);
     assert!(map_state.connections_state.connection_index().is_empty());
-    
+
     // focused_connection should be None
     assert_eq!(map_state.connections_state.focused_connection, None);
 }
@@ -240,7 +273,7 @@ fn test_stash_connection_without_target() {
 #[test]
 fn test_take_out_connection() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
-    
+
     // Set up a connection
     let connection = Connection {
         from_id: 1,
@@ -249,20 +282,23 @@ fn test_take_out_connection() {
         to_side: Some(Side::Left),
         color: Color::White,
     };
-    map_state.connections_state.focused_connection = Some(connection); 
+    map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
 
     map_state.connections_state.take_out_connection(0);
 
     // Connection should be removed from connections vector
     assert_eq!(map_state.connections_state.connections().len(), 0);
-    
+
     // Connection should be removed from connection_index
     assert_eq!(map_state.connections_state.connection_index()[&1].len(), 0);
     assert_eq!(map_state.connections_state.connection_index()[&2].len(), 0);
-    
+
     // focused_connection should now contain the removed connection
-    assert_eq!(map_state.connections_state.focused_connection, Some(connection));
+    assert_eq!(
+        map_state.connections_state.focused_connection,
+        Some(connection)
+    );
 }
 
 #[test]
@@ -271,7 +307,7 @@ fn test_on_tick_save_changes_disabled() {
     map_state.settings.save_interval = None;
     map_state.settings.runtime_backups_interval = None;
     map_state.persistence.mark_dirty(); // Simulate unsaved changes
-    
+
     let old_last_save = map_state.persistence.last_save;
 
     map_state.auto_save_if_needed();
@@ -287,7 +323,7 @@ fn test_on_tick_save_changes_not_enough_time_passed() {
     map_state.settings.runtime_backups_interval = None;
     map_state.persistence.mark_dirty(); // Simulate unsaved changes
     map_state.persistence.last_save = Instant::now(); // Just saved
-    
+
     let old_last_save = map_state.persistence.last_save;
 
     map_state.auto_save_if_needed();
@@ -303,7 +339,7 @@ fn test_on_tick_save_changes_no_unsaved_changes() {
     map_state.settings.runtime_backups_interval = None;
     map_state.persistence.mark_clean(); // No unsaved changes
     map_state.persistence.last_save = Instant::now() - Duration::from_secs(30); // Long time ago
-    
+
     let old_last_save = map_state.persistence.last_save;
 
     map_state.auto_save_if_needed();

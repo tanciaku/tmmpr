@@ -1,8 +1,4 @@
-use crate::{
-    states::{
-        map::{Note, Side}
-    },
-};
+use crate::states::map::{Note, Side};
 
 /// A 2D point in the coordinate space.
 ///
@@ -150,13 +146,19 @@ pub fn calculate_path(
     let start_tuple = start_note.get_connection_point(start_side);
     let end_tuple = end_note.get_connection_point(end_side);
 
-    let start = Point { x: start_tuple.0 as isize, y: start_tuple.1 as isize, };
-    let end = Point { x: end_tuple.0 as isize, y: end_tuple.1 as isize, };
-    
+    let start = Point {
+        x: start_tuple.0 as isize,
+        y: start_tuple.1 as isize,
+    };
+    let end = Point {
+        x: end_tuple.0 as isize,
+        y: end_tuple.1 as isize,
+    };
+
     // Offset points extend 2 units away from note edges for visual clearance
     let start_off = get_offset_point(start, start_side);
     let end_off = get_offset_point(end, end_side);
-    
+
     let available_space_x = end.x - start.x;
     let available_space_y = end.y - start.y;
 
@@ -182,7 +184,7 @@ pub fn calculate_path(
             match (h_placement, v_placement) {
                 // Right
                 (HPlacement::Right, VPlacement::Below) |
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) |
                 // Bottom
                 (HPlacement::Level, VPlacement::Below) |
@@ -200,8 +202,8 @@ pub fn calculate_path(
         (Side::Right, Side::Left) => {
             match (h_placement, v_placement) {
                 // Right
-                (HPlacement::Right, VPlacement::Below) | 
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Below) |
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) => {
                     points = s_shapes(start, start_off, end, end_off, available_space_x);
                 }
@@ -224,7 +226,7 @@ pub fn calculate_path(
                 (HPlacement::Right, VPlacement::Below) => {
                     points = corner_shapes_1(start, start_off, end, end_off);
                 }
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) => {
                     points = sideways_s_shapes_x(start, start_off, end, end_off, available_space_x);
                 }
@@ -271,7 +273,7 @@ pub fn calculate_path(
             match (h_placement, v_placement) {
                 // Right
                 (HPlacement::Right, VPlacement::Below) |
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) |
                 // Bottom
                 (HPlacement::Level, VPlacement::Below) |
@@ -294,7 +296,7 @@ pub fn calculate_path(
             match (h_placement, v_placement) {
                 // Right
                 (HPlacement::Right, VPlacement::Below) |
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) |
                 // Bottom
                 (HPlacement::Level, VPlacement::Below) |
@@ -318,7 +320,7 @@ pub fn calculate_path(
                     points = sideways_s_shapes_y(start, start_off, end, end_off, available_space_y);
                 }
                 // Right
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) => {
                     points = c_shape(start, start_off, end, end_off);
                 }
@@ -340,7 +342,7 @@ pub fn calculate_path(
             match (h_placement, v_placement) {
                 // Right
                 (HPlacement::Right, VPlacement::Below) |
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) |
                 // Bottom
                 (HPlacement::Level, VPlacement::Below) |
@@ -354,7 +356,7 @@ pub fn calculate_path(
                 // Top
                 (HPlacement::Left, VPlacement::Above) => {
                     points = corner_shapes_1(start, start_off, end, end_off);
-                }                    
+                }
                 _ => {}
             }
         }
@@ -363,7 +365,7 @@ pub fn calculate_path(
             match (h_placement, v_placement) {
                 // Right
                 (HPlacement::Right, VPlacement::Below) |
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) |
                 // Bottom
                 (HPlacement::Level, VPlacement::Below) |
@@ -454,7 +456,7 @@ pub fn calculate_path(
                     points = sideways_s_shapes_y(start, start_off, end, end_off, available_space_y);
                 }
                 // Right
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) |
                 // Top
                 (HPlacement::Level, VPlacement::Above) |
@@ -476,7 +478,7 @@ pub fn calculate_path(
                 (HPlacement::Right, VPlacement::Below) => {
                     points = corner_shapes_2(start, start_off, end, end_off);
                 }
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) |
                 // Bottom
                 (HPlacement::Level, VPlacement::Below) |
@@ -501,7 +503,7 @@ pub fn calculate_path(
                     points = sideways_s_shapes_y(start, start_off, end, end_off, available_space_y);
                 }
                 // Right
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) |
                 // Top
                 (HPlacement::Level, VPlacement::Above) |
@@ -517,7 +519,7 @@ pub fn calculate_path(
             match (h_placement, v_placement) {
                 // Right
                 (HPlacement::Right, VPlacement::Below) |
-                (HPlacement::Right, VPlacement::Above) | 
+                (HPlacement::Right, VPlacement::Above) |
                 (HPlacement::Right, VPlacement::Level) |
                 // Bottom
                 (HPlacement::Level, VPlacement::Below) |
@@ -537,77 +539,135 @@ pub fn calculate_path(
     points
 }
 
-
 pub fn get_offset_point(p: Point, side: Side) -> Point {
     let offset = 2;
     let p_off = match side {
-        Side::Right => Point { x: p.x + offset, y: p.y },
-        Side::Left => Point { x: p.x - offset, y: p.y },
-        Side::Top => Point { x: p.x, y: p.y - offset },
-        Side::Bottom => Point { x: p.x, y: p.y + offset },
+        Side::Right => Point {
+            x: p.x + offset,
+            y: p.y,
+        },
+        Side::Left => Point {
+            x: p.x - offset,
+            y: p.y,
+        },
+        Side::Top => Point {
+            x: p.x,
+            y: p.y - offset,
+        },
+        Side::Bottom => Point {
+            x: p.x,
+            y: p.y + offset,
+        },
     };
     p_off
 }
 
-
-fn c_shape(start: Point, start_off: Point, end: Point, end_off: Point) -> Vec<Point> { 
+fn c_shape(start: Point, start_off: Point, end: Point, end_off: Point) -> Vec<Point> {
     let furthest_point_x = start_off.x.min(end_off.x); // furthest point to the left
     vec![
         start,
         start_off,
-        Point { x: furthest_point_x, y: start_off.y },
-        Point { x: furthest_point_x, y: end_off.y },
+        Point {
+            x: furthest_point_x,
+            y: start_off.y,
+        },
+        Point {
+            x: furthest_point_x,
+            y: end_off.y,
+        },
         end_off,
         end,
     ]
 }
 
-fn reverse_c_shape(start: Point, start_off: Point, end: Point, end_off: Point) -> Vec<Point> { 
+fn reverse_c_shape(start: Point, start_off: Point, end: Point, end_off: Point) -> Vec<Point> {
     let furthest_point_x = start_off.x.max(end_off.x); // furthest point to the right
     vec![
         start,
         start_off,
-        Point { x: furthest_point_x, y: start_off.y },
-        Point { x: furthest_point_x, y: end_off.y },
+        Point {
+            x: furthest_point_x,
+            y: start_off.y,
+        },
+        Point {
+            x: furthest_point_x,
+            y: end_off.y,
+        },
         end_off,
-        end
+        end,
     ]
 }
 
 // s shape, reverse s shape
-fn s_shapes(start: Point, start_off: Point, end: Point, end_off: Point, available_space_x: isize) -> Vec<Point> {
-    let midway_point_x = start.x + (available_space_x/2);
+fn s_shapes(
+    start: Point,
+    start_off: Point,
+    end: Point,
+    end_off: Point,
+    available_space_x: isize,
+) -> Vec<Point> {
+    let midway_point_x = start.x + (available_space_x / 2);
     vec![
         start,
         start_off,
-        Point { x: midway_point_x, y: start_off.y },
-        Point { x: midway_point_x, y: end_off.y },
+        Point {
+            x: midway_point_x,
+            y: start_off.y,
+        },
+        Point {
+            x: midway_point_x,
+            y: end_off.y,
+        },
         end_off,
-        end
+        end,
     ]
 }
 
-fn sideways_s_shapes_y(start: Point, start_off: Point, end: Point, end_off: Point, available_space_y: isize) -> Vec<Point> {
-    let midway_point_y = start.y + (available_space_y/2);
+fn sideways_s_shapes_y(
+    start: Point,
+    start_off: Point,
+    end: Point,
+    end_off: Point,
+    available_space_y: isize,
+) -> Vec<Point> {
+    let midway_point_y = start.y + (available_space_y / 2);
     vec![
         start,
         start_off,
-        Point { x: start_off.x, y: midway_point_y },
-        Point { x: end_off.x, y: midway_point_y },
+        Point {
+            x: start_off.x,
+            y: midway_point_y,
+        },
+        Point {
+            x: end_off.x,
+            y: midway_point_y,
+        },
         end_off,
-        end
+        end,
     ]
 }
 
-fn sideways_s_shapes_x(start: Point, start_off: Point, end: Point, end_off: Point, available_space_x: isize) -> Vec<Point> {
-    let midway_point_x = start.x + (available_space_x/2);
+fn sideways_s_shapes_x(
+    start: Point,
+    start_off: Point,
+    end: Point,
+    end_off: Point,
+    available_space_x: isize,
+) -> Vec<Point> {
+    let midway_point_x = start.x + (available_space_x / 2);
     vec![
         start,
         start_off,
-        Point { x: midway_point_x, y: start_off.y },
-        Point { x: midway_point_x, y: end_off.y },
+        Point {
+            x: midway_point_x,
+            y: start_off.y,
+        },
+        Point {
+            x: midway_point_x,
+            y: end_off.y,
+        },
         end_off,
-        end
+        end,
     ]
 }
 
@@ -616,9 +676,12 @@ fn corner_shapes_1(start: Point, start_off: Point, end: Point, end_off: Point) -
     vec![
         start,
         start_off,
-        Point { x: end_off.x, y: start_off.y },
+        Point {
+            x: end_off.x,
+            y: start_off.y,
+        },
         end_off,
-        end
+        end,
     ]
 }
 
@@ -627,9 +690,12 @@ fn corner_shapes_2(start: Point, start_off: Point, end: Point, end_off: Point) -
     vec![
         start,
         start_off,
-        Point { x: start_off.x, y: end_off.y },
+        Point {
+            x: start_off.x,
+            y: end_off.y,
+        },
         end_off,
-        end
+        end,
     ]
 }
 
@@ -638,10 +704,16 @@ fn upside_down_u_shapes(start: Point, start_off: Point, end: Point, end_off: Poi
     vec![
         start,
         start_off,
-        Point { x: start_off.x, y: highest_y },
-        Point { x: end_off.x, y: highest_y },
+        Point {
+            x: start_off.x,
+            y: highest_y,
+        },
+        Point {
+            x: end_off.x,
+            y: highest_y,
+        },
         end_off,
-        end
+        end,
     ]
 }
 
@@ -650,9 +722,15 @@ fn u_shapes(start: Point, start_off: Point, end: Point, end_off: Point) -> Vec<P
     vec![
         start,
         start_off,
-        Point { x: start_off.x, y: lowest_y },
-        Point { x: end_off.x, y: lowest_y },
+        Point {
+            x: start_off.x,
+            y: lowest_y,
+        },
+        Point {
+            x: end_off.x,
+            y: lowest_y,
+        },
         end_off,
-        end
+        end,
     ]
 }

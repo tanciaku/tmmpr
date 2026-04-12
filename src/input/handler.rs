@@ -1,7 +1,13 @@
 use crate::{
     app::{App, Screen},
-    input::{map::{map_delete_kh, map_edit_kh, map_normal_kh, map_visual_kh}, settings_kh, start_kh},
-    states::{MapState, map::{Mode, Notification}},
+    input::{
+        map::{map_delete_kh, map_edit_kh, map_normal_kh, map_visual_kh},
+        settings_kh, start_kh,
+    },
+    states::{
+        MapState,
+        map::{Mode, Notification},
+    },
     utils::{RealFileSystem, create_map_file, load_map_file, save_with_notification},
 };
 use color_eyre::Result;
@@ -32,7 +38,9 @@ pub fn handle_events(app: &mut App) -> Result<()> {
             Event::Key(key) if key.kind == KeyEventKind::Press => {
                 let app_action = match &mut app.screen {
                     Screen::Start(start_state) => start_kh(start_state, key, &RealFileSystem),
-                    Screen::Settings(settings_state) => settings_kh(settings_state, key, &RealFileSystem),
+                    Screen::Settings(settings_state) => {
+                        settings_kh(settings_state, key, &RealFileSystem)
+                    }
                     Screen::Map(map_state) => map_kh(map_state, key),
                 };
 
@@ -45,19 +53,22 @@ pub fn handle_events(app: &mut App) -> Result<()> {
                         let Screen::Map(map_state) = &mut app.screen else {
                             unreachable!("SaveMapFile triggered outside map screen")
                         };
-                        let _ = save_with_notification(map_state, &path, Notification::SaveSuccess, Notification::SaveFail);
+                        let _ = save_with_notification(
+                            map_state,
+                            &path,
+                            Notification::SaveSuccess,
+                            Notification::SaveFail,
+                        );
                     }
                     AppAction::LoadMapFile(path) => load_map_file(app, &path),
                 }
             }
 
-            Event::Resize(_, _) => {
-                match &mut app.screen {
-                    Screen::Start(start_state) => start_state.needs_clear_and_redraw = true,
-                    Screen::Settings(settings_state) => settings_state.needs_clear_and_redraw = true,
-                    Screen::Map(map_state) => map_state.clear_and_redraw(),
-                }
-            }
+            Event::Resize(_, _) => match &mut app.screen {
+                Screen::Start(start_state) => start_state.needs_clear_and_redraw = true,
+                Screen::Settings(settings_state) => settings_state.needs_clear_and_redraw = true,
+                Screen::Map(map_state) => map_state.clear_and_redraw(),
+            },
 
             _ => {}
         }
@@ -66,7 +77,7 @@ pub fn handle_events(app: &mut App) -> Result<()> {
 }
 
 /// Dispatches key events to mode-specific handlers in the map screen.
-pub fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction { 
+pub fn map_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
     match &map_state.mode {
         Mode::Normal => map_normal_kh(map_state, key, &RealFileSystem),
         Mode::Visual | Mode::VisualMove | Mode::VisualConnect => map_visual_kh(map_state, key),

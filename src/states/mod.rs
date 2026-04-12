@@ -1,10 +1,10 @@
-pub mod start;
-pub mod map; 
+pub mod map;
 pub mod settings;
+pub mod start;
 
-pub use start::StartState;
 pub use map::MapState;
 pub use settings::SettingsState;
+pub use start::StartState;
 
 // Test modules
 #[cfg(test)]

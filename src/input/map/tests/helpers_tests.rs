@@ -1,9 +1,16 @@
-use std::path::PathBuf;
 use ratatui::style::Color;
+use std::path::PathBuf;
 
 use crate::{
-    input::map::helpers::{cycle_color, cycle_side, help_next_page, help_previous_page, move_note, move_viewport, switch_notes_focus},
-    states::{MapState, map::{Connection, Mode, Side}}, utils::test_utils::MockFileSystem,
+    input::map::helpers::{
+        cycle_color, cycle_side, help_next_page, help_previous_page, move_note, move_viewport,
+        switch_notes_focus,
+    },
+    states::{
+        MapState,
+        map::{Connection, Mode, Side},
+    },
+    utils::test_utils::MockFileSystem,
 };
 
 fn create_test_map_state() -> MapState {
@@ -19,21 +26,21 @@ fn create_test_map_state() -> MapState {
 #[test]
 fn test_help_next_page_cycles_forward() {
     let mut map_state = create_test_map_state();
-    
+
     // Test cycling through all pages
     map_state.ui_state.show_help(1);
     help_next_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(2));
-    
+
     help_next_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(3));
-    
+
     help_next_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(4));
-    
+
     help_next_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(5));
-    
+
     // Should wrap back to 1
     help_next_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(1));
@@ -43,9 +50,9 @@ fn test_help_next_page_cycles_forward() {
 fn test_help_next_page_no_help_screen() {
     let mut map_state = create_test_map_state();
     map_state.ui_state.hide_help();
-    
+
     help_next_page(&mut map_state);
-    
+
     // Should remain None when help_screen is not active
     assert_eq!(map_state.ui_state.help_screen, None);
 }
@@ -53,21 +60,21 @@ fn test_help_next_page_no_help_screen() {
 #[test]
 fn test_help_previous_page_cycles_backward() {
     let mut map_state = create_test_map_state();
-    
+
     // Test cycling backward through all pages
     map_state.ui_state.show_help(1);
     help_previous_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(5));
-    
+
     help_previous_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(4));
-    
+
     help_previous_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(3));
-    
+
     help_previous_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(2));
-    
+
     help_previous_page(&mut map_state);
     assert_eq!(map_state.ui_state.help_screen, Some(1));
 }
@@ -76,9 +83,9 @@ fn test_help_previous_page_cycles_backward() {
 fn test_help_previous_page_no_help_screen() {
     let mut map_state = create_test_map_state();
     map_state.ui_state.hide_help();
-    
+
     help_previous_page(&mut map_state);
-    
+
     // Should remain None when help_screen is not active
     assert_eq!(map_state.ui_state.help_screen, None);
 }
@@ -88,9 +95,9 @@ fn test_move_viewport_x_positive() {
     let mut map_state = create_test_map_state();
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 20;
-    
+
     move_viewport(&mut map_state, "x", 5);
-    
+
     assert_eq!(map_state.viewport.view_pos.x, 15);
     assert_eq!(map_state.viewport.view_pos.y, 20); // Should remain unchanged
     assert_eq!(map_state.persistence.has_unsaved_changes, true); // Should be set to true
@@ -101,9 +108,9 @@ fn test_move_viewport_x_negative() {
     let mut map_state = create_test_map_state();
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 20;
-    
+
     move_viewport(&mut map_state, "x", -5);
-    
+
     assert_eq!(map_state.viewport.view_pos.x, 5);
     assert_eq!(map_state.viewport.view_pos.y, 20); // Should remain unchanged
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
@@ -114,9 +121,9 @@ fn test_move_viewport_x_negative_saturating() {
     let mut map_state = create_test_map_state();
     map_state.viewport.view_pos.x = 3;
     map_state.viewport.view_pos.y = 20;
-    
+
     move_viewport(&mut map_state, "x", -10);
-    
+
     assert_eq!(map_state.viewport.view_pos.x, 0); // Should saturate at 0
     assert_eq!(map_state.viewport.view_pos.y, 20);
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
@@ -127,9 +134,9 @@ fn test_move_viewport_y_positive() {
     let mut map_state = create_test_map_state();
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 20;
-    
+
     move_viewport(&mut map_state, "y", 7);
-    
+
     assert_eq!(map_state.viewport.view_pos.x, 10); // Should remain unchanged
     assert_eq!(map_state.viewport.view_pos.y, 27);
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
@@ -140,9 +147,9 @@ fn test_move_viewport_y_negative() {
     let mut map_state = create_test_map_state();
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 20;
-    
+
     move_viewport(&mut map_state, "y", -8);
-    
+
     assert_eq!(map_state.viewport.view_pos.x, 10); // Should remain unchanged
     assert_eq!(map_state.viewport.view_pos.y, 12);
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
@@ -153,9 +160,9 @@ fn test_move_viewport_y_negative_saturating() {
     let mut map_state = create_test_map_state();
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 5;
-    
+
     move_viewport(&mut map_state, "y", -10);
-    
+
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 0); // Should saturate at 0
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
@@ -166,9 +173,9 @@ fn test_move_viewport_invalid_axis() {
     let mut map_state = create_test_map_state();
     map_state.viewport.view_pos.x = 10;
     map_state.viewport.view_pos.y = 20;
-    
+
     move_viewport(&mut map_state, "z", 5);
-    
+
     // Should not change anything for invalid axis
     assert_eq!(map_state.viewport.view_pos.x, 10);
     assert_eq!(map_state.viewport.view_pos.y, 20);
@@ -178,15 +185,17 @@ fn test_move_viewport_invalid_axis() {
 #[test]
 fn test_move_note_x_positive_simple() {
     let mut map_state = create_test_map_state();
-    
+
     // Add a note far from screen edges
-    map_state.notes_state.add(40, 20, String::from("Test"), Color::White);
+    map_state
+        .notes_state
+        .add(40, 20, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
-    
+
     move_note(&mut map_state, "x", 5);
-    
+
     // Note should move
     assert_eq!(map_state.notes_state.notes()[&0].x, 45);
     assert_eq!(map_state.notes_state.notes()[&0].y, 20); // Should remain unchanged
@@ -199,15 +208,17 @@ fn test_move_note_x_positive_simple() {
 #[test]
 fn test_move_note_x_positive_viewport_adjustment() {
     let mut map_state = create_test_map_state();
-    
+
     // Add a note near the right edge of the screen
-    map_state.notes_state.add(95, 20, String::from("Test"), Color::White);
+    map_state
+        .notes_state
+        .add(95, 20, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
-    
+
     move_note(&mut map_state, "x", 5);
-    
+
     // Note should move
     assert_eq!(map_state.notes_state.notes()[&0].x, 100);
     // Viewport should also move to keep note in view
@@ -220,15 +231,17 @@ fn test_move_note_x_positive_viewport_adjustment() {
 #[test]
 fn test_move_note_x_negative_simple() {
     let mut map_state = create_test_map_state();
-    
+
     // Add a note far from screen edges
-    map_state.notes_state.add(40, 20, String::from("Test"), Color::White);
+    map_state
+        .notes_state
+        .add(40, 20, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
-    
+
     move_note(&mut map_state, "x", -5);
-    
+
     // Note should move
     assert_eq!(map_state.notes_state.notes()[&0].x, 35);
     assert_eq!(map_state.notes_state.notes()[&0].y, 20);
@@ -241,15 +254,17 @@ fn test_move_note_x_negative_simple() {
 #[test]
 fn test_move_note_x_negative_viewport_adjustment() {
     let mut map_state = create_test_map_state();
-    
+
     // Add a note and set viewport so note is at left edge
-    map_state.notes_state.add(5, 20, String::from("Test"), Color::White);
+    map_state
+        .notes_state
+        .add(5, 20, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.viewport.view_pos.x = 5;
     map_state.viewport.view_pos.y = 0;
-    
+
     move_note(&mut map_state, "x", -3);
-    
+
     // Note should move
     assert_eq!(map_state.notes_state.notes()[&0].x, 2);
     // Viewport should move to keep note in view
@@ -260,15 +275,17 @@ fn test_move_note_x_negative_viewport_adjustment() {
 #[test]
 fn test_move_note_y_positive_simple() {
     let mut map_state = create_test_map_state();
-    
+
     // Add a note far from screen edges
-    map_state.notes_state.add(40, 20, String::from("Test"), Color::White);
+    map_state
+        .notes_state
+        .add(40, 20, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
-    
+
     move_note(&mut map_state, "y", 5);
-    
+
     // Note should move
     assert_eq!(map_state.notes_state.notes()[&0].x, 40);
     assert_eq!(map_state.notes_state.notes()[&0].y, 25);
@@ -281,16 +298,18 @@ fn test_move_note_y_positive_simple() {
 #[test]
 fn test_move_note_y_positive_viewport_adjustment() {
     let mut map_state = create_test_map_state();
-    
+
     // Add a note near the bottom of the screen
     // Screen height is 50, minus 3 for info bar = 47 effective height
-    map_state.notes_state.add(40, 45, String::from("Test"), Color::White);
+    map_state
+        .notes_state
+        .add(40, 45, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
-    
+
     move_note(&mut map_state, "y", 5);
-    
+
     // Note should move
     assert_eq!(map_state.notes_state.notes()[&0].y, 50);
     // Viewport should move to keep note in view
@@ -302,15 +321,17 @@ fn test_move_note_y_positive_viewport_adjustment() {
 #[test]
 fn test_move_note_y_negative_simple() {
     let mut map_state = create_test_map_state();
-    
+
     // Add a note far from screen edges
-    map_state.notes_state.add(40, 20, String::from("Test"), Color::White);
+    map_state
+        .notes_state
+        .add(40, 20, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 0;
-    
+
     move_note(&mut map_state, "y", -5);
-    
+
     // Note should move
     assert_eq!(map_state.notes_state.notes()[&0].x, 40);
     assert_eq!(map_state.notes_state.notes()[&0].y, 15);
@@ -323,15 +344,17 @@ fn test_move_note_y_negative_simple() {
 #[test]
 fn test_move_note_y_negative_viewport_adjustment() {
     let mut map_state = create_test_map_state();
-    
+
     // Add a note and set viewport so note is at top edge
-    map_state.notes_state.add(40, 5, String::from("Test"), Color::White);
+    map_state
+        .notes_state
+        .add(40, 5, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.viewport.view_pos.x = 0;
     map_state.viewport.view_pos.y = 5;
-    
+
     move_note(&mut map_state, "y", -3);
-    
+
     // Note should move
     assert_eq!(map_state.notes_state.notes()[&0].y, 2);
     // Viewport should move to keep note in view
@@ -342,12 +365,14 @@ fn test_move_note_y_negative_viewport_adjustment() {
 #[test]
 fn test_move_note_invalid_axis() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(40, 20, String::from("Test"), Color::White);
+
+    map_state
+        .notes_state
+        .add(40, 20, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
-    
+
     move_note(&mut map_state, "z", 5);
-    
+
     // Note position should remain unchanged for invalid axis
     assert_eq!(map_state.notes_state.notes()[&0].x, 40);
     assert_eq!(map_state.notes_state.notes()[&0].y, 20);
@@ -357,14 +382,18 @@ fn test_move_note_invalid_axis() {
 #[test]
 fn test_switch_notes_focus_down_j() {
     let mut map_state = create_test_map_state();
-    
+
     // Add notes with vertical alignment
-    map_state.notes_state.add(50, 10, String::from("Top"), Color::White);
-    map_state.notes_state.add(50, 30, String::from("Bottom"), Color::White); // Further down
+    map_state
+        .notes_state
+        .add(50, 10, String::from("Top"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 30, String::from("Bottom"), Color::White); // Further down
     map_state.notes_state.select(0);
-    
+
     switch_notes_focus(&mut map_state, "j");
-    
+
     // Should switch to note 1
     assert_eq!(map_state.notes_state.selected_note_id(), Some(1));
     // Render order should be updated (selected note moved to back)
@@ -374,14 +403,18 @@ fn test_switch_notes_focus_down_j() {
 #[test]
 fn test_switch_notes_focus_up_k() {
     let mut map_state = create_test_map_state();
-    
+
     // Add notes with vertical alignment
-    map_state.notes_state.add(50, 10, String::from("Top"), Color::White);
-    map_state.notes_state.add(50, 30, String::from("Bottom"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 10, String::from("Top"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 30, String::from("Bottom"), Color::White);
     map_state.notes_state.select(1);
-    
+
     switch_notes_focus(&mut map_state, "k");
-    
+
     // Should switch to note 0
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     // Render order should be updated
@@ -391,14 +424,18 @@ fn test_switch_notes_focus_up_k() {
 #[test]
 fn test_switch_notes_focus_right_l() {
     let mut map_state = create_test_map_state();
-    
+
     // Add notes with horizontal alignment
-    map_state.notes_state.add(10, 25, String::from("Left"), Color::White);
-    map_state.notes_state.add(80, 25, String::from("Right"), Color::White); // Further right
+    map_state
+        .notes_state
+        .add(10, 25, String::from("Left"), Color::White);
+    map_state
+        .notes_state
+        .add(80, 25, String::from("Right"), Color::White); // Further right
     map_state.notes_state.select(0);
-    
+
     switch_notes_focus(&mut map_state, "l");
-    
+
     // Should switch to note 1
     assert_eq!(map_state.notes_state.selected_note_id(), Some(1));
     assert_eq!(*map_state.notes_state.render_order(), vec![0, 1]);
@@ -407,14 +444,18 @@ fn test_switch_notes_focus_right_l() {
 #[test]
 fn test_switch_notes_focus_left_h() {
     let mut map_state = create_test_map_state();
-    
+
     // Add notes with horizontal alignment
-    map_state.notes_state.add(10, 25, String::from("Left"), Color::White);
-    map_state.notes_state.add(80, 25, String::from("Right"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 25, String::from("Left"), Color::White);
+    map_state
+        .notes_state
+        .add(80, 25, String::from("Right"), Color::White);
     map_state.notes_state.select(1);
-    
+
     switch_notes_focus(&mut map_state, "h");
-    
+
     // Should switch to note 0
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
     assert_eq!(*map_state.notes_state.render_order(), vec![1, 0]);
@@ -423,13 +464,15 @@ fn test_switch_notes_focus_left_h() {
 #[test]
 fn test_switch_notes_focus_no_valid_candidate() {
     let mut map_state = create_test_map_state();
-    
+
     // Add only one note
-    map_state.notes_state.add(50, 25, String::from("Only"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Only"), Color::White);
     map_state.notes_state.select(0);
-    
+
     switch_notes_focus(&mut map_state, "j");
-    
+
     // Should remain on the same note since no valid candidate
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
 }
@@ -437,15 +480,21 @@ fn test_switch_notes_focus_no_valid_candidate() {
 #[test]
 fn test_switch_notes_focus_cone_selection() {
     let mut map_state = create_test_map_state();
-    
+
     // Add notes in a pattern where cone selection matters
-    map_state.notes_state.add(50, 25, String::from("Center"), Color::White); // Selected
-    map_state.notes_state.add(60, 30, String::from("Diagonal"), Color::White); // Diagonal (dx=10, dy=5, dx>dy)
-    map_state.notes_state.add(70, 26, String::from("Right"), Color::White); // More to the right (dx=20, dy=1, dx>dy)
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Center"), Color::White); // Selected
+    map_state
+        .notes_state
+        .add(60, 30, String::from("Diagonal"), Color::White); // Diagonal (dx=10, dy=5, dx>dy)
+    map_state
+        .notes_state
+        .add(70, 26, String::from("Right"), Color::White); // More to the right (dx=20, dy=1, dx>dy)
     map_state.notes_state.select(0);
-    
+
     switch_notes_focus(&mut map_state, "l"); // Move right
-    
+
     // Should choose note 1 because it has the smallest x-coordinate among valid candidates (algorithm uses min_by_key on (x, y_dist))
     assert_eq!(map_state.notes_state.selected_note_id(), Some(1));
 }
@@ -453,7 +502,7 @@ fn test_switch_notes_focus_cone_selection() {
 #[test]
 fn test_switch_notes_focus_with_visual_connection() {
     let mut map_state = create_test_map_state();
-    
+
     // Set up visual connection mode
     map_state.mode = Mode::VisualConnect;
     let connection = Connection {
@@ -464,19 +513,26 @@ fn test_switch_notes_focus_with_visual_connection() {
         color: Color::White,
     };
     map_state.connections_state.focused_connection = Some(connection);
-    
+
     // Add notes
-    map_state.notes_state.add(10, 25, String::from("Start"), Color::White);
-    map_state.notes_state.add(80, 25, String::from("End"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 25, String::from("Start"), Color::White);
+    map_state
+        .notes_state
+        .add(80, 25, String::from("End"), Color::White);
     map_state.notes_state.select(0);
-    
+
     switch_notes_focus(&mut map_state, "l");
-    
+
     // Should update the focused connection
     assert_eq!(map_state.notes_state.selected_note_id(), Some(1));
     if let Some(focused_conn) = &map_state.connections_state.focused_connection {
         assert_eq!(focused_conn.to_id, Some(1));
-        assert_eq!(focused_conn.to_side, Some(map_state.settings.default_end_side));
+        assert_eq!(
+            focused_conn.to_side,
+            Some(map_state.settings.default_end_side)
+        );
     }
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
@@ -484,7 +540,7 @@ fn test_switch_notes_focus_with_visual_connection() {
 #[test]
 fn test_switch_notes_focus_with_visual_connection_same_note() {
     let mut map_state = create_test_map_state();
-    
+
     // Set up visual connection mode
     map_state.mode = Mode::VisualConnect;
     let connection = Connection {
@@ -495,10 +551,14 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
         color: Color::White,
     };
     map_state.connections_state.focused_connection = Some(connection);
-    
-    map_state.notes_state.add(50, 25, String::from("Only"), Color::White);
-    map_state.notes_state.add(70, 25, String::from("Too close"), Color::White); 
-    
+
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Only"), Color::White);
+    map_state
+        .notes_state
+        .add(70, 25, String::from("Too close"), Color::White);
+
     map_state.notes_state.select(0);
     switch_notes_focus(&mut map_state, "l");
 
@@ -506,12 +566,15 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
     assert_eq!(map_state.notes_state.selected_note_id(), Some(1));
     if let Some(focused_conn) = &map_state.connections_state.focused_connection {
         assert_eq!(focused_conn.to_id, Some(1));
-        assert_eq!(focused_conn.to_side, Some(map_state.settings.default_end_side));
+        assert_eq!(
+            focused_conn.to_side,
+            Some(map_state.settings.default_end_side)
+        );
     }
 
     // Jump back to the connection source (from_id) note
     switch_notes_focus(&mut map_state, "h");
-    
+
     // Should reset to_id and to_side
     // This is to prevent being able to make connection from source note to source note
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
@@ -524,12 +587,14 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
 #[test]
 fn test_switch_notes_focus_invalid_key() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(50, 25, String::from("Test"), Color::White);
+
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
-    
+
     switch_notes_focus(&mut map_state, "x");
-    
+
     // Should remain unchanged for invalid key
     assert_eq!(map_state.notes_state.selected_note_id(), Some(0));
 }
@@ -537,31 +602,41 @@ fn test_switch_notes_focus_invalid_key() {
 #[test]
 fn test_switch_notes_focus_arrow_keys() {
     let mut map_state = create_test_map_state();
-    
+
     // Add notes for arrow key testing
-    map_state.notes_state.add(50, 25, String::from("Center"), Color::White);
-    map_state.notes_state.add(50, 40, String::from("Down"), Color::White);
-    map_state.notes_state.add(50, 10, String::from("Up"), Color::White);
-    map_state.notes_state.add(80, 25, String::from("Right"), Color::White);
-    map_state.notes_state.add(20, 25, String::from("Left"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Center"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 40, String::from("Down"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 10, String::from("Up"), Color::White);
+    map_state
+        .notes_state
+        .add(80, 25, String::from("Right"), Color::White);
+    map_state
+        .notes_state
+        .add(20, 25, String::from("Left"), Color::White);
     map_state.notes_state.select(0);
-    
+
     // Test Down arrow
     switch_notes_focus(&mut map_state, "Down");
     assert_eq!(map_state.notes_state.selected_note_id(), Some(1));
-    
+
     // Reset and test Up arrow
     map_state.notes_state.deselect();
     map_state.notes_state.select(0);
     switch_notes_focus(&mut map_state, "Up");
     assert_eq!(map_state.notes_state.selected_note_id(), Some(2));
-    
+
     // Reset and test Right arrow
     map_state.notes_state.deselect();
     map_state.notes_state.select(0);
     switch_notes_focus(&mut map_state, "Right");
     assert_eq!(map_state.notes_state.selected_note_id(), Some(3));
-    
+
     // Reset and test Left arrow
     map_state.notes_state.deselect();
     map_state.notes_state.select(0);
@@ -587,7 +662,7 @@ fn test_cycle_color() {
     assert_eq!(cycle_color(Color::Cyan), Color::White);
     assert_eq!(cycle_color(Color::White), Color::Black);
     assert_eq!(cycle_color(Color::Black), Color::Red);
-    
+
     // Test non-standard colors default to White
     assert_eq!(cycle_color(Color::Gray), Color::White);
     assert_eq!(cycle_color(Color::DarkGray), Color::White);

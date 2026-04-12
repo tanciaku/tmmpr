@@ -1,8 +1,8 @@
-use ratatui::style::Color;
-use serde::{Serialize, Deserialize};
-use unicode_width::UnicodeWidthStr;
 use super::enums::Side;
 use crate::graph::Node;
+use ratatui::style::Color;
+use serde::{Deserialize, Serialize};
+use unicode_width::UnicodeWidthStr;
 
 /// The app-specific payload stored inside a graph node.
 #[derive(PartialEq, Serialize, Deserialize, Clone, Debug)]
@@ -32,13 +32,15 @@ impl Note {
     /// preserve trailing empty lines that would otherwise be ignored.
     pub fn get_dimensions(&self) -> (u16, u16) {
         let height = (1 + self.data.content.matches('\n').count()) as u16;
-        
-        let width = self.data.content
+
+        let width = self
+            .data
+            .content
             .lines()
             .map(|line| line.width())
             .max()
             .unwrap_or(0) as u16;
-        
+
         enforce_note_dimensions(width, height)
     }
 
@@ -49,25 +51,23 @@ impl Note {
         let (note_width, note_height) = self.get_dimensions();
 
         match side {
-            Side::Right => {
-                ((self.x + note_width as usize - 1), (self.y + (note_height/2) as usize))
-            }
-            Side::Left => {
-                (self.x, (self.y + (note_height/2) as usize))
-            }
-            Side::Top => {
-                (self.x + (note_width/2) as usize, self.y)
-            }
-            Side::Bottom => {
-                (self.x + (note_width/2) as usize, self.y + note_height as usize - 1)
-            }
+            Side::Right => (
+                (self.x + note_width as usize - 1),
+                (self.y + (note_height / 2) as usize),
+            ),
+            Side::Left => (self.x, (self.y + (note_height / 2) as usize)),
+            Side::Top => (self.x + (note_width / 2) as usize, self.y),
+            Side::Bottom => (
+                self.x + (note_width / 2) as usize,
+                self.y + note_height as usize - 1,
+            ),
         }
     }
 }
 
 fn enforce_note_dimensions(width: u16, height: u16) -> (u16, u16) {
-    let width = (width + 2).max(20) + 1;  // borders, min, cursor
-    let height = (height + 2).max(4);     // borders, min
+    let width = (width + 2).max(20) + 1; // borders, min, cursor
+    let height = (height + 2).max(4); // borders, min
 
     (width, height)
 }

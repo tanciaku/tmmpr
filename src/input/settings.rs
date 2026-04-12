@@ -1,17 +1,31 @@
 //! Settings screen input handling
 
-use crate::{app::Screen, states::{SettingsState, StartState, settings::{DiscardExitTo, SelectedToggle, SettingsType, save_settings_with_fs}}, utils::FileSystem};
 use super::AppAction;
+use crate::{
+    app::Screen,
+    states::{
+        SettingsState, StartState,
+        settings::{DiscardExitTo, SelectedToggle, SettingsType, save_settings_with_fs},
+    },
+    utils::FileSystem,
+};
 use crossterm::event::{KeyCode, KeyEvent};
 
-pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn FileSystem) -> AppAction {
-
+pub fn settings_kh(
+    settings_state: &mut SettingsState,
+    key: KeyEvent,
+    fs: &dyn FileSystem,
+) -> AppAction {
     // Restrict input to only error acknowledgment keys if settings couldn't be loaded
     if let SettingsType::Default(_, error_message) = &settings_state.settings {
         if let Some(_) = error_message {
             match key.code {
-                KeyCode::Char('q') => return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs))),
-                KeyCode::Char('o') => return AppAction::LoadMapFile(settings_state.map_file_path.clone()),
+                KeyCode::Char('q') => {
+                    return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)));
+                }
+                KeyCode::Char('o') => {
+                    return AppAction::LoadMapFile(settings_state.map_file_path.clone());
+                }
                 _ => {}
             }
         }
@@ -23,17 +37,19 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn F
             KeyCode::Esc => {
                 settings_state.confirm_discard_menu = None;
             }
-            KeyCode::Char('q') => {
-                match exit_to {
-                    DiscardExitTo::StartScreen => return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs))),
-                    DiscardExitTo::MapScreen => return AppAction::LoadMapFile(settings_state.map_file_path.clone()),
+            KeyCode::Char('q') => match exit_to {
+                DiscardExitTo::StartScreen => {
+                    return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)));
                 }
-            }
+                DiscardExitTo::MapScreen => {
+                    return AppAction::LoadMapFile(settings_state.map_file_path.clone());
+                }
+            },
             _ => {}
         }
 
         settings_state.needs_clear_and_redraw = true;
-        return AppAction::Continue
+        return AppAction::Continue;
     }
 
     // Context help page takes all input when shown
@@ -44,13 +60,13 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn F
         }
 
         settings_state.needs_clear_and_redraw = true;
-        return AppAction::Continue
+        return AppAction::Continue;
     }
 
     // Backup path input prompt takes all input when shown
     if settings_state.input_prompt {
         let settings = settings_state.settings.settings_mut();
-        
+
         // Safety: backups_path is always Some while input_prompt is true
         match key.code {
             // Esc cancels input AND clears any previously entered path
@@ -78,23 +94,23 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn F
         }
 
         settings_state.needs_clear_and_redraw = true;
-        return AppAction::Continue
+        return AppAction::Continue;
     }
 
     match key.code {
         KeyCode::Char('q') => {
             if settings_state.can_exit {
-                return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)))
+                return AppAction::Switch(Screen::Start(StartState::new_with_fs(fs)));
             } else {
                 settings_state.confirm_discard_menu = Some(DiscardExitTo::StartScreen);
-            }            
+            }
         }
         KeyCode::Char('o') => {
             if settings_state.can_exit {
-                return AppAction::LoadMapFile(settings_state.map_file_path.clone())
+                return AppAction::LoadMapFile(settings_state.map_file_path.clone());
             } else {
                 settings_state.confirm_discard_menu = Some(DiscardExitTo::MapScreen);
-            }            
+            }
         }
 
         KeyCode::Char('?') | KeyCode::F(1) => settings_state.context_page = true,
@@ -110,7 +126,10 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn F
 
             match settings_state.selected_toggle {
                 SelectedToggle::Toggle1 => {
-                    settings_state.settings.settings_mut().cycle_save_intervals();
+                    settings_state
+                        .settings
+                        .settings_mut()
+                        .cycle_save_intervals();
                 }
                 SelectedToggle::Toggle2 => {
                     settings_state.input_prompt = true;
@@ -120,31 +139,54 @@ pub fn settings_kh(settings_state: &mut SettingsState, key: KeyEvent, fs: &dyn F
                         settings.backups_path = Some(String::new());
                     }
                 }
-                SelectedToggle::Toggle4 => settings_state.settings.settings_mut().cycle_default_sides(true),
-                SelectedToggle::Toggle5 => settings_state.settings.settings_mut().cycle_default_sides(false),
-                SelectedToggle::Toggle6 => settings_state.settings.settings_mut().edit_modal = !settings_state.settings.settings().edit_modal,
+                SelectedToggle::Toggle4 => settings_state
+                    .settings
+                    .settings_mut()
+                    .cycle_default_sides(true),
+                SelectedToggle::Toggle5 => settings_state
+                    .settings
+                    .settings_mut()
+                    .cycle_default_sides(false),
+                SelectedToggle::Toggle6 => {
+                    settings_state.settings.settings_mut().edit_modal =
+                        !settings_state.settings.settings().edit_modal
+                }
                 _ => {}
             }
         }
 
         // Tab cycles sub-options for backup interval settings
-        KeyCode::Tab => {
-            match settings_state.selected_toggle {
-                SelectedToggle::Toggle2 => {
-                    if settings_state.settings.settings().backups_interval.is_some() {
-                        settings_state.settings.settings_mut().cycle_backup_interval();
-                        settings_state.can_exit = false;
-                    }
+        KeyCode::Tab => match settings_state.selected_toggle {
+            SelectedToggle::Toggle2 => {
+                if settings_state
+                    .settings
+                    .settings()
+                    .backups_interval
+                    .is_some()
+                {
+                    settings_state
+                        .settings
+                        .settings_mut()
+                        .cycle_backup_interval();
+                    settings_state.can_exit = false;
                 }
-                SelectedToggle::Toggle3 => {
-                    if settings_state.settings.settings().runtime_backups_interval.is_some() {
-                        settings_state.settings.settings_mut().cycle_runtime_backup_interval();
-                        settings_state.can_exit = false;
-                    }
-                }
-                _ => {}
             }
-        }
+            SelectedToggle::Toggle3 => {
+                if settings_state
+                    .settings
+                    .settings()
+                    .runtime_backups_interval
+                    .is_some()
+                {
+                    settings_state
+                        .settings
+                        .settings_mut()
+                        .cycle_runtime_backup_interval();
+                    settings_state.can_exit = false;
+                }
+            }
+            _ => {}
+        },
         _ => {}
     }
 

@@ -4,17 +4,11 @@
 mod tests {
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
     use std::path::PathBuf;
-    
+
     use crate::{
-        input::{
-            start::start_kh,
-            AppAction
-        },
-        states::start::{FocusedInputBox, SelectedStartButton, StartState, RecentPaths},
-        utils::{
-            IoErrorKind,
-            test_utils::MockFileSystem,
-        }
+        input::{AppAction, start::start_kh},
+        states::start::{FocusedInputBox, RecentPaths, SelectedStartButton, StartState},
+        utils::{IoErrorKind, test_utils::MockFileSystem},
     };
 
     fn create_key_event(code: KeyCode) -> KeyEvent {
@@ -64,7 +58,7 @@ mod tests {
     #[test]
     fn test_navigation_with_j_and_down() {
         let mut state = create_test_start_state();
-        
+
         // Test 'j' key
         let key = create_key_event(KeyCode::Char('j'));
         let mock_fs = MockFileSystem::new();
@@ -81,7 +75,7 @@ mod tests {
     #[test]
     fn test_navigation_boundaries() {
         let mut state = create_test_start_state();
-        
+
         // Test that we can't go up from CreateSelect
         assert_eq!(state.selected_button, SelectedStartButton::CreateSelect);
         let key = create_key_event(KeyCode::Char('k'));
@@ -101,11 +95,11 @@ mod tests {
     fn test_enter_on_create_select_opens_input_mode() {
         let mut state = create_test_start_state();
         state.selected_button = SelectedStartButton::CreateSelect;
-        
+
         let key = create_key_event(KeyCode::Enter);
         let mock_fs = MockFileSystem::new();
         let result = start_kh(&mut state, key, &mock_fs);
-        
+
         assert_eq!(result, AppAction::Continue);
         assert!(state.input_path);
         assert!(state.input_path_string.is_some());
@@ -120,7 +114,7 @@ mod tests {
         // submit_path() which uses the real filesystem. The actual filesystem
         // interaction is tested in the states/tests/start_tests.rs file with mocks.
         // Here we just verify that non-existent files are handled correctly.
-        
+
         let mut state = create_test_start_state();
         let mock_fs = MockFileSystem::new();
         // Use paths that don't exist
@@ -129,7 +123,7 @@ mod tests {
             recent_path_2: Some(PathBuf::from("/nonexistent/path2.json")),
             recent_path_3: Some(PathBuf::from("/nonexistent/path3.json")),
         });
-        
+
         // Test Recent1 - should return Continue since file doesn't exist
         state.selected_button = SelectedStartButton::Recent1;
         let key = create_key_event(KeyCode::Enter);
@@ -292,10 +286,10 @@ mod tests {
     #[test]
     fn test_input_mode_enter_in_input_box2_submits() {
         // Note: This test verifies that Enter in InputBox2 calls submit_path.
-        // The actual filesystem interactions are tested with mocks in 
+        // The actual filesystem interactions are tested with mocks in
         // states/tests/start_tests.rs. Here we just verify the input handler
         // correctly triggers the submission, without creating real directories.
-        
+
         let mut state = create_test_start_state();
         let mock_fs = MockFileSystem::new();
         state.input_path = true;
@@ -308,7 +302,10 @@ mod tests {
 
         // Mock filesystem returns ok for operations in submit_path_with_fs in default state
         // (If not set otherwise by constructors)
-        assert_eq!(result, AppAction::CreateMapFile(PathBuf::from("/nonexistent/test_path/test_name.json")));
+        assert_eq!(
+            result,
+            AppAction::CreateMapFile(PathBuf::from("/nonexistent/test_path/test_name.json"))
+        );
         assert!(state.needs_clear_and_redraw);
         // Should have an error message (either DirCreate or DirFind)
         assert!(state.display_err_msg.is_none());
@@ -318,10 +315,10 @@ mod tests {
     fn test_unknown_key_returns_continue() {
         let mut state = create_test_start_state();
         let mock_fs = MockFileSystem::new();
-        
+
         let key = create_key_event(KeyCode::Char('x')); // Random key not handled
         let result = start_kh(&mut state, key, &mock_fs);
-        
+
         assert_eq!(result, AppAction::Continue);
     }
 
@@ -331,7 +328,7 @@ mod tests {
         let mock_fs = MockFileSystem::new();
         state.input_path = true;
         state.input_path_string = None; // This shouldn't happen in practice
-        state.input_path_name = None;   // but we test defensive behavior
+        state.input_path_name = None; // but we test defensive behavior
         state.focused_input_box = FocusedInputBox::InputBox1;
 
         let key = create_key_event(KeyCode::Char('t'));
@@ -365,12 +362,12 @@ mod tests {
         let mut state = create_test_start_state();
         let mock_fs = MockFileSystem::new();
         // Keep the default test paths (which don't exist)
-        
+
         // Test Recent1 with non-existent file
         state.selected_button = SelectedStartButton::Recent1;
         let key = create_key_event(KeyCode::Enter);
         let result = start_kh(&mut state, key, &mock_fs);
-        
+
         // Should return Continue since the file doesn't exist
         assert_eq!(result, AppAction::Continue);
         // Should have set an error message

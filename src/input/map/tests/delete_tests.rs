@@ -1,10 +1,14 @@
-use std::path::PathBuf;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::Color;
+use std::path::PathBuf;
 
 use crate::{
     input::{AppAction, map::delete::map_delete_kh},
-    states::{MapState, map::{Connection, Mode, Side}}, utils::test_utils::MockFileSystem,
+    states::{
+        MapState,
+        map::{Connection, Mode, Side},
+    },
+    utils::test_utils::MockFileSystem,
 };
 
 fn create_test_map_state() -> MapState {
@@ -24,7 +28,9 @@ fn create_key_event(code: KeyCode) -> KeyEvent {
 #[test]
 fn test_delete_kh_escape_switches_to_visual() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Note 0"), Color::White);
     map_state.notes_state.select(0);
     map_state.mode = Mode::Delete;
 
@@ -38,8 +44,10 @@ fn test_delete_kh_escape_switches_to_visual() {
 #[test]
 fn test_delete_single_note() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(50, 25, String::from("Test Note"), Color::White);
+
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.mode = Mode::Delete;
 
@@ -56,12 +64,18 @@ fn test_delete_single_note() {
 #[test]
 fn test_delete_note_with_multiple_notes() {
     let mut map_state = create_test_map_state();
-    
+
     // Add multiple notes
-    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
-    
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Note 0"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Note 1"), Color::White);
+    map_state
+        .notes_state
+        .add(80, 40, String::from("Note 2"), Color::White);
+
     map_state.notes_state.select(1);
     map_state.mode = Mode::Delete;
 
@@ -69,16 +83,16 @@ fn test_delete_note_with_multiple_notes() {
 
     assert_eq!(result, AppAction::Continue);
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
-    
+
     // Check that only note 1 was removed
     assert_eq!(map_state.notes_state.notes().len(), 2);
     assert!(map_state.notes_state.notes().contains_key(&0));
     assert!(!map_state.notes_state.notes().contains_key(&1)); // This one should be deleted
     assert!(map_state.notes_state.notes().contains_key(&2));
-    
+
     // Check render order
     assert_eq!(*map_state.notes_state.render_order(), vec![0, 2]);
-    
+
     assert_eq!(map_state.notes_state.selected_note_id(), None);
     assert_eq!(map_state.mode, Mode::Normal);
 }
@@ -86,13 +100,19 @@ fn test_delete_note_with_multiple_notes() {
 #[test]
 fn test_delete_note_with_multiple_connections() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
-    
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Note 0"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Note 1"), Color::White);
+    map_state
+        .notes_state
+        .add(80, 40, String::from("Note 2"), Color::White);
+
     map_state.notes_state.select(1);
-    
+
     // Add connections: 0->1 and 1->2
     let connection1 = Connection {
         from_id: 0,
@@ -103,7 +123,7 @@ fn test_delete_note_with_multiple_connections() {
     };
     map_state.connections_state.focused_connection = Some(connection1);
     map_state.connections_state.stash_connection();
-    
+
     let connection2 = Connection {
         from_id: 1,
         from_side: Side::Right,
@@ -113,7 +133,7 @@ fn test_delete_note_with_multiple_connections() {
     };
     map_state.connections_state.focused_connection = Some(connection2);
     map_state.connections_state.stash_connection();
-    
+
     // Add an unrelated connection: 0->2 (should be preserved)
     let connection3 = Connection {
         from_id: 0,
@@ -124,39 +144,50 @@ fn test_delete_note_with_multiple_connections() {
     };
     map_state.connections_state.focused_connection = Some(connection3);
     map_state.connections_state.stash_connection();
-     
+
     map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
     assert_eq!(result, AppAction::Continue);
-    
+
     // Note 1 should be deleted
     assert_eq!(map_state.notes_state.notes().len(), 2);
     assert!(map_state.notes_state.notes().contains_key(&0));
     assert!(!map_state.notes_state.notes().contains_key(&1));
     assert!(map_state.notes_state.notes().contains_key(&2));
-    
+
     // Only connection3 (0->2) should remain
     assert_eq!(map_state.connections_state.connections().len(), 1);
     assert_eq!(map_state.connections_state.connections()[0], connection3);
-    
+
     // Connection index should be cleaned up
     // Note 0 should only have connection3
     if let Some(indices_vec) = map_state.connections_state.connection_index().get(&0) {
         assert_eq!(indices_vec.len(), 1);
-        assert_eq!(map_state.connections_state.connections()[indices_vec[0]], connection3);
+        assert_eq!(
+            map_state.connections_state.connections()[indices_vec[0]],
+            connection3
+        );
     }
-    
+
     // Note 2 should only have connection3
     if let Some(indices_vec) = map_state.connections_state.connection_index().get(&2) {
         assert_eq!(indices_vec.len(), 1);
-        assert_eq!(map_state.connections_state.connections()[indices_vec[0]], connection3);
+        assert_eq!(
+            map_state.connections_state.connections()[indices_vec[0]],
+            connection3
+        );
     }
-    
+
     // Note 1 should not exist in connection index
-    assert!(!map_state.connections_state.connection_index().contains_key(&1));
-    
+    assert!(
+        !map_state
+            .connections_state
+            .connection_index()
+            .contains_key(&1)
+    );
+
     assert_eq!(map_state.notes_state.selected_note_id(), None);
     assert_eq!(map_state.mode, Mode::Normal);
 }
@@ -164,12 +195,16 @@ fn test_delete_note_with_multiple_connections() {
 #[test]
 fn test_delete_note_as_connection_target() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
-    
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Note 0"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Note 1"), Color::White);
+
     map_state.notes_state.select(0); // Select note that is the target
-    
+
     // Add a connection where 0 is the target: 1->0
     let connection = Connection {
         from_id: 1,
@@ -180,27 +215,32 @@ fn test_delete_note_as_connection_target() {
     };
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
-    
+
     map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
     assert_eq!(result, AppAction::Continue);
-    
+
     // Note 0 should be deleted
     assert_eq!(map_state.notes_state.notes().len(), 1);
     assert!(!map_state.notes_state.notes().contains_key(&0));
     assert!(map_state.notes_state.notes().contains_key(&1));
-    
+
     // Connection should be removed
     assert!(map_state.connections_state.connections().is_empty());
-    
+
     // Connection index should be cleaned up
-    assert!(!map_state.connections_state.connection_index().contains_key(&0));
+    assert!(
+        !map_state
+            .connections_state
+            .connection_index()
+            .contains_key(&0)
+    );
     if let Some(vec_indices) = map_state.connections_state.connection_index().get(&1) {
         assert!(vec_indices.is_empty());
     }
-    
+
     assert_eq!(map_state.notes_state.selected_note_id(), None);
     assert_eq!(map_state.mode, Mode::Normal);
 }
@@ -208,13 +248,17 @@ fn test_delete_note_as_connection_target() {
 #[test]
 fn test_delete_note_as_connection_source() {
     let mut map_state = create_test_map_state();
-    
+
     // Add two notes
-    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
-    
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Note 0"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Note 1"), Color::White);
+
     map_state.notes_state.select(0); // Select note that is the source
-    
+
     // Add a connection where 0 is the source: 0->1
     let connection = Connection {
         from_id: 0,
@@ -225,27 +269,32 @@ fn test_delete_note_as_connection_source() {
     };
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
-    
+
     map_state.mode = Mode::Delete;
 
     let result = map_delete_kh(&mut map_state, create_key_event(KeyCode::Char('d')));
 
     assert_eq!(result, AppAction::Continue);
-    
+
     // Note 0 should be deleted
     assert_eq!(map_state.notes_state.notes().len(), 1);
     assert!(!map_state.notes_state.notes().contains_key(&0));
     assert!(map_state.notes_state.notes().contains_key(&1));
-    
+
     // Connection should be removed
     assert!(map_state.connections_state.connections().is_empty());
-    
+
     // Connection index should be cleaned up
-    assert!(!map_state.connections_state.connection_index().contains_key(&0));
+    assert!(
+        !map_state
+            .connections_state
+            .connection_index()
+            .contains_key(&0)
+    );
     if let Some(vec_indices) = map_state.connections_state.connection_index().get(&1) {
         assert!(vec_indices.is_empty());
     }
-    
+
     assert_eq!(map_state.notes_state.selected_note_id(), None);
     assert_eq!(map_state.mode, Mode::Normal);
 }
@@ -253,9 +302,11 @@ fn test_delete_note_as_connection_source() {
 #[test]
 fn test_delete_kh_other_keys_ignored() {
     let mut map_state = create_test_map_state();
-    
+
     // Add a note
-    map_state.notes_state.add(50, 25, String::from("Test Note"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.mode = Mode::Delete;
 
@@ -275,7 +326,7 @@ fn test_delete_kh_other_keys_ignored() {
 
     for key in test_keys {
         let result = map_delete_kh(&mut map_state, create_key_event(key));
-        
+
         // Should not change anything for unhandled keys
         assert_eq!(result, AppAction::Continue);
         assert_eq!(map_state.mode, Mode::Delete);
@@ -288,12 +339,18 @@ fn test_delete_kh_other_keys_ignored() {
 #[test]
 fn test_delete_note_render_order() {
     let mut map_state = create_test_map_state();
-    
+
     // Add notes with the selected note at different positions in render order
-    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
-    
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Note 0"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Note 1"), Color::White);
+    map_state
+        .notes_state
+        .add(80, 40, String::from("Note 2"), Color::White);
+
     // Test deleting first note in render order
     map_state.notes_state.select(2);
     map_state.mode = Mode::Delete;
@@ -311,12 +368,18 @@ fn test_delete_note_last_in_render_order() {
     // Normal behavior
 
     let mut map_state = create_test_map_state();
-    
+
     // Add notes
-    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
-    map_state.notes_state.add(50, 25, String::from("Note 1"), Color::White);
-    map_state.notes_state.add(80, 40, String::from("Note 2"), Color::White);
-    
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Note 0"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Note 1"), Color::White);
+    map_state
+        .notes_state
+        .add(80, 40, String::from("Note 2"), Color::White);
+
     // Test deleting last note in render order
     map_state.notes_state.select(2);
     map_state.mode = Mode::Delete;
@@ -333,9 +396,11 @@ fn test_delete_note_last_in_render_order() {
 fn test_delete_note_clears_and_redraws() {
     let mut map_state = create_test_map_state();
     map_state.ui_state.mark_redrawn();
-    
+
     // Add a note
-    map_state.notes_state.add(50, 25, String::from("Test Note"), Color::White);
+    map_state
+        .notes_state
+        .add(50, 25, String::from("Test Note"), Color::White);
     map_state.notes_state.select(0);
     map_state.mode = Mode::Delete;
 
@@ -348,7 +413,9 @@ fn test_delete_note_clears_and_redraws() {
 #[test]
 fn test_escape_clears_and_redraws() {
     let mut map_state = create_test_map_state();
-    map_state.notes_state.add(10, 10, String::from("Note 0"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Note 0"), Color::White);
     map_state.notes_state.select(0);
     map_state.ui_state.mark_redrawn();
     map_state.mode = Mode::Delete;

@@ -1,9 +1,13 @@
-use std::path::PathBuf;
 use ratatui::style::Color;
+use std::path::PathBuf;
 
 use crate::{
-    input::map::{cursor_pos_beginning, remove_char, text_editing::{backspace_char, insert_char, move_cursor_down, move_cursor_up}},
-    states::MapState, utils::test_utils::MockFileSystem,
+    input::map::{
+        cursor_pos_beginning, remove_char,
+        text_editing::{backspace_char, insert_char, move_cursor_down, move_cursor_up},
+    },
+    states::MapState,
+    utils::test_utils::MockFileSystem,
 };
 
 fn create_test_map_state() -> MapState {
@@ -23,106 +27,141 @@ fn create_test_map_state() -> MapState {
 #[test]
 fn test_backspace_at_beginning() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     cursor_pos_beginning(&mut map_state.notes_state);
-    
+
     backspace_char(&mut map_state);
-    
+
     // Should not change anything when cursor is at position 0
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
 #[test]
 fn test_backspace_in_middle() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3); // Cursor after "Hel"
-    
+
     backspace_char(&mut map_state);
-    
+
     // Should remove the 'l' before the cursor
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Helo");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Helo"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 2);
 }
 
 #[test]
 fn test_backspace_at_end() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5); // Cursor at end
-    
+
     backspace_char(&mut map_state);
-    
+
     // Should remove the last character
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hell");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hell"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 4);
 }
 
 #[test]
 fn test_backspace_single_character() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("A"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("A"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(1);
-    
+
     backspace_char(&mut map_state);
-    
+
     // Should result in empty string
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        ""
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
 #[test]
 fn test_backspace_with_newlines() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // Cursor at start of "World"
-    
+
     backspace_char(&mut map_state);
-    
+
     // Should remove the newline character
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "HelloWorld");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "HelloWorld"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
 }
 
 #[test]
 fn test_backspace_unicode() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello 世界"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello 世界"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(9); // After "Hello 世"
-    
+
     backspace_char(&mut map_state);
-    
+
     // Should remove the Chinese character '世'
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello 界");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello 界"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
 
 #[test]
 fn test_backspace_multiple_times() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5);
-    
+
     backspace_char(&mut map_state);
     backspace_char(&mut map_state);
     backspace_char(&mut map_state);
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "He");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "He"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 2);
 }
 
@@ -136,136 +175,181 @@ fn test_remove_at_end() {
     // Last pos here would be 4
 
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5); // Cursor at end
-    
+
     remove_char(&mut map_state);
-    
+
     // Should not remove anything when cursor is at end
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
 }
 
 #[test]
 fn test_remove_in_middle() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // Cursor at 'l'
-    
+
     remove_char(&mut map_state);
-    
+
     // Should remove the 'l' at the cursor
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Helo");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Helo"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 2); // Cursor stays in place
 }
 
 #[test]
 fn test_remove_at_beginning() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0); // Cursor at beginning
-    
+
     remove_char(&mut map_state);
-    
+
     // Should remove the first character
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "ello");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "ello"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
 #[test]
 fn test_remove_empty_content() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from(""), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
-    
+
     remove_char(&mut map_state);
-    
+
     // Should do nothing on empty content
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        ""
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
 #[test]
 fn test_remove_single_character() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("A"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("A"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
-    
+
     remove_char(&mut map_state);
-    
+
     // Should result in empty string
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        ""
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
 #[test]
 fn test_remove_with_newlines() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5); // Cursor at newline
-    
+
     remove_char(&mut map_state);
-    
+
     // Should remove the newline character
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "HelloWorld");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "HelloWorld"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
 }
 
 #[test]
 fn test_remove_unicode() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello 世界"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello 世界"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // At '世'
-    
+
     remove_char(&mut map_state);
-    
+
     // Should remove the Chinese character '世'
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello 界");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello 界"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
 
 #[test]
 fn test_remove_cursor_adjustment() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("AB"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("AB"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(1); // At 'B'
-    
+
     remove_char(&mut map_state);
-    
+
     // Should remove 'B' and adjust cursor
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "A");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "A"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 0); // Cursor moved back
 }
 
 #[test]
 fn test_remove_multiple_times() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
-    
+
     remove_char(&mut map_state); // Remove 'H'
     remove_char(&mut map_state); // Remove 'e'
     remove_char(&mut map_state); // Remove 'l'
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "lo");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "lo"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
 
@@ -276,14 +360,19 @@ fn test_remove_multiple_times() {
 #[test]
 fn test_insert_at_beginning() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
-    
+
     insert_char(&mut map_state, 'X');
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "XHello");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "XHello"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 1);
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
@@ -291,87 +380,117 @@ fn test_insert_at_beginning() {
 #[test]
 fn test_insert_in_middle() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // After "He"
-    
+
     insert_char(&mut map_state, 'X');
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "HeXllo");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "HeXllo"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 3);
 }
 
 #[test]
 fn test_insert_at_end() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5);
-    
+
     insert_char(&mut map_state, '!');
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello!");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello!"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
 
 #[test]
 fn test_insert_into_empty() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from(""), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
-    
+
     insert_char(&mut map_state, 'A');
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "A");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "A"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 1);
 }
 
 #[test]
 fn test_insert_newline() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5);
-    
+
     insert_char(&mut map_state, '\n');
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello\n");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello\n"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
 
 #[test]
 fn test_insert_unicode() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello "), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello "), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6);
-    
+
     insert_char(&mut map_state, '世');
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello 世");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello 世"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 9);
 }
 
 #[test]
 fn test_insert_special_characters() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Test"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(4);
-    
+
     insert_char(&mut map_state, ' ');
     insert_char(&mut map_state, '!');
     insert_char(&mut map_state, '@');
     insert_char(&mut map_state, '#');
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Test !@#");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Test !@#"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 8);
 }
 
@@ -379,13 +498,15 @@ fn test_insert_special_characters() {
 fn test_insert_can_exit_flag() {
     let mut map_state = create_test_map_state();
     map_state.persistence.mark_clean(); // Start with true
-    
-    map_state.notes_state.add(10, 10, String::from("Test"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Test"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
-    
+
     insert_char(&mut map_state, 'X');
-    
+
     // Should always set can_exit to false on edit
     assert_eq!(map_state.persistence.has_unsaved_changes, true);
 }
@@ -393,17 +514,22 @@ fn test_insert_can_exit_flag() {
 #[test]
 fn test_insert_multiple_chars() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from(""), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
-    
+
     let word = "Hello";
     for ch in word.chars() {
         insert_char(&mut map_state, ch);
     }
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
 }
 
@@ -414,13 +540,15 @@ fn test_insert_multiple_chars() {
 #[test]
 fn test_move_up_on_first_line() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3); // On first line
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should not move when already on first line
     assert_eq!(map_state.notes_state.cursor_pos(), 3);
 }
@@ -428,13 +556,15 @@ fn test_move_up_on_first_line() {
 #[test]
 fn test_move_up_to_same_column() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // On 'r' in "World"
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should move to same column on previous line (position 2 - 'l' in "Hello")
     assert_eq!(map_state.notes_state.cursor_pos(), 2);
 }
@@ -442,13 +572,15 @@ fn test_move_up_to_same_column() {
 #[test]
 fn test_move_up_snap_to_shorter_line() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hi\nLonger line"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hi\nLonger line"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(10); // On 'r' in "Longer"
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should snap to end of shorter previous line (position 2 - end of "Hi")
     assert_eq!(map_state.notes_state.cursor_pos(), 2);
 }
@@ -456,13 +588,15 @@ fn test_move_up_snap_to_shorter_line() {
 #[test]
 fn test_move_up_from_third_line() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("First\nSecond\nThird"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("First\nSecond\nThird"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(14); // On 'h' in "Third"
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should move to second line, position 7 ('e' in "Second")
     assert_eq!(map_state.notes_state.cursor_pos(), 7);
 }
@@ -470,13 +604,15 @@ fn test_move_up_from_third_line() {
 #[test]
 fn test_move_up_at_line_start() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // At start of "World"
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should move to start of previous line
     assert_eq!(map_state.notes_state.cursor_pos(), 0);
 }
@@ -484,13 +620,15 @@ fn test_move_up_at_line_start() {
 #[test]
 fn test_move_up_at_line_end() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(11); // At end of "World"
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should move to end of previous line
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
 }
@@ -498,13 +636,15 @@ fn test_move_up_at_line_end() {
 #[test]
 fn test_move_up_empty_lines() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\n\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\n\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(7); // At start of "World"
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should move to the empty line (position 6)
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
@@ -512,13 +652,15 @@ fn test_move_up_empty_lines() {
 #[test]
 fn test_move_up_with_multiple_empty_lines() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("A\n\n\nB"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("A\n\n\nB"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(4); // At 'B'
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should move to previous empty line
     assert_eq!(map_state.notes_state.cursor_pos(), 3);
 }
@@ -526,13 +668,15 @@ fn test_move_up_with_multiple_empty_lines() {
 #[test]
 fn test_move_up_single_line() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3);
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should not move on single line
     assert_eq!(map_state.notes_state.cursor_pos(), 3);
 }
@@ -540,13 +684,18 @@ fn test_move_up_single_line() {
 #[test]
 fn test_move_up_varying_line_lengths() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Short\nThis is a longer line\nMed"), Color::White);
+
+    map_state.notes_state.add(
+        10,
+        10,
+        String::from("Short\nThis is a longer line\nMed"),
+        Color::White,
+    );
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(30); // On 'd' in "Med"
-    
+
     move_cursor_up(&mut map_state.notes_state);
-    
+
     // Should move to same column on longer line (position 8 - 'i' in "This")
     assert_eq!(map_state.notes_state.cursor_pos(), 8);
 }
@@ -558,13 +707,15 @@ fn test_move_up_varying_line_lengths() {
 #[test]
 fn test_move_down_on_last_line() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // On second line
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should not move when already on last line
     assert_eq!(map_state.notes_state.cursor_pos(), 8);
 }
@@ -572,13 +723,15 @@ fn test_move_down_on_last_line() {
 #[test]
 fn test_move_down_to_same_column() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // On 'l' in "Hello"
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should move to same column on next line (position 8 - 'r' in "World")
     assert_eq!(map_state.notes_state.cursor_pos(), 8);
 }
@@ -586,13 +739,15 @@ fn test_move_down_to_same_column() {
 #[test]
 fn test_move_down_snap_to_shorter_line() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Longer line\nHi"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Longer line\nHi"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(7); // On 'l' in "line"
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should snap to end of shorter next line (position 14 - end of "Hi")
     assert_eq!(map_state.notes_state.cursor_pos(), 14);
 }
@@ -600,13 +755,15 @@ fn test_move_down_snap_to_shorter_line() {
 #[test]
 fn test_move_down_from_first_line() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("First\nSecond\nThird"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("First\nSecond\nThird"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // On 'r' in "First"
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should move to second line, position 8 ('c' in "Second")
     assert_eq!(map_state.notes_state.cursor_pos(), 8);
 }
@@ -614,13 +771,15 @@ fn test_move_down_from_first_line() {
 #[test]
 fn test_move_down_at_line_start() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0); // At start of "Hello"
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should move to start of next line
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
@@ -628,13 +787,15 @@ fn test_move_down_at_line_start() {
 #[test]
 fn test_move_down_at_line_end() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5); // At end of "Hello"
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should move to end of next line
     assert_eq!(map_state.notes_state.cursor_pos(), 11);
 }
@@ -642,13 +803,15 @@ fn test_move_down_at_line_end() {
 #[test]
 fn test_move_down_empty_lines() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello\n\nWorld"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello\n\nWorld"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3); // On 'l' in "Hello"
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should move to the empty line (position 6)
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
@@ -656,13 +819,15 @@ fn test_move_down_empty_lines() {
 #[test]
 fn test_move_down_with_multiple_empty_lines() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("A\n\n\nB"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("A\n\n\nB"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0); // At 'A'
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should move to next empty line
     assert_eq!(map_state.notes_state.cursor_pos(), 2);
 }
@@ -670,13 +835,15 @@ fn test_move_down_with_multiple_empty_lines() {
 #[test]
 fn test_move_down_single_line() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(3);
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should not move on single line
     assert_eq!(map_state.notes_state.cursor_pos(), 3);
 }
@@ -684,13 +851,18 @@ fn test_move_down_single_line() {
 #[test]
 fn test_move_down_varying_line_lengths() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Med\nThis is a longer line\nShort"), Color::White);
+
+    map_state.notes_state.add(
+        10,
+        10,
+        String::from("Med\nThis is a longer line\nShort"),
+        Color::White,
+    );
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(2); // On 'd' in "Med"
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should move to same column on longer line (position 6 - 'i' in "This")
     assert_eq!(map_state.notes_state.cursor_pos(), 6);
 }
@@ -698,13 +870,15 @@ fn test_move_down_varying_line_lengths() {
 #[test]
 fn test_move_down_to_last_line() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("First\nSecond\nThird"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("First\nSecond\nThird"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(8); // On 'c' in "Second"
-    
+
     move_cursor_down(&mut map_state.notes_state);
-    
+
     // Should move to third line (position 15 - 'i' in "Third")
     assert_eq!(map_state.notes_state.cursor_pos(), 15);
 }
@@ -716,71 +890,89 @@ fn test_move_down_to_last_line() {
 #[test]
 fn test_edit_workflow_insert_and_backspace() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from(""), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from(""), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
-    
+
     // Type "Hello"
     insert_char(&mut map_state, 'H');
     insert_char(&mut map_state, 'e');
     insert_char(&mut map_state, 'l');
     insert_char(&mut map_state, 'l');
     insert_char(&mut map_state, 'o');
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 5);
-    
+
     // Backspace twice
     backspace_char(&mut map_state);
     backspace_char(&mut map_state);
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hel");
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hel"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 3);
 }
 
 #[test]
 fn test_edit_workflow_navigation_and_editing() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Line 1\nLine 2\nLine 3"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Line 1\nLine 2\nLine 3"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(0);
-    
+
     // Move down to line 2
     move_cursor_down(&mut map_state.notes_state);
     assert_eq!(map_state.notes_state.cursor_pos(), 7); // Start of "Line 2"
-    
+
     // Insert an 'X'
     insert_char(&mut map_state, 'X');
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Line 1\nXLine 2\nLine 3");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Line 1\nXLine 2\nLine 3"
+    );
     assert_eq!(map_state.notes_state.cursor_pos(), 8); // Cursor moved after insert
-    
+
     // Backspace to remove the 'X'
     backspace_char(&mut map_state);
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Line 1\nLine 2\nLine 3");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Line 1\nLine 2\nLine 3"
+    );
 }
 
 #[test]
 fn test_cursor_movement_up_and_down() {
     let mut map_state = create_test_map_state();
-    
+
     // String layout: "AAA\nBBBBB\nCC"
     // Line 0: "AAA" (indices 0,1,2)
     // Line 1: "BBBBB" (indices 4,5,6,7,8)
     // Line 2: "CC" (indices 10,11)
-    map_state.notes_state.add(10, 10, String::from("AAA\nBBBBB\nCC"), Color::White);
+    map_state
+        .notes_state
+        .add(10, 10, String::from("AAA\nBBBBB\nCC"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(6); // On third 'B' in middle line (column 2)
-    
+
     // Move down (should snap to end of shorter line)
     move_cursor_down(&mut map_state.notes_state);
     assert_eq!(map_state.notes_state.cursor_pos(), 12); // End of "CC"
-    
+
     // Move up (column 2 in "BBBBB")
     move_cursor_up(&mut map_state.notes_state);
     assert_eq!(map_state.notes_state.cursor_pos(), 6); // Back to third 'B' in "BBBBB"
-    
+
     // Move up again (column 2 in "AAA")
     move_cursor_up(&mut map_state.notes_state);
     assert_eq!(map_state.notes_state.cursor_pos(), 2); // Third 'A' in "AAA"
@@ -789,11 +981,13 @@ fn test_cursor_movement_up_and_down() {
 #[test]
 fn test_multiline_editing() {
     let mut map_state = create_test_map_state();
-    
-    map_state.notes_state.add(10, 10, String::from("Hello"), Color::White);
+
+    map_state
+        .notes_state
+        .add(10, 10, String::from("Hello"), Color::White);
     map_state.notes_state.select(0);
     map_state.notes_state.set_cursor_pos(5);
-    
+
     // Add newline and more text
     insert_char(&mut map_state, '\n');
     insert_char(&mut map_state, 'W');
@@ -801,13 +995,19 @@ fn test_multiline_editing() {
     insert_char(&mut map_state, 'r');
     insert_char(&mut map_state, 'l');
     insert_char(&mut map_state, 'd');
-    
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello\nWorld");
-    
+
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello\nWorld"
+    );
+
     // Navigate back up and edit
     move_cursor_up(&mut map_state.notes_state);
     assert_eq!(map_state.notes_state.cursor_pos(), 5); // End of "Hello"
-    
+
     insert_char(&mut map_state, '!');
-    assert_eq!(map_state.notes_state.notes().get(&0).unwrap().data.content, "Hello!\nWorld");
+    assert_eq!(
+        map_state.notes_state.notes().get(&0).unwrap().data.content,
+        "Hello!\nWorld"
+    );
 }

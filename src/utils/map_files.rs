@@ -1,18 +1,21 @@
-use std::{path::Path, collections::HashMap};
 use chrono::Local;
-use serde::{Serialize, Deserialize, Serializer, Deserializer};
 use ratatui::style::Color;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::{collections::HashMap, path::Path};
 
 use crate::{
     app::{App, Screen},
+    graph::Node,
     states::{
         MapState,
         map::{Connection, ConnectionsState, Note, NoteData, NotesState, Notification, ViewPos},
     },
     utils::{
-        IoErrorKind, filesystem::{FileSystem, RealFileSystem}, get_color_from_string, get_color_name_in_string, handle_on_load_backup_with_fs, read_json_data, write_json_data
+        IoErrorKind,
+        filesystem::{FileSystem, RealFileSystem},
+        get_color_from_string, get_color_name_in_string, handle_on_load_backup_with_fs,
+        read_json_data, write_json_data,
     },
-    graph::Node,
 };
 
 /// Backward-compatible note deserializer.
@@ -33,7 +36,8 @@ impl From<LegacyNote> for Note {
     fn from(l: LegacyNote) -> Note {
         let note_data = l.data.unwrap_or_else(|| NoteData {
             content: l.content.unwrap_or_default(),
-            color: l.color
+            color: l
+                .color
                 .as_deref()
                 .map(crate::utils::get_color_from_string)
                 .unwrap_or(Color::White),
@@ -53,7 +57,7 @@ where
 }
 
 /// Serializable representation of map state for JSON persistence.
-/// 
+///
 /// Separated from `MapState` to include only the data that needs to be persisted,
 /// excluding runtime-only fields.
 #[derive(Serialize, Deserialize)]
@@ -82,10 +86,9 @@ where
     D: Deserializer<'de>,
 {
     let s = String::deserialize(deserializer)?;
-    
+
     Ok(get_color_from_string(&s))
 }
-
 
 /// Creates a new map file at the given path and transitions to the Map screen.
 pub fn create_map_file(app: &mut App, path: &Path) {
@@ -108,7 +111,7 @@ pub fn create_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem)
         if let Screen::Start(start_state) = &mut app.screen {
             start_state.handle_submit_error(IoErrorKind::FileWrite);
         }
-        return
+        return;
     }
 
     // Always called from Start screen
@@ -145,9 +148,12 @@ pub fn save_with_notification(
 }
 
 /// Saves map data to a file.
-/// 
+///
 /// Updates persistence state to allow exit after successful save.
-pub fn save_map_file(map_state: &mut MapState, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+pub fn save_map_file(
+    map_state: &mut MapState,
+    path: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     let map_data = MapData {
         view_pos: map_state.viewport.view_pos.clone(),
         next_note_id_counter: map_state.notes_state.next_note_id_counter(),
@@ -167,7 +173,7 @@ pub fn load_map_file(app: &mut App, path: &Path) {
 }
 
 /// Loads a map file with a custom filesystem (testable version).
-/// 
+///
 /// Only called from the Start screen. On error, shows error message and remains
 /// on Start screen to allow retry.
 pub fn load_map_file_with_fs(app: &mut App, path: &Path, fs: &impl FileSystem) {

@@ -6,7 +6,7 @@ use ratatui::DefaultTerminal;
 use tmmpr::{
     app::{App, Screen},
     input::handle_events,
-    ui::{render_map, render_settings, render_start} 
+    ui::{render_map, render_settings, render_start},
 };
 
 fn main() -> color_eyre::Result<()> {
@@ -22,7 +22,7 @@ fn main() -> color_eyre::Result<()> {
 /// Each screen state tracks whether it needs redrawing instead of rendering every frame.
 fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     let _ = execute!(stdout(), SetCursorStyle::SteadyBar);
-    
+
     while app.running {
         match &mut app.screen {
             Screen::Start(start_state) => {
@@ -37,7 +37,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                     settings_state.needs_clear_and_redraw = false;
                 }
             }
-            Screen::Map(map_state) => { 
+            Screen::Map(map_state) => {
                 // Periodic auto-save and backup creation (respects user settings)
                 map_state.auto_save_if_needed();
                 map_state.auto_backup_if_needed();
@@ -48,7 +48,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                 }
             }
         };
-         
+
         handle_events(app)?;
     }
 

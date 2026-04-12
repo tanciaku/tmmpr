@@ -1,14 +1,20 @@
-
 use ratatui::{
-    Frame, layout::{Alignment, Constraint, Direction, Layout, Margin, Position}, style::{Color, Style, Stylize}, text::{Line, Span}, widgets::{Block, Clear, List, ListItem, Paragraph, Wrap}
+    Frame,
+    layout::{Alignment, Constraint, Direction, Layout, Margin, Position},
+    style::{Color, Style, Stylize},
+    text::{Line, Span},
+    widgets::{Block, Clear, List, ListItem, Paragraph, Wrap},
 };
 
 use crate::{
     states::{
         SettingsState,
-        settings::{BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, SettingsNotification, SettingsType, side_to_string},
+        settings::{
+            BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle,
+            SettingsNotification, SettingsType, side_to_string,
+        },
     },
-    utils::IoErrorKind
+    utils::IoErrorKind,
 };
 
 /// Renders the settings screen with toggleable options for map behavior and backups.
@@ -17,7 +23,6 @@ use crate::{
 /// for backups path, or the main settings menu. Consumes one-time notifications by clearing
 /// them after rendering.
 pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
-
     // Error case - settings functionality unavailable
     if let SettingsType::Default(_, error_message) = &settings_state.settings {
         if let Some(err_msg) = error_message {
@@ -33,14 +38,36 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
                 ])
                 .split(frame.area());
 
-            let error_text1 = Line::from(Span::styled("There was an error with using the settings functionality:", Style::new().fg(Color::Red))).alignment(Alignment::Center);
+            let error_text1 = Line::from(Span::styled(
+                "There was an error with using the settings functionality:",
+                Style::new().fg(Color::Red),
+            ))
+            .alignment(Alignment::Center);
             let error_text2 = match err_msg {
-                IoErrorKind::DirFind => Line::from(Span::styled("no home directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-                IoErrorKind::DirCreate => Line::from(Span::styled("can't create config directory", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-                IoErrorKind::FileWrite => Line::from(Span::styled("can't create settings file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
-                IoErrorKind::FileRead => Line::from(Span::styled("can't read settings file", Style::new().fg(Color::Red))).alignment(Alignment::Center),
+                IoErrorKind::DirFind => Line::from(Span::styled(
+                    "no home directory",
+                    Style::new().fg(Color::Red),
+                ))
+                .alignment(Alignment::Center),
+                IoErrorKind::DirCreate => Line::from(Span::styled(
+                    "can't create config directory",
+                    Style::new().fg(Color::Red),
+                ))
+                .alignment(Alignment::Center),
+                IoErrorKind::FileWrite => Line::from(Span::styled(
+                    "can't create settings file",
+                    Style::new().fg(Color::Red),
+                ))
+                .alignment(Alignment::Center),
+                IoErrorKind::FileRead => Line::from(Span::styled(
+                    "can't read settings file",
+                    Style::new().fg(Color::Red),
+                ))
+                .alignment(Alignment::Center),
             };
-            let settings_error_controls_text = Line::from("q - exit to start screen      o - go back to the map screen").alignment(Alignment::Center);
+            let settings_error_controls_text =
+                Line::from("q - exit to start screen      o - go back to the map screen")
+                    .alignment(Alignment::Center);
 
             frame.render_widget(error_text1, settings_error_area[1]);
             frame.render_widget(error_text2, settings_error_area[2]);
@@ -64,7 +91,8 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             ])
             .split(frame.area());
 
-        let context_page_controls_text = Line::from("? / F1 - toggle context page").alignment(Alignment::Center);
+        let context_page_controls_text =
+            Line::from("? / F1 - toggle context page").alignment(Alignment::Center);
         frame.render_widget(context_page_controls_text, context_page_area[3]);
 
         let context_page_area = Layout::default()
@@ -110,13 +138,14 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             Line::from("(? / F1  in Map Screen to open Help Screen)"),
         ];
 
-        let context_page_content: Vec<ListItem> = context_page_lines
-            .into_iter()
-            .map(ListItem::new)
-            .collect();
+        let context_page_content: Vec<ListItem> =
+            context_page_lines.into_iter().map(ListItem::new).collect();
         let context_page_content = List::new(context_page_content);
 
-        frame.render_widget(context_page_content, context_page_area[1].inner(Margin::new(3, 3)));
+        frame.render_widget(
+            context_page_content,
+            context_page_area[1].inner(Margin::new(3, 3)),
+        );
 
         return;
     }
@@ -139,7 +168,10 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         ])
         .split(frame.area());
 
-    let settings_screen_controls_text1 = Line::from("q - exit to start screen      o - go back to the map screen      s - save the settings").alignment(Alignment::Center);
+    let settings_screen_controls_text1 = Line::from(
+        "q - exit to start screen      o - go back to the map screen      s - save the settings",
+    )
+    .alignment(Alignment::Center);
     let settings_screen_controls_text2 = Line::from("Enter - toggle option      k / Up - go up       j / Down - go down       ? / F1 - toggle context page").alignment(Alignment::Center);
 
     frame.render_widget(settings_screen_controls_text1, settings_menu_area[7]);
@@ -148,12 +180,16 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     // One-time notification (cleared after rendering)
     if let Some(notification) = &settings_state.notification {
         let notification_text = match notification {
-            SettingsNotification::SaveSuccess => {
-                Line::from(Span::styled("Settings saved successfully.", Style::new().fg(Color::Green))).alignment(Alignment::Center)
-            }
-            SettingsNotification::SaveFail => {
-                Line::from(Span::styled("There was an error saving to settings file. (Write Error)", Style::new().fg(Color::Red))).alignment(Alignment::Center)
-            }
+            SettingsNotification::SaveSuccess => Line::from(Span::styled(
+                "Settings saved successfully.",
+                Style::new().fg(Color::Green),
+            ))
+            .alignment(Alignment::Center),
+            SettingsNotification::SaveFail => Line::from(Span::styled(
+                "There was an error saving to settings file. (Write Error)",
+                Style::new().fg(Color::Red),
+            ))
+            .alignment(Alignment::Center),
         };
 
         frame.render_widget(notification_text, settings_menu_area[3]);
@@ -162,12 +198,27 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     }
 
     // Contextual keybind hints for toggles with multiple options
-    if settings_state.settings.settings().backups_interval.is_some() && matches!(settings_state.selected_toggle, SelectedToggle::Toggle2) {
-        let backups_toggle_hint = Line::from(String::from("Tab - to cycle backup intervals")).alignment(Alignment::Center);
+    if settings_state
+        .settings
+        .settings()
+        .backups_interval
+        .is_some()
+        && matches!(settings_state.selected_toggle, SelectedToggle::Toggle2)
+    {
+        let backups_toggle_hint = Line::from(String::from("Tab - to cycle backup intervals"))
+            .alignment(Alignment::Center);
         frame.render_widget(backups_toggle_hint, settings_menu_area[5]);
     }
-    if settings_state.settings.settings().runtime_backups_interval.is_some() && matches!(settings_state.selected_toggle, SelectedToggle::Toggle3) {
-        let runtime_backups_toggle_hint = Line::from(String::from("Tab - to cycle runtime backup intervals")).alignment(Alignment::Center);
+    if settings_state
+        .settings
+        .settings()
+        .runtime_backups_interval
+        .is_some()
+        && matches!(settings_state.selected_toggle, SelectedToggle::Toggle3)
+    {
+        let runtime_backups_toggle_hint =
+            Line::from(String::from("Tab - to cycle runtime backup intervals"))
+                .alignment(Alignment::Center);
         frame.render_widget(runtime_backups_toggle_hint, settings_menu_area[5]);
     }
 
@@ -206,7 +257,9 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     let toggle2_style = SelectedToggle::Toggle2.get_style(&settings_state.selected_toggle);
 
     // Toggle 3 - runtime backups (only shown when backups enabled)
-    let toggle3_line_text = if let Some(toggle3_content) = &settings_state.settings.settings().runtime_backups_interval {
+    let toggle3_line_text = if let Some(toggle3_content) =
+        &settings_state.settings.settings().runtime_backups_interval
+    {
         let toggle3_content_text = match toggle3_content {
             RuntimeBackupsInterval::Hourly => String::from("Hourly"),
             RuntimeBackupsInterval::Every2Hours => String::from("Every 2 hours"),
@@ -215,13 +268,17 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             RuntimeBackupsInterval::Every12Hours => String::from("Every 12 hours"),
         };
         let toggle3_style = SelectedToggle::Toggle3.get_style(&settings_state.selected_toggle);
-        vec![Span::raw("Runtime backups interval:  "), Span::styled(format!("{}", toggle3_content_text), toggle3_style)] 
+        vec![
+            Span::raw("Runtime backups interval:  "),
+            Span::styled(format!("{}", toggle3_content_text), toggle3_style),
+        ]
     } else {
         vec![]
     };
 
     // Toggle 4 - default start side for making connections
-    let toggle4_content_text = side_to_string(settings_state.settings.settings().default_start_side);
+    let toggle4_content_text =
+        side_to_string(settings_state.settings.settings().default_start_side);
     let toggle4_style = SelectedToggle::Toggle4.get_style(&settings_state.selected_toggle);
 
     // Toggle 5 - default end side for making connections
@@ -237,17 +294,32 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
     let toggle6_style = SelectedToggle::Toggle6.get_style(&settings_state.selected_toggle);
 
     let settings_menu_content_lines = vec![
-        Line::from(vec![Span::raw("Map changes auto save interval:  "), Span::styled(format!("{}", toggle1_content_text), toggle1_style)]),
+        Line::from(vec![
+            Span::raw("Map changes auto save interval:  "),
+            Span::styled(format!("{}", toggle1_content_text), toggle1_style),
+        ]),
         Line::from(""),
-        Line::from(vec![Span::raw("Backups interval:  "), Span::styled(format!("{}", toggle2_content_text), toggle2_style)]),
+        Line::from(vec![
+            Span::raw("Backups interval:  "),
+            Span::styled(format!("{}", toggle2_content_text), toggle2_style),
+        ]),
         Line::from(""),
         Line::from(toggle3_line_text),
         Line::from(""),
-        Line::from(vec![Span::raw("Default start side:  "), Span::styled(format!("{}", toggle4_content_text), toggle4_style)]),
+        Line::from(vec![
+            Span::raw("Default start side:  "),
+            Span::styled(format!("{}", toggle4_content_text), toggle4_style),
+        ]),
         Line::from(""),
-        Line::from(vec![Span::raw("Default end side:  "), Span::styled(format!("{}", toggle5_content_text), toggle5_style)]),
+        Line::from(vec![
+            Span::raw("Default end side:  "),
+            Span::styled(format!("{}", toggle5_content_text), toggle5_style),
+        ]),
         Line::from(""),
-        Line::from(vec![Span::raw("Modal Editing for Edit Mode:  "), Span::styled(format!("{}", toggle6_content_text), toggle6_style)]),
+        Line::from(vec![
+            Span::raw("Modal Editing for Edit Mode:  "),
+            Span::styled(format!("{}", toggle6_content_text), toggle6_style),
+        ]),
     ];
 
     let settings_menu_content: Vec<ListItem> = settings_menu_content_lines
@@ -256,7 +328,10 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         .collect();
     let settings_menu_content = List::new(settings_menu_content);
 
-    frame.render_widget(settings_menu_content, settings_menu_area[1].inner(Margin::new(3, 3)));
+    frame.render_widget(
+        settings_menu_content,
+        settings_menu_area[1].inner(Margin::new(3, 3)),
+    );
 
     // Modal prompt for entering backups directory path
     if settings_state.input_prompt {
@@ -276,7 +351,7 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
                 Constraint::Fill(1),
             ])
             .split(input_prompt_area[1]);
-    
+
         frame.render_widget(Clear, frame.area());
         frame.render_widget(Block::bordered(), input_prompt_area[1]);
 
@@ -309,24 +384,39 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
             Line::from("Empty field or directory name only - uses home directory as base path").alignment(Alignment::Center),
             Line::from("Path starting with / - uses absolute directory path").alignment(Alignment::Center),
             Line::from("Esc key - cancels path entry (if new) or removes existing path and disables backups").alignment(Alignment::Center)];
-        let input_prompt_text: Vec<ListItem> = input_prompt_text.into_iter().map(ListItem::new).collect();
+        let input_prompt_text: Vec<ListItem> =
+            input_prompt_text.into_iter().map(ListItem::new).collect();
         let input_prompt_text = List::new(input_prompt_text);
 
-        let keybinds_text = Line::from("Esc - cancel          Enter - confirm path").alignment(Alignment::Center);
+        let keybinds_text =
+            Line::from("Esc - cancel          Enter - confirm path").alignment(Alignment::Center);
 
         frame.render_widget(input_prompt_text, input_prompt_lines_area[1]);
         frame.render_widget(keybinds_text, input_prompt_lines_area[7]);
 
         // Safe unwrap: backups_path is always Some while input_prompt is true
         let user_input_path = Paragraph::new(Line::from(
-            settings_state.settings.settings().backups_path.as_ref().unwrap().as_str()))
-            .block(Block::bordered())
-            .wrap(Wrap { trim: false });
+            settings_state
+                .settings
+                .settings()
+                .backups_path
+                .as_ref()
+                .unwrap()
+                .as_str(),
+        ))
+        .block(Block::bordered())
+        .wrap(Wrap { trim: false });
         frame.render_widget(user_input_path, input_prompt_input_area[1]);
 
         // Account for wrapping: inner width is 58 (60 - 2 borders)
         let inner_width = 58usize;
-        let path_len = settings_state.settings.settings().backups_path.as_ref().unwrap().len();
+        let path_len = settings_state
+            .settings
+            .settings()
+            .backups_path
+            .as_ref()
+            .unwrap()
+            .len();
         // +1 offset accounts for border width
         let cursor_x = input_prompt_input_area[1].x + (path_len % inner_width) as u16 + 1;
         let cursor_y = input_prompt_input_area[1].y + (path_len / inner_width) as u16 + 1;
@@ -335,15 +425,21 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
         if let Some(err) = &settings_state.input_prompt_err {
             match err {
                 BackupsErr::DirFind => {
-                    let err_text = Line::from("Error finding the home directory").fg(Color::Red).alignment(Alignment::Center);
+                    let err_text = Line::from("Error finding the home directory")
+                        .fg(Color::Red)
+                        .alignment(Alignment::Center);
                     frame.render_widget(err_text, input_prompt_lines_area[5]);
                 }
                 BackupsErr::DirCreate => {
-                    let err_text = Line::from("Error creating backups directory").fg(Color::Red).alignment(Alignment::Center);
+                    let err_text = Line::from("Error creating backups directory")
+                        .fg(Color::Red)
+                        .alignment(Alignment::Center);
                     frame.render_widget(err_text, input_prompt_lines_area[5]);
                 }
                 BackupsErr::FileWrite => {
-                    let err_text = Line::from("Error writing to the provided directory").fg(Color::Red).alignment(Alignment::Center);
+                    let err_text = Line::from("Error writing to the provided directory")
+                        .fg(Color::Red)
+                        .alignment(Alignment::Center);
                     frame.render_widget(err_text, input_prompt_lines_area[5]);
                 }
             }
@@ -376,16 +472,19 @@ pub fn render_settings(frame: &mut Frame, settings_state: &mut SettingsState) {
                 Constraint::Length(2),
             ])
             .split(confirm_discard_menu_area[2]);
-        
-        let line_1 = Line::from("Exit without saving changes to settings?").alignment(Alignment::Center);
-        let line_2 = Line::from(
-            vec![
-                Span::styled("[ ESC ] - Cancel", Style::new().fg(Color::Green)), 
-                Span::raw("      "),
-                Span::styled("[ q ] - Confirm discard and exit", Style::new().fg(Color::Red)), 
 
-            ]).alignment(Alignment::Center);
-        
+        let line_1 =
+            Line::from("Exit without saving changes to settings?").alignment(Alignment::Center);
+        let line_2 = Line::from(vec![
+            Span::styled("[ ESC ] - Cancel", Style::new().fg(Color::Green)),
+            Span::raw("      "),
+            Span::styled(
+                "[ q ] - Confirm discard and exit",
+                Style::new().fg(Color::Red),
+            ),
+        ])
+        .alignment(Alignment::Center);
+
         frame.render_widget(line_1, confirm_discard_menu_text_areas[1]);
         frame.render_widget(line_2, confirm_discard_menu_text_areas[4]);
     }

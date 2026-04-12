@@ -88,10 +88,14 @@ pub fn move_cursor_up(notes_state: &mut NotesState) {
         current_line_start += line.len() + 1;
     }
 
-    if current_line_start == 0 { return } // Already on first line
+    if current_line_start == 0 {
+        return;
+    } // Already on first line
 
     // Grapheme count of current line prefix gives the visual column
-    let col = note.data.content[current_line_start..cursor_pos].graphemes(true).count();
+    let col = note.data.content[current_line_start..cursor_pos]
+        .graphemes(true)
+        .count();
 
     let previous_line = &note.data.content[previous_line_start..current_line_start - 1];
 
@@ -125,10 +129,14 @@ pub fn move_cursor_down(notes_state: &mut NotesState) {
         next_line_start += line.len() + 1;
     }
 
-    if next_line_start > note.data.content.len() { return } // Already on last line
+    if next_line_start > note.data.content.len() {
+        return;
+    } // Already on last line
 
     // Grapheme count of current line prefix gives the visual column
-    let col = note.data.content[current_line_start..cursor_pos].graphemes(true).count();
+    let col = note.data.content[current_line_start..cursor_pos]
+        .graphemes(true)
+        .count();
 
     let next_line = &note.data.content[next_line_start..];
     let next_line = match next_line.find('\n') {

@@ -19,10 +19,10 @@ pub mod graph;
 #[doc(hidden)]
 pub mod app;
 #[doc(hidden)]
-pub mod states;
+pub mod input;
 #[doc(hidden)]
-pub mod utils;
+pub mod states;
 #[doc(hidden)]
 pub mod ui;
 #[doc(hidden)]
-pub mod input;
+pub mod utils;

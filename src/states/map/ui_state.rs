@@ -1,6 +1,5 @@
 use crate::states::map::{DiscardMenuType, Notification};
 
-
 #[derive(PartialEq, Debug)]
 pub struct UIState {
     pub needs_clear_and_redraw: bool,
@@ -19,7 +18,7 @@ impl UIState {
             help_screen: None,
         }
     }
-    
+
     pub fn request_redraw(&mut self) {
         self.needs_clear_and_redraw = true;
     }
