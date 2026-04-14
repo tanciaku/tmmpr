@@ -5,10 +5,13 @@ use std::{collections::HashMap, path::Path};
 
 use crate::{
     app::{App, Screen},
-    graph::Node,
+    graph::{Node, Side},
     states::{
         MapState,
-        map::{Connection, ConnectionsState, Note, NoteData, NotesState, Notification, ViewPos},
+        map::{
+            Connection, ConnectionData, ConnectionsState, Note, NoteData, NotesState, Notification,
+            ViewPos,
+        },
     },
     utils::{
         IoErrorKind,
@@ -20,7 +23,7 @@ use crate::{
 
 /// Backward-compatible note deserializer.
 /// Accepts both the old flat format (`content`/`color` at top level)
-/// and the new nestedd format (`data: { content, color }`).
+/// and the new nested format (`data: { content, color }`).
 #[derive(Deserialize)]
 struct LegacyNote {
     pub x: usize,
@@ -56,6 +59,44 @@ where
     Ok(raw.into_iter().map(|(k, v)| (k, Note::from(v))).collect())
 }
 
+/// Backward-compatible connection deserializer.
+/// Accepts both the old flat format (`color` at top level)
+/// and the new nested format (`data: { color }`).
+#[derive(Deserialize)]
+struct LegacyConnection {
+    pub from_id: usize,
+    pub from_side: Side,
+    pub to_id: Option<usize>,
+    pub to_side: Option<Side>,
+    // new format
+    pub data: Option<ConnectionData>,
+    // old format
+    pub color: Option<String>,
+}
+
+impl From<LegacyConnection> for Connection {
+    fn from(l: LegacyConnection) -> Connection {
+        let connection_data = l.data.unwrap_or_else(|| ConnectionData {
+            color: l
+                .color
+                .as_deref()
+                .map(crate::utils::get_color_from_string)
+                .unwrap_or(Color::White),
+        });
+        Connection::new(l.from_id, l.from_side, l.to_id, l.to_side, connection_data)
+    }
+}
+
+/// Deserializes a `Vec<Connection>` by first going through `LegacyConnection`,
+/// accepting both old flat and new nested JSON formats.
+fn deserialize_connections<'de, D>(deserializer: D) -> Result<Vec<Connection>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw: Vec<LegacyConnection> = Vec::deserialize(deserializer)?;
+    Ok(raw.into_iter().map(|c| Connection::from(c)).collect())
+}
+
 /// Serializable representation of map state for JSON persistence.
 ///
 /// Separated from `MapState` to include only the data that needs to be persisted,
@@ -68,6 +109,7 @@ pub struct MapData {
     #[serde(deserialize_with = "deserialize_notes")]
     pub notes: HashMap<usize, Note>,
     pub render_order: Vec<usize>,
+    #[serde(deserialize_with = "deserialize_connections")]
     pub connections: Vec<Connection>,
 }
 

@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::states::{
-    map::Side,
-    settings::{BackupsInterval, RuntimeBackupsInterval, cycle_side},
+use crate::{
+    graph::Side,
+    states::settings::{BackupsInterval, RuntimeBackupsInterval, cycle_side},
 };
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};

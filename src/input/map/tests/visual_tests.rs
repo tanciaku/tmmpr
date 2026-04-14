@@ -3,10 +3,11 @@ use ratatui::style::Color;
 use std::path::PathBuf;
 
 use crate::{
+    graph::Side,
     input::{AppAction, map::visual::map_visual_kh},
     states::{
         MapState,
-        map::{Connection, Mode, Side},
+        map::{Connection, ConnectionData, Mode},
     },
     utils::test_utils::MockFileSystem,
 };
@@ -146,7 +147,7 @@ fn test_visual_create_new_connection() {
     assert_eq!(connection.from_id, 0);
     assert_eq!(connection.to_id, None);
     assert_eq!(connection.to_side, None);
-    assert_eq!(connection.color, Color::White);
+    assert_eq!(connection.data.color, Color::White);
 }
 
 #[test]
@@ -164,13 +165,13 @@ fn test_visual_enter_connection_mode_with_existing_connection() {
     map_state.mode = Mode::Visual;
 
     // Add a connection from note 0 to note 1
-    let connection = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
 
@@ -531,13 +532,14 @@ fn test_connection_mode_exit_with_c() {
     map_state.mode = Mode::VisualConnect;
 
     // Set up a focused connection
-    map_state.connections_state.focused_connection = Some(Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    });
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
+    map_state.connections_state.focused_connection = Some(connection);
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('c')));
 
@@ -558,13 +560,8 @@ fn test_connection_mode_rotate_from_side() {
     map_state.mode = Mode::VisualConnect;
 
     // Set up a focused connection starting from note 0
-    map_state.connections_state.focused_connection = Some(Connection {
-        from_id: 0,
-        from_side: Side::Top,
-        to_id: None,
-        to_side: None,
-        color: Color::White,
-    });
+    let connection = Connection::new(0, Side::Top, None, None, ConnectionData::new(Color::White));
+    map_state.connections_state.focused_connection = Some(connection);
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('r')));
 
@@ -590,13 +587,14 @@ fn test_connection_mode_rotate_to_side() {
     map_state.mode = Mode::VisualConnect;
 
     // Set up a focused connection with note 1 as target
-    map_state.connections_state.focused_connection = Some(Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    });
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
+    map_state.connections_state.focused_connection = Some(connection);
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('r')));
 
@@ -625,33 +623,33 @@ fn test_connection_mode_cycle_connections() {
     map_state.mode = Mode::VisualConnect;
 
     // Add three connections involving note 0
-    let connection1 = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection1 = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection1);
     map_state.connections_state.stash_connection();
 
-    let connection2 = Connection {
-        from_id: 0,
-        from_side: Side::Bottom,
-        to_id: Some(2),
-        to_side: Some(Side::Top),
-        color: Color::Green,
-    };
+    let connection2 = Connection::new(
+        0,
+        Side::Bottom,
+        Some(2),
+        Some(Side::Top),
+        ConnectionData::new(Color::Green),
+    );
     map_state.connections_state.focused_connection = Some(connection2);
     map_state.connections_state.stash_connection();
 
-    let connection3 = Connection {
-        from_id: 0,
-        from_side: Side::Top,
-        to_id: Some(1),
-        to_side: Some(Side::Bottom),
-        color: Color::Blue,
-    };
+    let connection3 = Connection::new(
+        0,
+        Side::Top,
+        Some(1),
+        Some(Side::Bottom),
+        ConnectionData::new(Color::Blue),
+    );
     map_state.connections_state.focused_connection = Some(connection3);
     map_state.connections_state.stash_connection();
 
@@ -666,7 +664,7 @@ fn test_connection_mode_cycle_connections() {
     let focused = map_state.connections_state.focused_connection.unwrap();
     assert_eq!(focused.from_side, Side::Bottom);
     assert_eq!(focused.to_id, Some(2));
-    assert_eq!(focused.color, Color::Green);
+    assert_eq!(focused.data.color, Color::Green);
 
     // Second cycle - should move to connection3
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('n')));
@@ -675,7 +673,7 @@ fn test_connection_mode_cycle_connections() {
     let focused = map_state.connections_state.focused_connection.unwrap();
     assert_eq!(focused.from_side, Side::Top);
     assert_eq!(focused.to_id, Some(1));
-    assert_eq!(focused.color, Color::Blue);
+    assert_eq!(focused.data.color, Color::Blue);
 
     // Third cycle - should wrap around back to connection1
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('n')));
@@ -684,7 +682,7 @@ fn test_connection_mode_cycle_connections() {
     let focused = map_state.connections_state.focused_connection.unwrap();
     assert_eq!(focused.from_side, Side::Right);
     assert_eq!(focused.to_id, Some(1));
-    assert_eq!(focused.color, Color::White);
+    assert_eq!(focused.data.color, Color::White);
 }
 
 #[test]
@@ -701,24 +699,19 @@ fn test_connection_mode_cycle_connections_not_editing() {
     map_state.mode = Mode::VisualConnect;
 
     // Add an existing connection associated with note 0 in the connections vector
-    let existing_connection = Connection {
-        from_id: 0,
-        from_side: Side::Bottom,
-        to_id: Some(1),
-        to_side: Some(Side::Top),
-        color: Color::Green,
-    };
+    let existing_connection = Connection::new(
+        0,
+        Side::Bottom,
+        Some(1),
+        Some(Side::Top),
+        ConnectionData::new(Color::Green),
+    );
     map_state.connections_state.focused_connection = Some(existing_connection);
     map_state.connections_state.stash_connection();
 
     // Set up a focused connection (partial - being created)
-    let focused_connection = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: None,
-        to_side: None,
-        color: Color::Blue,
-    };
+    let focused_connection =
+        Connection::new(0, Side::Right, None, None, ConnectionData::new(Color::Blue));
     map_state.connections_state.focused_connection = Some(focused_connection);
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('n')));
@@ -730,12 +723,12 @@ fn test_connection_mode_cycle_connections_not_editing() {
     let focused = map_state.connections_state.focused_connection.unwrap();
     assert_eq!(focused.from_side, Side::Right); // Should be unchanged
     assert_eq!(focused.to_id, None); // Should be unchanged
-    assert_eq!(focused.color, Color::Blue); // Should be unchanged
+    assert_eq!(focused.data.color, Color::Blue); // Should be unchanged
 
     // The existing connection should still be in the vector
     assert_eq!(map_state.connections_state.connections().len(), 1);
     assert_eq!(
-        map_state.connections_state.connections()[0].color,
+        map_state.connections_state.connections()[0].data.color,
         Color::Green
     );
 }
@@ -753,13 +746,13 @@ fn test_connection_mode_delete_connection() {
     map_state.notes_state.select(0);
     map_state.mode = Mode::VisualConnect;
 
-    let connection = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
 
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.editing_connection_index = Some(0);
@@ -783,13 +776,13 @@ fn test_connection_mode_delete_not_editing() {
     map_state.notes_state.select(0);
     map_state.mode = Mode::VisualConnect;
 
-    let connection = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: None,
-        to_side: None,
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        None,
+        None,
+        ConnectionData::new(Color::White),
+    );
 
     map_state.connections_state.focused_connection = Some(connection);
 
@@ -815,13 +808,14 @@ fn test_connection_mode_switch_focus_for_target() {
     map_state.mode = Mode::VisualConnect;
 
     // Creating a new connection
-    map_state.connections_state.focused_connection = Some(Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: None,
-        to_side: None,
-        color: Color::White,
-    });
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        None,
+        None,
+        ConnectionData::new(Color::White),
+    );
+    map_state.connections_state.focused_connection = Some(connection);
 
     // Test all direction keys
     let _ = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('j')));
@@ -847,13 +841,14 @@ fn test_connection_mode_cycle_color() {
     map_state.notes_state.select(0);
     map_state.mode = Mode::VisualConnect;
 
-    map_state.connections_state.focused_connection = Some(Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: None,
-        to_side: None,
-        color: Color::White,
-    });
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        None,
+        None,
+        ConnectionData::new(Color::White),
+    );
+    map_state.connections_state.focused_connection = Some(connection);
 
     let result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
@@ -861,7 +856,7 @@ fn test_connection_mode_cycle_color() {
     assert_eq!(map_state.persistence.has_unsaved_changes, true); // Should mark as dirty
 
     let connection = map_state.connections_state.focused_connection.unwrap();
-    assert_ne!(connection.color, Color::White); // Color should have changed
+    assert_ne!(connection.data.color, Color::White); // Color should have changed
 }
 
 #[test]
@@ -893,13 +888,14 @@ fn test_connection_mode_clear_and_redraw() {
     map_state.notes_state.select(0);
     map_state.mode = Mode::VisualConnect;
 
-    map_state.connections_state.focused_connection = Some(Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: None,
-        to_side: None,
-        color: Color::White,
-    });
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        None,
+        None,
+        ConnectionData::new(Color::White),
+    );
+    map_state.connections_state.focused_connection = Some(connection);
 
     let _result = map_visual_kh(&mut map_state, create_key_event(KeyCode::Char('e')));
 
@@ -916,13 +912,14 @@ fn test_connection_mode_unhandled_keys() {
     map_state.notes_state.select(0);
     map_state.mode = Mode::VisualConnect;
 
-    map_state.connections_state.focused_connection = Some(Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: None,
-        to_side: None,
-        color: Color::White,
-    });
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        None,
+        None,
+        ConnectionData::new(Color::White),
+    );
+    map_state.connections_state.focused_connection = Some(connection);
 
     // Test various unhandled keys
     let test_keys = vec![
@@ -961,23 +958,23 @@ fn test_multiple_notes_with_connections() {
     map_state.mode = Mode::Visual;
 
     // Add multiple connections
-    let connection1 = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection1 = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection1);
     map_state.connections_state.stash_connection();
 
-    let connection2 = Connection {
-        from_id: 1,
-        from_side: Side::Right,
-        to_id: Some(2),
-        to_side: Some(Side::Left),
-        color: Color::Green,
-    };
+    let connection2 = Connection::new(
+        1,
+        Side::Right,
+        Some(2),
+        Some(Side::Left),
+        ConnectionData::new(Color::Green),
+    );
     map_state.connections_state.focused_connection = Some(connection2);
     map_state.connections_state.stash_connection();
 
@@ -991,7 +988,7 @@ fn test_multiple_notes_with_connections() {
     let focused_connection = map_state.connections_state.focused_connection.unwrap();
     assert_eq!(focused_connection.from_id, 0);
     assert_eq!(focused_connection.to_id, Some(1));
-    assert_eq!(focused_connection.color, Color::White);
+    assert_eq!(focused_connection.data.color, Color::White);
 }
 
 #[test]
@@ -1075,13 +1072,13 @@ fn test_stash_and_cycle_connections_wraparound() {
     map_state.mode = Mode::VisualConnect;
 
     // Add a connection
-    let connection = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
 
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.editing_connection_index = Some(0);

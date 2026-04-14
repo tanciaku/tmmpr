@@ -1,10 +1,9 @@
-use super::super::enums::Side;
 use ratatui::style::Color;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::states::map::new_note;
+    use crate::{graph::Side, states::map::new_note};
 
     #[test]
     fn test_note_creation() {

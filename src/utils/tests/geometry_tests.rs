@@ -1,7 +1,8 @@
 use ratatui::style::Color;
 
 use crate::{
-    states::map::{Note, Side, new_note},
+    graph::Side,
+    states::map::{Note, new_note},
     utils::geometry::{Point, calculate_path, get_offset_point},
 };
 

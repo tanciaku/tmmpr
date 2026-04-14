@@ -3,10 +3,11 @@ use ratatui::style::Color;
 use std::path::PathBuf;
 
 use crate::{
+    graph::Side,
     input::{AppAction, map::delete::map_delete_kh},
     states::{
         MapState,
-        map::{Connection, Mode, Side},
+        map::{Connection, ConnectionData, Mode},
     },
     utils::test_utils::MockFileSystem,
 };
@@ -114,34 +115,34 @@ fn test_delete_note_with_multiple_connections() {
     map_state.notes_state.select(1);
 
     // Add connections: 0->1 and 1->2
-    let connection1 = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection1 = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection1);
     map_state.connections_state.stash_connection();
 
-    let connection2 = Connection {
-        from_id: 1,
-        from_side: Side::Right,
-        to_id: Some(2),
-        to_side: Some(Side::Left),
-        color: Color::Green,
-    };
+    let connection2 = Connection::new(
+        1,
+        Side::Right,
+        Some(2),
+        Some(Side::Left),
+        ConnectionData::new(Color::Green),
+    );
     map_state.connections_state.focused_connection = Some(connection2);
     map_state.connections_state.stash_connection();
 
     // Add an unrelated connection: 0->2 (should be preserved)
-    let connection3 = Connection {
-        from_id: 0,
-        from_side: Side::Bottom,
-        to_id: Some(2),
-        to_side: Some(Side::Top),
-        color: Color::Blue,
-    };
+    let connection3 = Connection::new(
+        0,
+        Side::Bottom,
+        Some(2),
+        Some(Side::Top),
+        ConnectionData::new(Color::Blue),
+    );
     map_state.connections_state.focused_connection = Some(connection3);
     map_state.connections_state.stash_connection();
 
@@ -206,13 +207,13 @@ fn test_delete_note_as_connection_target() {
     map_state.notes_state.select(0); // Select note that is the target
 
     // Add a connection where 0 is the target: 1->0
-    let connection = Connection {
-        from_id: 1,
-        from_side: Side::Right,
-        to_id: Some(0),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        1,
+        Side::Right,
+        Some(0),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
 
@@ -260,13 +261,13 @@ fn test_delete_note_as_connection_source() {
     map_state.notes_state.select(0); // Select note that is the source
 
     // Add a connection where 0 is the source: 0->1
-    let connection = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
 

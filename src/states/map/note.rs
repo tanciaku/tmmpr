@@ -1,5 +1,4 @@
-use super::enums::Side;
-use crate::graph::Node;
+use crate::graph::{Node, Side};
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use unicode_width::UnicodeWidthStr;

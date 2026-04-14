@@ -8,7 +8,7 @@ use crate::{
     },
     states::{
         MapState,
-        map::{Connection, Mode},
+        map::{Connection, ConnectionData, Mode},
     },
 };
 
@@ -128,7 +128,7 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
                 if let Some(focused_connection) =
                     map_state.connections_state.focused_connection.as_mut()
                 {
-                    focused_connection.color = cycle_color(focused_connection.color);
+                    focused_connection.data.color = cycle_color(focused_connection.data.color);
                     map_state.persistence.mark_dirty();
                 }
             }
@@ -166,13 +166,14 @@ pub fn map_visual_kh(map_state: &mut MapState, key: KeyEvent) -> AppAction {
         KeyCode::Char('C') => {
             let selected_note_id = map_state.notes_state.expect_selected_note_id();
 
-            map_state.connections_state.focused_connection = Some(Connection {
-                from_id: selected_note_id,
-                from_side: map_state.settings.default_start_side,
-                to_id: None,
-                to_side: None,
-                color: Color::White,
-            });
+            let connection = Connection::new(
+                selected_note_id,
+                map_state.settings.default_start_side,
+                None,
+                None,
+                ConnectionData::new(Color::White),
+            );
+            map_state.connections_state.focused_connection = Some(connection);
 
             map_state.mode = Mode::VisualConnect;
             map_state.persistence.mark_dirty();

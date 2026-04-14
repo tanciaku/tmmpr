@@ -1,9 +1,9 @@
 use ratatui::style::Color;
 use std::cmp::Reverse;
 
-use crate::states::{
-    MapState,
-    map::{Mode, Side},
+use crate::{
+    graph::Side,
+    states::{MapState, map::Mode},
 };
 
 /// Cycles to the next help page (1→2→3→4→5→1)

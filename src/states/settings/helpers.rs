@@ -1,4 +1,4 @@
-use crate::states::map::Side;
+use crate::graph::Side;
 
 pub fn cycle_side(side: Side) -> Side {
     match side {

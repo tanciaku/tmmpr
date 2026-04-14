@@ -2,13 +2,14 @@ use ratatui::style::Color;
 use std::path::PathBuf;
 
 use crate::{
+    graph::Side,
     input::map::helpers::{
         cycle_color, cycle_side, help_next_page, help_previous_page, move_note, move_viewport,
         switch_notes_focus,
     },
     states::{
         MapState,
-        map::{Connection, Mode, Side},
+        map::{Connection, ConnectionData, Mode},
     },
     utils::test_utils::MockFileSystem,
 };
@@ -505,13 +506,13 @@ fn test_switch_notes_focus_with_visual_connection() {
 
     // Set up visual connection mode
     map_state.mode = Mode::VisualConnect;
-    let connection = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: None,
-        to_side: None,
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        None,
+        None,
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection);
 
     // Add notes
@@ -543,13 +544,13 @@ fn test_switch_notes_focus_with_visual_connection_same_note() {
 
     // Set up visual connection mode
     map_state.mode = Mode::VisualConnect;
-    let connection = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: None,
-        to_side: None,
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        None,
+        None,
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection);
 
     map_state

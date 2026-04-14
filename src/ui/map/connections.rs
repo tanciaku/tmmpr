@@ -1,9 +1,10 @@
 use ratatui::{Frame, style::Color};
 
 use crate::{
+    graph::Side,
     states::{
         MapState,
-        map::{Mode, Note, Side},
+        map::{Mode, Note},
     },
     ui::{
         DOUBLE_JUNCTIONS, IN_PROGRESS_CHARSET, NORMAL_CHARSET, PLAIN_JUNCTIONS, SegDir,
@@ -38,7 +39,7 @@ pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
                         continue;
                     }
 
-                    draw_connection(path, false, connection.color, frame, map_state);
+                    draw_connection(path, false, connection.data.color, frame, map_state);
                 }
             }
         }

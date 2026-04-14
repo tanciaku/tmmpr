@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 /// Represents the application's current input mode, similar to Vim.
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Mode {
@@ -11,17 +9,6 @@ pub enum Mode {
     EditNormal,
     EditInsert,
     Delete,
-}
-
-/// Represents which side of a note a connection is attached to.
-///
-/// Used to specify the connection point on both the source and target notes.
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
-pub enum Side {
-    Top,
-    Bottom,
-    Left,
-    Right,
 }
 
 /// Notifications displayed in the status bar.

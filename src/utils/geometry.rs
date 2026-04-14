@@ -1,4 +1,4 @@
-use crate::states::map::{Note, Side};
+use crate::{graph::Side, states::map::Note};
 
 /// A 2D point in the coordinate space.
 ///

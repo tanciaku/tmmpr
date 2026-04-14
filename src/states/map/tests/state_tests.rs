@@ -6,9 +6,10 @@ use std::{
 };
 
 use crate::{
+    graph::Side,
     states::{
         MapState,
-        map::{Connection, Mode, Side, new_note},
+        map::{Connection, ConnectionData, Mode, new_note},
     },
     utils::{IoErrorKind, test_utils::MockFileSystem},
 };
@@ -211,13 +212,13 @@ fn test_stash_connection_with_target() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
 
     // Create a connection with a target
-    let connection = Connection {
-        from_id: 1,
-        from_side: Side::Right,
-        to_id: Some(2),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        1,
+        Side::Right,
+        Some(2),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection);
 
     map_state.connections_state.stash_connection();
@@ -251,13 +252,13 @@ fn test_stash_connection_without_target() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
 
     // Create a connection without a target
-    let connection = Connection {
-        from_id: 1,
-        from_side: Side::Right,
-        to_id: None,
-        to_side: None,
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        1,
+        Side::Right,
+        None,
+        None,
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection);
 
     map_state.connections_state.stash_connection();
@@ -275,13 +276,13 @@ fn test_take_out_connection() {
     let mut map_state = create_test_map_state(0, 0, 100, 50);
 
     // Set up a connection
-    let connection = Connection {
-        from_id: 1,
-        from_side: Side::Right,
-        to_id: Some(2),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        1,
+        Side::Right,
+        Some(2),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
 

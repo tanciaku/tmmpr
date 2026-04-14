@@ -5,13 +5,11 @@ use std::path::PathBuf;
 use tempfile::TempDir;
 
 use crate::{
-    states::{
-        map::Side,
-        settings::{
-            BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, Settings,
-            SettingsNotification, SettingsState, SettingsType, cycle_side, get_settings_with_fs,
-            resolve_backup_path, save_settings_with_fs, side_to_string, validate_backup_directory,
-        },
+    graph::Side,
+    states::settings::{
+        BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, Settings,
+        SettingsNotification, SettingsState, SettingsType, cycle_side, get_settings_with_fs,
+        resolve_backup_path, save_settings_with_fs, side_to_string, validate_backup_directory,
     },
     utils::{
         IoErrorKind, read_json_data,

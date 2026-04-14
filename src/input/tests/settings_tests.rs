@@ -4,10 +4,10 @@ use tempfile::TempDir;
 
 use crate::{
     app::Screen,
+    graph::Side,
     input::{AppAction, settings::settings_kh},
     states::{
         SettingsState,
-        map::Side,
         settings::{
             BackupsErr, BackupsInterval, DiscardExitTo, RuntimeBackupsInterval, SelectedToggle,
             Settings, SettingsType,

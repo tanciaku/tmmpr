@@ -4,9 +4,10 @@ use tempfile::tempdir;
 
 use crate::{
     app::{App, Screen},
+    graph::Side,
     states::{
         MapState,
-        map::{Connection, Notification, Side},
+        map::{Connection, ConnectionData, Notification},
         start::StartState,
     },
     utils::{
@@ -48,13 +49,13 @@ fn create_populated_map_state(path: PathBuf) -> MapState {
         .notes_state
         .add(50, 60, String::from("Test Note 2"), Color::Green);
 
-    let connection = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
+    let connection = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
     map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
 
@@ -360,24 +361,24 @@ fn test_save_map_file_preserves_connections() {
         .notes_state
         .add(20, 20, String::from("B"), Color::White);
 
-    let conn1 = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::Red,
-    };
-    map_state.connections_state.focused_connection = Some(conn1);
+    let connection1 = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::Red),
+    );
+    map_state.connections_state.focused_connection = Some(connection1);
     map_state.connections_state.stash_connection();
 
-    let conn2 = Connection {
-        from_id: 1,
-        from_side: Side::Bottom,
-        to_id: Some(0),
-        to_side: Some(Side::Bottom),
-        color: Color::Blue,
-    };
-    map_state.connections_state.focused_connection = Some(conn2);
+    let connection2 = Connection::new(
+        1,
+        Side::Bottom,
+        Some(0),
+        Some(Side::Bottom),
+        ConnectionData::new(Color::Blue),
+    );
+    map_state.connections_state.focused_connection = Some(connection2);
     map_state.connections_state.stash_connection();
 
     let _ = save_map_file(&mut map_state, &file_path);
@@ -386,7 +387,7 @@ fn test_save_map_file_preserves_connections() {
     let loaded_data: MapData = read_json_data(&file_path).unwrap();
     assert_eq!(loaded_data.connections.len(), 2);
     assert_eq!(loaded_data.connections[0].from_id, 0);
-    assert_eq!(loaded_data.connections[0].color, Color::Red);
+    assert_eq!(loaded_data.connections[0].data.color, Color::Red);
     assert_eq!(loaded_data.connections[1].to_id, Some(0));
 }
 
@@ -485,14 +486,14 @@ fn test_load_map_file_loads_connections() {
         .notes_state
         .add(20, 20, String::from("B"), Color::White);
 
-    let conn = Connection {
-        from_id: 0,
-        from_side: Side::Bottom,
-        to_id: Some(1),
-        to_side: Some(Side::Top),
-        color: Color::Yellow,
-    };
-    map_state.connections_state.focused_connection = Some(conn);
+    let connection = Connection::new(
+        0,
+        Side::Bottom,
+        Some(1),
+        Some(Side::Top),
+        ConnectionData::new(Color::Yellow),
+    );
+    map_state.connections_state.focused_connection = Some(connection);
     map_state.connections_state.stash_connection();
 
     let _ = save_map_file(&mut map_state, &file_path);
@@ -514,7 +515,7 @@ fn test_load_map_file_loads_connections() {
             Side::Bottom
         );
         assert_eq!(
-            loaded_state.connections_state.connections()[0].color,
+            loaded_state.connections_state.connections()[0].data.color,
             Color::Yellow
         );
 
@@ -733,24 +734,24 @@ fn test_roundtrip_save_and_load_preserves_all_data() {
         .add(50, 60, String::from("Third"), Color::Blue);
 
     // Add connections
-    let conn1 = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
-    original_state.connections_state.focused_connection = Some(conn1);
+    let connection1 = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
+    original_state.connections_state.focused_connection = Some(connection1);
     original_state.connections_state.stash_connection();
 
-    let conn2 = Connection {
-        from_id: 2,
-        from_side: Side::Bottom,
-        to_id: Some(1),
-        to_side: Some(Side::Top),
-        color: Color::Cyan,
-    };
-    original_state.connections_state.focused_connection = Some(conn2);
+    let connection2 = Connection::new(
+        2,
+        Side::Bottom,
+        Some(1),
+        Some(Side::Top),
+        ConnectionData::new(Color::Cyan),
+    );
+    original_state.connections_state.focused_connection = Some(connection2);
     original_state.connections_state.stash_connection();
 
     // Set view position
@@ -941,24 +942,24 @@ fn test_connection_index_roundtrip() {
         .notes_state
         .add(30, 30, String::from("C"), Color::White);
 
-    let conn1 = Connection {
-        from_id: 0,
-        from_side: Side::Right,
-        to_id: Some(1),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
-    map_state.connections_state.focused_connection = Some(conn1);
+    let connection1 = Connection::new(
+        0,
+        Side::Right,
+        Some(1),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
+    map_state.connections_state.focused_connection = Some(connection1);
     map_state.connections_state.stash_connection();
 
-    let conn2 = Connection {
-        from_id: 1,
-        from_side: Side::Right,
-        to_id: Some(2),
-        to_side: Some(Side::Left),
-        color: Color::White,
-    };
-    map_state.connections_state.focused_connection = Some(conn2);
+    let connection2 = Connection::new(
+        1,
+        Side::Right,
+        Some(2),
+        Some(Side::Left),
+        ConnectionData::new(Color::White),
+    );
+    map_state.connections_state.focused_connection = Some(connection2);
     map_state.connections_state.stash_connection();
 
     let _ = save_map_file(&mut map_state, &file_path);

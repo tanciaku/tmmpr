@@ -116,8 +116,8 @@ pub fn render_bar(frame: &mut Frame, map_state: &mut MapState) {
         if let Some(selected_note_id) = &map_state.notes_state.selected_note_id() {
             if let Some(focused_connection) = &map_state.connections_state.focused_connection {
                 current_color_text = String::from("Selected connection color: ");
-                current_color_name = get_color_name_in_string(focused_connection.color);
-                current_color = focused_connection.color;
+                current_color_name = get_color_name_in_string(focused_connection.data.color);
+                current_color = focused_connection.data.color;
             } else {
                 if let Some(note) = map_state.notes_state.notes().get(selected_note_id) {
                     current_color_text = String::from("Selected note color: ");
