@@ -3,8 +3,9 @@ use ratatui::style::Color;
 use std::{io::stdout, path::PathBuf};
 
 use crate::{
+    graph::ViewportState,
     states::{
-        map::{ConnectionsState, Mode, NotesState, PersistenceState, UIState, ViewportState},
+        map::{ConnectionsState, Mode, NotesState, PersistenceState, UIState},
         settings::{Settings, SettingsType, get_settings_with_fs},
     },
     utils::{FileSystem, IoErrorKind, handle_runtime_backup, save_map_file},

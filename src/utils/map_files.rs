@@ -5,12 +5,11 @@ use std::{collections::HashMap, path::Path};
 
 use crate::{
     app::{App, Screen},
-    graph::{Node, Side},
+    graph::{Node, Side, ViewPos},
     states::{
         MapState,
         map::{
             Connection, ConnectionData, ConnectionsState, Note, NoteData, NotesState, Notification,
-            ViewPos,
         },
     },
     utils::{
