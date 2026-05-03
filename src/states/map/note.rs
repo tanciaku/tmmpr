@@ -1,4 +1,4 @@
-use crate::graph::{Node, Side};
+use crate::graph::{Node, NodeLayout, Side};
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use unicode_width::UnicodeWidthStr;
@@ -24,16 +24,13 @@ pub fn new_note(x: usize, y: usize, content: String, color: Color) -> Note {
     Node::new(x, y, NoteData::new(content, color))
 }
 
-impl Note {
-    /// Returns the rendered dimensions (width, height) including 2-cell border padding.
-    ///
-    /// Height is calculated by counting newlines rather than using `lines()` to
-    /// preserve trailing empty lines that would otherwise be ignored.
-    pub fn get_dimensions(&self) -> (u16, u16) {
-        let height = (1 + self.data.content.matches('\n').count()) as u16;
+/// NoteData knows how large it renders. Position-dependent geometry
+/// (connection_point) is handled by Node<T: NodeLayout> in graph/node.rs.
+impl NodeLayout for NoteData {
+    fn dimensions(&self) -> (u16, u16) {
+        let height = (1 + self.content.matches('\n').count()) as u16;
 
         let width = self
-            .data
             .content
             .lines()
             .map(|line| line.width())
@@ -42,25 +39,17 @@ impl Note {
 
         enforce_note_dimensions(width, height)
     }
+}
+
+impl Note {
+    /// Returns the rendered dimensions (width, height) including 2-cell border padding.
+    pub fn get_dimensions(&self) -> (u16, u16) {
+        self.data.dimensions()
+    }
 
     /// Returns the canvas coordinates where a connection line should attach to this note.
-    ///
-    /// The point is centered on the specified side.
     pub fn get_connection_point(&self, side: Side) -> (usize, usize) {
-        let (note_width, note_height) = self.get_dimensions();
-
-        match side {
-            Side::Right => (
-                (self.x + note_width as usize - 1),
-                (self.y + (note_height / 2) as usize),
-            ),
-            Side::Left => (self.x, (self.y + (note_height / 2) as usize)),
-            Side::Top => (self.x + (note_width / 2) as usize, self.y),
-            Side::Bottom => (
-                self.x + (note_width / 2) as usize,
-                self.y + note_height as usize - 1,
-            ),
-        }
+        self.connection_point(side)
     }
 }
 
