@@ -8,10 +8,8 @@ use ratatui::{
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
-    states::{
-        MapState,
-        map::{Mode, SignedRect},
-    },
+    graph::SignedRect,
+    states::{MapState, map::Mode},
     ui::draw_connecting_character,
 };
 

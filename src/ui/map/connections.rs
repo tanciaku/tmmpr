@@ -1,7 +1,7 @@
 use ratatui::{Frame, style::Color};
 
 use crate::{
-    graph::Side,
+    graph::{Point, Side, calculate_path},
     states::{
         MapState,
         map::{Mode, Note},
@@ -10,7 +10,6 @@ use crate::{
         DOUBLE_JUNCTIONS, IN_PROGRESS_CHARSET, NORMAL_CHARSET, PLAIN_JUNCTIONS, SegDir,
         THICK_JUNCTIONS,
     },
-    utils::{Point, calculate_path},
 };
 
 pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
@@ -70,7 +69,7 @@ pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
 
 /// Draws a connection path on the screen.
 /// `in_progress`: if true, uses special charset to indicate connection being created/edited
-pub fn draw_connection(
+pub(crate) fn draw_connection(
     path: Vec<Point>,
     in_progress: bool,
     color: Color,

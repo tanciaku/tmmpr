@@ -1,24 +1,69 @@
+//! Internal geometry utilities for the graph module.
+//!
+//! This module is not part of the public API.
+
 use crate::graph::{Node, NodeLayout, Side};
+
+/// A rectangle representation that uses signed integers (`isize`) for its coordinates.
+///
+/// This is crucial for performing screen-space calculations where coordinates can
+/// temporarily become negative (e.g., a note is partially off-screen to the left)
+/// before being clipped to the viewport boundaries.
+pub(crate) struct SignedRect {
+    pub(crate) x: isize,
+    pub(crate) y: isize,
+    pub(crate) width: isize,
+    pub(crate) height: isize,
+}
+
+impl SignedRect {
+    /// Core clipping logic for determining the visible portion of a rectangle (typically
+    /// a note) within the viewport bounds.
+    pub(crate) fn intersection(&self, view: &SignedRect) -> Option<SignedRect> {
+        if self.x >= view.x + view.width
+            || self.x + self.width <= view.x
+            || self.y >= view.y + view.height
+            || self.y + self.height <= view.y
+        {
+            return None;
+        } else {
+            let x_start = self.x.max(view.x);
+            let x_end = (self.x + self.width).min(view.x + view.width);
+            let x_width = x_end - x_start;
+
+            let y_start = self.y.max(view.y);
+            let y_end = (self.y + self.height).min(view.y + view.height);
+            let y_height = y_end - y_start;
+
+            Some(SignedRect {
+                x: x_start,
+                y: y_start,
+                width: x_width,
+                height: y_height,
+            })
+        }
+    }
+}
 
 /// A 2D point in the coordinate space.
 ///
 /// Uses signed integers where X increases rightward and Y increases downward,
 /// following standard coordinate conventions.
 #[derive(Clone, Copy)]
-pub struct Point {
-    pub x: isize,
-    pub y: isize,
+pub(crate) struct Point {
+    pub(crate) x: isize,
+    pub(crate) y: isize,
 }
 
 /// Where the end point is, in relation to the start point horizontally
-pub enum HPlacement {
+pub(crate) enum HPlacement {
     Right,
     Left,
     Level,
 }
 
 /// Where the end point is, in relation to the start point vertically
-pub enum VPlacement {
+pub(crate) enum VPlacement {
     Above,
     Below,
     Level,
@@ -28,7 +73,7 @@ pub enum VPlacement {
 ///
 /// Selects a path shape (S, C, U, corner, etc.) based on the relative positions of the nodes
 /// and the sides being connected, with 2-unit offsets for visual clearance from node boundaries.
-pub fn calculate_path<T: NodeLayout>(
+pub(crate) fn calculate_path<T: NodeLayout>(
     start_node: &Node<T>,
     start_side: Side,
     end_node: &Node<T>,
@@ -430,7 +475,7 @@ pub fn calculate_path<T: NodeLayout>(
     points
 }
 
-pub fn get_offset_point(p: Point, side: Side) -> Point {
+pub(crate) fn get_offset_point(p: Point, side: Side) -> Point {
     let offset = 2;
     let p_off = match side {
         Side::Right => Point {

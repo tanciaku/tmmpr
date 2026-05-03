@@ -1,9 +1,8 @@
 use ratatui::style::Color;
 
 use crate::{
-    graph::Side,
+    graph::{Point, Side, calculate_path, get_offset_point},
     states::map::{Note, new_note},
-    utils::geometry::{Point, calculate_path, get_offset_point},
 };
 
 // Helper functions for creating test data

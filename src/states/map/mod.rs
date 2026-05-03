@@ -1,6 +1,5 @@
 mod connections_state;
 mod enums;
-mod geometry;
 mod note;
 mod notes_state;
 mod persistence;
@@ -11,7 +10,6 @@ mod ui_state;
 
 pub use connections_state::*;
 pub use enums::*;
-pub use geometry::*;
 pub use note::*;
 pub use notes_state::*;
 pub use persistence::*;
