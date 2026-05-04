@@ -6,6 +6,7 @@ pub const THICK_JUNCTIONS: [&str; 4] = ["┻", "┳", "┫", "┣"];
 pub const DOUBLE_JUNCTIONS: [&str; 4] = ["╩", "╦", "╣", "╠"];
 
 /// Used to determine which corner character to draw when rendering connections
+// TODO: restore pub(crate) later
 #[derive(Copy, Clone)]
 pub enum SegDir {
     Right,

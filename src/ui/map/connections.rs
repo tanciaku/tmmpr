@@ -1,15 +1,12 @@
 use ratatui::{Frame, style::Color};
-use tmmpr::graph::{Point, Side, calculate_path};
+use tmmpr::graph::{
+    DOUBLE_JUNCTIONS, IN_PROGRESS_CHARSET, NORMAL_CHARSET, PLAIN_JUNCTIONS, Point, SegDir, Side,
+    THICK_JUNCTIONS, calculate_path,
+};
 
-use crate::{
-    states::{
-        MapState,
-        map::{Mode, Note},
-    },
-    ui::{
-        DOUBLE_JUNCTIONS, IN_PROGRESS_CHARSET, NORMAL_CHARSET, PLAIN_JUNCTIONS, SegDir,
-        THICK_JUNCTIONS,
-    },
+use crate::states::{
+    MapState,
+    map::{Mode, Note},
 };
 
 pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {

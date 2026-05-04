@@ -1,6 +1,6 @@
 //! # tmmpr
 //!
-//! A library for node graph data structures and algorithms.
+//! A library for node graph data structures.
 //!
 //! ## ⚠️ Work in Progress
 //!
@@ -11,7 +11,5 @@
 //! ## Library Usage
 //!
 //! TODO
-//!
-//! Other modules are internal and subject to change.
 
 pub mod graph;
