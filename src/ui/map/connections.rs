@@ -1,7 +1,7 @@
 use ratatui::{Frame, style::Color};
+use tmmpr::graph::{Point, Side, calculate_path};
 
 use crate::{
-    graph::{Point, Side, calculate_path},
     states::{
         MapState,
         map::{Mode, Note},
@@ -238,7 +238,7 @@ pub fn draw_connecting_character(
         Side::Right => connection_charset[3],
     };
 
-    let p = note.get_connection_point(side);
+    let p = note.connection_point(side);
     let (p_x, p_y) = map_state
         .viewport
         .to_screen_coords(p.0 as isize, p.1 as isize);

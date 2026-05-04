@@ -1,10 +1,10 @@
 use ratatui::style::Color;
 use std::{fs, path::PathBuf};
 use tempfile::tempdir;
+use tmmpr::graph::Side;
 
 use crate::{
     app::{App, Screen},
-    graph::Side,
     states::{
         MapState,
         map::{Connection, ConnectionData, Notification},

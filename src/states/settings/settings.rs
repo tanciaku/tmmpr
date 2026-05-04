@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{
-    graph::Side,
-    states::settings::{BackupsInterval, RuntimeBackupsInterval, cycle_side},
-};
+use crate::states::settings::{BackupsInterval, RuntimeBackupsInterval, cycle_side};
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
+use tmmpr::graph::Side;
 
 #[derive(PartialEq, Serialize, Deserialize, Debug)]
 pub struct Settings {

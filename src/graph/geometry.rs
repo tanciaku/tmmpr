@@ -9,17 +9,23 @@ use crate::graph::{Node, NodeLayout, Side};
 /// This is crucial for performing screen-space calculations where coordinates can
 /// temporarily become negative (e.g., a note is partially off-screen to the left)
 /// before being clipped to the viewport boundaries.
-pub(crate) struct SignedRect {
-    pub(crate) x: isize,
-    pub(crate) y: isize,
-    pub(crate) width: isize,
-    pub(crate) height: isize,
+// TODO: restore pub(crate) later
+pub struct SignedRect {
+    // TODO: restore pub(crate) later
+    pub x: isize,
+    // TODO: restore pub(crate) later
+    pub y: isize,
+    // TODO: restore pub(crate) later
+    pub width: isize,
+    // TODO: restore pub(crate) later
+    pub height: isize,
 }
 
 impl SignedRect {
     /// Core clipping logic for determining the visible portion of a rectangle (typically
     /// a note) within the viewport bounds.
-    pub(crate) fn intersection(&self, view: &SignedRect) -> Option<SignedRect> {
+    // TODO: restore pub(crate) later
+    pub fn intersection(&self, view: &SignedRect) -> Option<SignedRect> {
         if self.x >= view.x + view.width
             || self.x + self.width <= view.x
             || self.y >= view.y + view.height
@@ -49,21 +55,26 @@ impl SignedRect {
 ///
 /// Uses signed integers where X increases rightward and Y increases downward,
 /// following standard coordinate conventions.
+// TODO: restore pub(crate) later
 #[derive(Clone, Copy)]
-pub(crate) struct Point {
-    pub(crate) x: isize,
-    pub(crate) y: isize,
+pub struct Point {
+    // TODO: restore pub(crate) later
+    pub x: isize,
+    // TODO: restore pub(crate) later
+    pub y: isize,
 }
 
 /// Where the end point is, in relation to the start point horizontally
-pub(crate) enum HPlacement {
+// TODO: restore pub(crate) later
+pub enum HPlacement {
     Right,
     Left,
     Level,
 }
 
 /// Where the end point is, in relation to the start point vertically
-pub(crate) enum VPlacement {
+// TODO: restore pub(crate) later
+pub enum VPlacement {
     Above,
     Below,
     Level,
@@ -73,7 +84,8 @@ pub(crate) enum VPlacement {
 ///
 /// Selects a path shape (S, C, U, corner, etc.) based on the relative positions of the nodes
 /// and the sides being connected, with 2-unit offsets for visual clearance from node boundaries.
-pub(crate) fn calculate_path<T: NodeLayout>(
+// TODO: restore pub(crate) later
+pub fn calculate_path<T: NodeLayout>(
     start_node: &Node<T>,
     start_side: Side,
     end_node: &Node<T>,
@@ -475,7 +487,8 @@ pub(crate) fn calculate_path<T: NodeLayout>(
     points
 }
 
-pub(crate) fn get_offset_point(p: Point, side: Side) -> Point {
+// TODO: restore pub(crate) later
+pub fn get_offset_point(p: Point, side: Side) -> Point {
     let offset = 2;
     let p_off = match side {
         Side::Right => Point {

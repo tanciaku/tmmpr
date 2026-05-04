@@ -1,8 +1,8 @@
 use ratatui::style::Color;
 use std::path::PathBuf;
+use tmmpr::graph::Side;
 
 use crate::{
-    graph::Side,
     input::map::helpers::{
         cycle_color, cycle_side, help_next_page, help_previous_page, move_note, move_viewport,
         switch_notes_focus,

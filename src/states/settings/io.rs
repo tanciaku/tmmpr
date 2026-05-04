@@ -4,9 +4,8 @@ use crate::{
         settings::{Settings, SettingsNotification, SettingsType},
     },
     utils::{
-        IoErrorKind,
-        filesystem::{FileSystem, RealFileSystem},
-        read_json_data, save_settings_to_file_with_fs, write_json_data,
+        IoErrorKind, filesystem::FileSystem, read_json_data, save_settings_to_file_with_fs,
+        write_json_data,
     },
 };
 
@@ -42,13 +41,6 @@ pub fn get_settings_with_fs(fs: &dyn FileSystem) -> SettingsType {
             Err(_) => SettingsType::Default(Settings::new(), Some(IoErrorKind::FileWrite)),
         }
     }
-}
-
-/// Saves settings to disk.
-///
-/// Precondition: Settings directories already exist (created during app initialization).
-pub fn save_settings(settings_state: &mut SettingsState) {
-    save_settings_with_fs(settings_state, &RealFileSystem)
 }
 
 pub fn save_settings_with_fs(settings_state: &mut SettingsState, fs: &dyn FileSystem) {

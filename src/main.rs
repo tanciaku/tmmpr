@@ -1,13 +1,19 @@
+mod app;
+mod input;
+mod states;
+mod ui;
+mod utils;
+
 use std::io::stdout;
 
-use color_eyre::Result;
-use crossterm::{cursor::SetCursorStyle, execute};
-use ratatui::DefaultTerminal;
-use tmmpr::{
+use crate::{
     app::{App, Screen},
     input::handle_events,
     ui::{render_map, render_settings, render_start},
 };
+use color_eyre::Result;
+use crossterm::{cursor::SetCursorStyle, execute};
+use ratatui::DefaultTerminal;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

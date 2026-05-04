@@ -1,9 +1,9 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::Color;
 use std::path::PathBuf;
+use tmmpr::graph::Side;
 
 use crate::{
-    graph::Side,
     input::{AppAction, map::delete::map_delete_kh},
     states::{
         MapState,

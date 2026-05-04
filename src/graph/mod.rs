@@ -4,6 +4,7 @@ mod node;
 mod viewport;
 
 pub use connection::*;
-pub(crate) use geometry::*;
+// TODO: restore pub(crate) later
+pub use geometry::*;
 pub use node::*;
 pub use viewport::*;

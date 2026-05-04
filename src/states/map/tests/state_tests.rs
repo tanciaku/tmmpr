@@ -4,12 +4,12 @@ use std::{
     path::PathBuf,
     time::{Duration, Instant},
 };
+use tmmpr::graph::{Node, Side};
 
 use crate::{
-    graph::Side,
     states::{
         MapState,
-        map::{Connection, ConnectionData, Mode, new_note},
+        map::{Connection, ConnectionData, Mode, Note, NoteData},
     },
     utils::{IoErrorKind, test_utils::MockFileSystem},
 };
@@ -36,6 +36,10 @@ fn create_test_map_state(
     map_state.viewport.screen_height = height;
 
     map_state
+}
+
+fn new_note(x: usize, y: usize, content: String, color: Color) -> Note {
+    Node::new(x, y, NoteData::new(content, color))
 }
 
 #[test]

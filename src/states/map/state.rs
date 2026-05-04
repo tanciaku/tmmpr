@@ -1,9 +1,9 @@
 use crossterm::{cursor::SetCursorStyle, execute};
 use ratatui::style::Color;
 use std::{io::stdout, path::PathBuf};
+use tmmpr::graph::ViewportState;
 
 use crate::{
-    graph::ViewportState,
     states::{
         map::{ConnectionsState, Mode, NotesState, PersistenceState, UIState},
         settings::{Settings, SettingsType, get_settings_with_fs},

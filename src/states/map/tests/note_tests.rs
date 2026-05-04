@@ -2,8 +2,15 @@ use ratatui::style::Color;
 
 #[cfg(test)]
 mod tests {
+    use tmmpr::graph::{Node, NodeLayout, Side};
+
+    use crate::states::map::{Note, NoteData};
+
     use super::*;
-    use crate::{graph::Side, states::map::new_note};
+
+    fn new_note(x: usize, y: usize, content: String, color: Color) -> Note {
+        Node::new(x, y, NoteData::new(content, color))
+    }
 
     #[test]
     fn test_note_creation() {
@@ -19,7 +26,7 @@ mod tests {
     fn test_get_dimensions_empty_content() {
         let note = new_note(0, 0, "".to_string(), Color::White);
 
-        let (width, height) = note.get_dimensions();
+        let (width, height) = note.data.dimensions();
 
         assert_eq!(width, 21);
         assert_eq!(height, 4);
@@ -28,7 +35,7 @@ mod tests {
     #[test]
     fn test_get_dimensions_single_line() {
         let note = new_note(0, 0, "Hello".to_string(), Color::White);
-        let (width, height) = note.get_dimensions();
+        let (width, height) = note.data.dimensions();
 
         assert_eq!(width, 21);
         assert_eq!(height, 4);
@@ -37,7 +44,7 @@ mod tests {
     #[test]
     fn test_get_dimensions_multiline() {
         let note = new_note(0, 0, "Hello\nWorld\nTest".to_string(), Color::White);
-        let (width, height) = note.get_dimensions();
+        let (width, height) = note.data.dimensions();
 
         // 3 lines (2 newlines + 1) + 2 (border) = 5 height
         assert_eq!(width, 21);
@@ -52,7 +59,7 @@ mod tests {
             "Hi\nThis is a looooonger line\nShort".to_string(),
             Color::White,
         );
-        let (width, height) = note.get_dimensions();
+        let (width, height) = note.data.dimensions();
 
         // Longest line is "This is a looooonger line" = 25 chars + 2 (border) + 1 (cursor) = 28 width
         assert_eq!(width, 28);
@@ -62,7 +69,7 @@ mod tests {
     #[test]
     fn test_get_dimensions_trailing_newline() {
         let note = new_note(0, 0, "Hello\nWorld\n".to_string(), Color::White);
-        let (width, height) = note.get_dimensions();
+        let (width, height) = note.data.dimensions();
 
         // 2 newlines + 1 = 3 lines, + 2 (border) = 5 height
         assert_eq!(width, 21);
@@ -72,9 +79,9 @@ mod tests {
     #[test]
     fn test_get_connection_point_right() {
         let note = new_note(10, 20, "Test\nContent".to_string(), Color::White);
-        let (x, y) = note.get_connection_point(Side::Right);
+        let (x, y) = note.connection_point(Side::Right);
 
-        let (width, height) = note.get_dimensions();
+        let (width, height) = note.data.dimensions();
 
         let expected_x = note.x + width as usize - 1;
         let expected_y = note.y + (height / 2) as usize;
@@ -86,9 +93,9 @@ mod tests {
     #[test]
     fn test_get_connection_point_left() {
         let note = new_note(10, 20, "Test\nContent".to_string(), Color::White);
-        let (x, y) = note.get_connection_point(Side::Left);
+        let (x, y) = note.connection_point(Side::Left);
 
-        let (_, height) = note.get_dimensions();
+        let (_, height) = note.data.dimensions();
         let expected_x = note.x;
         let expected_y = note.y + (height / 2) as usize;
 
@@ -99,9 +106,9 @@ mod tests {
     #[test]
     fn test_get_connection_point_top() {
         let note = new_note(10, 20, "Test\nContent".to_string(), Color::White);
-        let (x, y) = note.get_connection_point(Side::Top);
+        let (x, y) = note.connection_point(Side::Top);
 
-        let (width, _) = note.get_dimensions();
+        let (width, _) = note.data.dimensions();
 
         let expected_x = note.x + (width / 2) as usize;
         let expected_y = note.y;
@@ -113,9 +120,9 @@ mod tests {
     #[test]
     fn test_get_connection_point_bottom() {
         let note = new_note(10, 20, "Test\nContent".to_string(), Color::White);
-        let (x, y) = note.get_connection_point(Side::Bottom);
+        let (x, y) = note.connection_point(Side::Bottom);
 
-        let (width, height) = note.get_dimensions();
+        let (width, height) = note.data.dimensions();
 
         let expected_x = note.x + (width / 2) as usize;
         let expected_y = note.y + height as usize - 1;
@@ -130,7 +137,7 @@ mod tests {
         let note = new_note(0, 0, "Hi".to_string(), Color::White);
 
         // Right side connection
-        let (x_right, _) = note.get_connection_point(Side::Right);
+        let (x_right, _) = note.connection_point(Side::Right);
         // Width should be enforced to minimum 20 + 1 (cursor) = 21
         // Connection point should be at x + 21 - 1 = x + 20
         assert_eq!(x_right, note.x + 20);
@@ -144,7 +151,7 @@ mod tests {
             "Sample note text!! 📝✨🎯💡🔥🎨".to_string(),
             Color::White,
         );
-        let (width, height) = note.get_dimensions();
+        let (width, height) = note.data.dimensions();
 
         // "Sample note text!! 📝✨🎯💡🔥🎨" = 31 chars + 2 (border) + 1 (cursor) = 34 width
         assert_eq!(width, 34);
@@ -160,10 +167,10 @@ mod tests {
             Color::Blue,
         );
 
-        let right = note.get_connection_point(Side::Right);
-        let left = note.get_connection_point(Side::Left);
-        let top = note.get_connection_point(Side::Top);
-        let bottom = note.get_connection_point(Side::Bottom);
+        let right = note.connection_point(Side::Right);
+        let left = note.connection_point(Side::Left);
+        let top = note.connection_point(Side::Top);
+        let bottom = note.connection_point(Side::Bottom);
 
         // All connection points should have reasonable coordinates
         assert!(right.0 > note.x);

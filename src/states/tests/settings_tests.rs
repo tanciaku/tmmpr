@@ -3,9 +3,9 @@ use ratatui::style::{Color, Style};
 use serde_json;
 use std::path::PathBuf;
 use tempfile::TempDir;
+use tmmpr::graph::Side;
 
 use crate::{
-    graph::Side,
     states::settings::{
         BackupsErr, BackupsInterval, RuntimeBackupsInterval, SelectedToggle, Settings,
         SettingsNotification, SettingsState, SettingsType, cycle_side, get_settings_with_fs,

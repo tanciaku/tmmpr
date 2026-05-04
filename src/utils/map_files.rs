@@ -2,10 +2,10 @@ use chrono::Local;
 use ratatui::style::Color;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{collections::HashMap, path::Path};
+use tmmpr::graph::{Node, Side, ViewPos};
 
 use crate::{
     app::{App, Screen},
-    graph::{Node, Side, ViewPos},
     states::{
         MapState,
         map::{

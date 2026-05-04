@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::graph::SignedRect;
+    use tmmpr::graph::SignedRect;
 
     #[test]
     fn test_signed_rect_no_intersection() {

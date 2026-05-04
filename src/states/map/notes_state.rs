@@ -1,6 +1,7 @@
-use crate::{graph::Node, states::map::NoteData};
+use crate::states::map::NoteData;
 use ratatui::style::Color;
 use std::collections::HashMap;
+use tmmpr::graph::Node;
 
 use super::note::Note;
 

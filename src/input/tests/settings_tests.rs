@@ -1,10 +1,10 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use std::path::PathBuf;
 use tempfile::TempDir;
+use tmmpr::graph::Side;
 
 use crate::{
     app::Screen,
-    graph::Side,
     input::{AppAction, settings::settings_kh},
     states::{
         SettingsState,

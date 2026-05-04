@@ -1,6 +1,6 @@
-use crate::graph::{Node, NodeLayout, Side};
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
+use tmmpr::graph::{Node, NodeLayout};
 use unicode_width::UnicodeWidthStr;
 
 /// The app-specific payload stored inside a graph node.
@@ -20,10 +20,6 @@ impl NoteData {
 /// A note is a graph node whose data is NoteData.
 pub type Note = Node<NoteData>;
 
-pub fn new_note(x: usize, y: usize, content: String, color: Color) -> Note {
-    Node::new(x, y, NoteData::new(content, color))
-}
-
 /// NoteData knows how large it renders. Position-dependent geometry
 /// (connection_point) is handled by Node<T: NodeLayout> in graph/node.rs.
 impl NodeLayout for NoteData {
@@ -38,18 +34,6 @@ impl NodeLayout for NoteData {
             .unwrap_or(0) as u16;
 
         enforce_note_dimensions(width, height)
-    }
-}
-
-impl Note {
-    /// Returns the rendered dimensions (width, height) including 2-cell border padding.
-    pub fn get_dimensions(&self) -> (u16, u16) {
-        self.data.dimensions()
-    }
-
-    /// Returns the canvas coordinates where a connection line should attach to this note.
-    pub fn get_connection_point(&self, side: Side) -> (usize, usize) {
-        self.connection_point(side)
     }
 }
 

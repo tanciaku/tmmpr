@@ -5,10 +5,10 @@ use ratatui::{
     style::Color,
     widgets::{Block, BorderType, Borders, Clear, Paragraph},
 };
+use tmmpr::graph::{NodeLayout, SignedRect};
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
-    graph::SignedRect,
     states::{MapState, map::Mode},
     ui::draw_connecting_character,
 };
@@ -21,7 +21,7 @@ use crate::{
 pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
     for &note_id in map_state.notes_state.render_order() {
         if let Some(note) = map_state.notes_state.notes().get(&note_id) {
-            let (note_width, note_height) = note.get_dimensions();
+            let (note_width, note_height) = note.data.dimensions();
 
             // Convert canvas coordinates to screen space (can be negative if off-screen)
             let (p_x, p_y) = map_state

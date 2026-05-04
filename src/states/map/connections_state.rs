@@ -17,7 +17,7 @@ impl ConnectionData {
 }
 
 /// App-specific connection type, binding [`crate::graph::Connection`] to [`ConnectionData`].
-pub type Connection = crate::graph::Connection<ConnectionData>;
+pub type Connection = tmmpr::graph::Connection<ConnectionData>;
 
 /// Manages the bidirectional relationship between connections and notes.
 ///
@@ -202,12 +202,6 @@ impl ConnectionsState {
     /// Gets all connection INDICES (within a vector of connections) for a given note
     pub fn get_indices_for_note(&self, note_id: usize) -> &[usize] {
         self.manager.get_indices_for_note(note_id)
-    }
-
-    /// Removes all connections involving the given note.
-    /// Returns the number of connections removed.
-    pub fn remove_all_for_note(&mut self, note_id: usize) -> usize {
-        self.manager.remove_all_for_note(note_id)
     }
 
     pub fn remove_note(&mut self, note_id: usize) {

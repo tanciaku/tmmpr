@@ -1,13 +1,11 @@
 use ratatui::style::Color;
+use tmmpr::graph::{Node, Point, Side, calculate_path, get_offset_point};
 
-use crate::{
-    graph::{Point, Side, calculate_path, get_offset_point},
-    states::map::{Note, new_note},
-};
+use crate::states::map::{Note, NoteData};
 
 // Helper functions for creating test data
 fn create_test_note(x: usize, y: usize, content: &str) -> Note {
-    new_note(x, y, content.to_string(), Color::White)
+    Node::new(x, y, NoteData::new(content.to_string(), Color::White))
 }
 
 // --- Tests for get_offset_point ---
@@ -129,8 +127,8 @@ fn test_s_shape_horizontal_right_to_left() {
     // S-shape should have 6 points: start, start_off, mid_top, mid_bottom, end_off, end
     assert_eq!(path.len(), 6, "S-shape should have 6 points");
 
-    let start_conn = start_note.get_connection_point(Side::Right);
-    let end_conn = end_note.get_connection_point(Side::Left);
+    let start_conn = start_note.connection_point(Side::Right);
+    let end_conn = end_note.connection_point(Side::Left);
 
     // Verify start and end
     assert_eq!(path[0].x, start_conn.0 as isize);
@@ -165,8 +163,8 @@ fn test_c_shape_left_to_left() {
     // C-shape should have 6 points
     assert_eq!(path.len(), 6, "C-shape should have 6 points");
 
-    let start_conn = start_note.get_connection_point(Side::Left);
-    let end_conn = end_note.get_connection_point(Side::Left);
+    let start_conn = start_note.connection_point(Side::Left);
+    let end_conn = end_note.connection_point(Side::Left);
 
     // Verify start and end
     assert_eq!(path[0].x, start_conn.0 as isize);
@@ -200,8 +198,8 @@ fn test_reverse_c_shape_right_to_right() {
     // Reverse C-shape should have 6 points
     assert_eq!(path.len(), 6, "Reverse C-shape should have 6 points");
 
-    let start_conn = start_note.get_connection_point(Side::Right);
-    let end_conn = end_note.get_connection_point(Side::Right);
+    let start_conn = start_note.connection_point(Side::Right);
+    let end_conn = end_note.connection_point(Side::Right);
 
     // Verify start and end
     assert_eq!(path[0].x, start_conn.0 as isize);
@@ -231,8 +229,8 @@ fn test_corner_shape_right_to_top() {
     // Corner shape should have 5 points: start, start_off, corner, end_off, end
     assert_eq!(path.len(), 5, "Corner shape should have 5 points");
 
-    let start_conn = start_note.get_connection_point(Side::Right);
-    let end_conn = end_note.get_connection_point(Side::Top);
+    let start_conn = start_note.connection_point(Side::Right);
+    let end_conn = end_note.connection_point(Side::Top);
 
     // Verify start and end
     assert_eq!(path[0].x, start_conn.0 as isize);
@@ -260,8 +258,8 @@ fn test_u_shape_bottom_to_bottom() {
     // U-shape should have 6 points
     assert_eq!(path.len(), 6, "U-shape should have 6 points");
 
-    let start_conn = start_note.get_connection_point(Side::Bottom);
-    let end_conn = end_note.get_connection_point(Side::Bottom);
+    let start_conn = start_note.connection_point(Side::Bottom);
+    let end_conn = end_note.connection_point(Side::Bottom);
 
     // Verify start and end
     assert_eq!(path[0].x, start_conn.0 as isize);
@@ -295,8 +293,8 @@ fn test_upside_down_u_shape_top_to_top() {
     // Upside-down U-shape should have 6 points
     assert_eq!(path.len(), 6, "Upside-down U-shape should have 6 points");
 
-    let start_conn = start_note.get_connection_point(Side::Top);
-    let end_conn = end_note.get_connection_point(Side::Top);
+    let start_conn = start_note.connection_point(Side::Top);
+    let end_conn = end_note.connection_point(Side::Top);
 
     // Verify start and end
     assert_eq!(path[0].x, start_conn.0 as isize);
@@ -325,8 +323,8 @@ fn test_sideways_s_shape_vertical() {
     // Should have 6 points for sideways s-shape
     assert_eq!(path.len(), 6);
 
-    let start_conn = start_note.get_connection_point(Side::Right);
-    let end_conn = end_note.get_connection_point(Side::Left);
+    let start_conn = start_note.connection_point(Side::Right);
+    let end_conn = end_note.connection_point(Side::Left);
 
     // Verify start and end
     assert_eq!(path[0].y, start_conn.1 as isize);

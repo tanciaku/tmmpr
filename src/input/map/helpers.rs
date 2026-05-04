@@ -1,10 +1,8 @@
 use ratatui::style::Color;
 use std::cmp::Reverse;
+use tmmpr::graph::{NodeLayout, Side};
 
-use crate::{
-    graph::Side,
-    states::{MapState, map::Mode},
-};
+use crate::states::{MapState, map::Mode};
 
 /// Cycles to the next help page (1→2→3→4→5→1)
 pub fn help_next_page(map_state: &mut MapState) {
@@ -75,7 +73,7 @@ pub fn move_viewport(map_state: &mut MapState, axis: &str, amount: isize) {
 /// If no note is selected.
 pub fn move_note(map_state: &mut MapState, axis: &str, amount: isize) {
     let note = map_state.notes_state.expect_selected_note_mut();
-    let (note_width, note_height) = note.get_dimensions();
+    let (note_width, note_height) = note.data.dimensions();
 
     match axis {
         "x" => {

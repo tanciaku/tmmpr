@@ -1,4 +1,4 @@
-use crate::graph::Side;
+use tmmpr::graph::Side;
 
 pub fn cycle_side(side: Side) -> Side {
     match side {
