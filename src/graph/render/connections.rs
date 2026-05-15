@@ -1,15 +1,8 @@
 use ratatui::{Frame, style::Color};
-use tmmpr::graph::{
-    DOUBLE_JUNCTIONS, IN_PROGRESS_CHARSET, NORMAL_CHARSET, PLAIN_JUNCTIONS, Point, SegDir, Side,
-    THICK_JUNCTIONS, calculate_path,
-};
 
-use crate::states::{
-    MapState,
-    map::{Mode, Note},
-};
+use crate::graph::{DOUBLE_JUNCTIONS, IN_PROGRESS_CHARSET, NORMAL_CHARSET, PLAIN_JUNCTIONS, Point, SegDir, Side, THICK_JUNCTIONS, calculate_path};
 
-pub fn render_connections(frame: &mut Frame, map_state: &mut MapState) {
+pub fn render_connections(frame: &mut Frame) {
     for connection in map_state.connections_state.connections() {
         if let Some(start_note) = map_state.notes_state.notes().get(&connection.from_id) {
             if let Some(end_note_id) = connection.to_id {

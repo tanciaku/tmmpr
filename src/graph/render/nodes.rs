@@ -5,20 +5,16 @@ use ratatui::{
     style::Color,
     widgets::{Block, BorderType, Borders, Clear, Paragraph},
 };
-use tmmpr::graph::{NodeLayout, SignedRect};
 use unicode_width::UnicodeWidthStr;
 
-use crate::{
-    states::{MapState, map::Mode},
-    ui::draw_connecting_character,
-};
+use crate::graph::{SignedRect, draw_connecting_character};
 
 /// Renders notes with proper clipping, scrolling, and z-ordering.
 ///
 /// Notes are drawn in render order (z-index), with viewport culling and partial
 /// visibility handling. Connection points are drawn after each note to prevent
 /// visual layering issues.
-pub fn render_notes(frame: &mut Frame, map_state: &mut MapState) {
+pub fn render_notes(frame: &mut Frame) {
     for &note_id in map_state.notes_state.render_order() {
         if let Some(note) = map_state.notes_state.notes().get(&note_id) {
             let (note_width, note_height) = note.data.dimensions();
